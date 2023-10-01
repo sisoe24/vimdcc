@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "nuke-vim-editor"
+version = "0.1.0"
+description = ""
+authors = ["virgilsisoe <28490646+sisoe24@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.autopep8]
+max_line_length = 100
+
+[tool.poetry.scripts]
+app = "nuke_vim_editor.main:main"
+
+[tool.poetry.dependencies]
+python = "~3.9"
+pyside2 = "5.15.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
