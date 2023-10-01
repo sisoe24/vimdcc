@@ -1,9 +1,11 @@
-from enum import Enum, auto
 import random
-from PySide2.QtCore import QEvent, QObject, Qt
+from enum import Enum, auto
+
 from PySide2.QtGui import QKeyEvent, QTextCursor
-from PySide2.QtWidgets import (QLineEdit, QVBoxLayout, QWidget, QSplitter, QTextEdit, QPushButton,
-                               QApplication, QPlainTextEdit)
+from PySide2.QtCore import Qt, QEvent, QObject
+from PySide2.QtWidgets import (QWidget, QLineEdit, QSplitter, QTextEdit,
+                               QPushButton, QVBoxLayout, QApplication,
+                               QPlainTextEdit)
 
 
 def get_script_editor():

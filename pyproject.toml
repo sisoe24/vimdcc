@@ -22,6 +22,9 @@ app = "nuke_vim_editor.main:main"
 python = "~3.9"
 pyside2 = "5.15.2"
 
+[tool.isort]
+length_sort = true
+
 
 [build-system]
 requires = ["poetry-core"]
