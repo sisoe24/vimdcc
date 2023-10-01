@@ -4,10 +4,10 @@ from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..handlers_core import BaseHandler, register_handler
+from ..handlers_core import BaseHandler, register_normal_handler
 
 
-@register_handler
+@register_normal_handler
 class MovementHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -39,7 +39,7 @@ class MovementHandler(BaseHandler):
             cursor.movePosition(QTextCursor.EndOfWord)
 
 
-@register_handler
+@register_normal_handler
 class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -77,7 +77,7 @@ class DocumentHandler(BaseHandler):
             cursor.movePosition(QTextCursor.PreviousBlock)
 
 
-@register_handler
+@register_normal_handler
 class SearchHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -134,7 +134,7 @@ class SearchHandler(BaseHandler):
             self._handle_39(cursor)
 
 
-@register_handler
+@register_normal_handler
 class InsertHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -173,7 +173,7 @@ class InsertHandler(BaseHandler):
             cursor.insertText("\n")
 
 
-@register_handler
+@register_normal_handler
 class EditHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
