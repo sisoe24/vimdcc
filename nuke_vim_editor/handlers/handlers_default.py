@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide2.QtGui import QKeyEvent, QTextCursor
+from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -28,6 +28,7 @@ class MovementHandler(BaseHandler):
             cursor.movePosition(QTextCursor.StartOfLine)
         elif key == Qt.Key_AsciiCircum:
             cursor.movePosition(QTextCursor.StartOfLine)
+            # HACK: Dont know if there is a better way to do this
             if cursor.block().text()[0] == " ":
                 cursor.movePosition(QTextCursor.NextWord)
         elif key == Qt.Key_W:
@@ -46,6 +47,7 @@ class DocumentHandler(BaseHandler):
     def handle(self, cursor: QTextCursor, event: QKeyEvent):
         key = event.key()
         modifiers = event.modifiers()
+
         if modifiers == Qt.ShiftModifier and key == Qt.Key_G:
             cursor.movePosition(QTextCursor.End)
 
@@ -80,69 +82,56 @@ class SearchHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
+    def _find_word_in_line(self, cursor: QTextCursor, document: QTextDocument, line_number: int, word: str):
+        line = document.findBlockByLineNumber(line_number)
+        if word in line.text():
+            get_word_pos = line.text().find(word)
+            cursor.setPosition(line.position() + get_word_pos)
+            self.editor.setTextCursor(cursor)
+            return True
+        return False
+
+    def _find_word_in_document(self, cursor: QTextCursor, direction: str):
+        cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
+        cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
+
+        word_under_cursor = cursor.selectedText()
+        document = self.editor.document()
+        current_line = cursor.blockNumber()
+
+        if direction == "up":
+            line_range = range(current_line - 1, -1, -1)
+            fallback_range = range(document.lineCount() - 1, current_line, -1)
+        else:  # direction == "down"
+            line_range = range(current_line + 1, document.lineCount() + 1)
+            fallback_range = range(0, current_line)
+
+        for i in line_range:
+            if self._find_word_in_line(cursor, document, i, word_under_cursor):
+                return True
+
+        for i in fallback_range:
+            if self._find_word_in_line(cursor, document, i, word_under_cursor):
+                return True
+
+        return False
+
+    def _handle_39(self, cursor: QTextCursor):
+        self._find_word_in_document(cursor, "up")
+
+    # Usage for the second method
+    def _handle_7(self, cursor: QTextCursor):
+        self._find_word_in_document(cursor, "down")
+
     def handle(self, cursor: QTextCursor, event: QKeyEvent):
         key = event.key()
         modifiers = event.modifiers()
 
         # Pound sign
         if key == 35:
-            cursor.movePosition(QTextCursor.StartOfWord,
-                                QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-            word_under_cursor = cursor.selectedText()
-            document = self.editor.document()
-            current_line = cursor.blockNumber()
-            match_found = False
-            for i in range(current_line + 1, document.lineCount() + 1):
-
-                line = document.findBlockByLineNumber(i)
-                if word_under_cursor in line.text():
-                    get_word_pos = line.text().find(word_under_cursor)
-                    cursor.setPosition(line.position() + get_word_pos)
-                    self.editor.setTextCursor(cursor)
-                    match_found = True
-                    break
-
-            if not match_found:
-
-                for i in range(0, current_line):
-
-                    line = document.findBlockByLineNumber(i)
-                    if word_under_cursor in line.text():
-                        get_word_pos = line.text().find(word_under_cursor)
-                        cursor.setPosition(line.position() + get_word_pos)
-                        self.editor.setTextCursor(cursor)
-                        break
-
-        # Asterisk sign
+            self._handle_7(cursor)
         elif key == 42:
-            cursor.movePosition(QTextCursor.StartOfWord,
-                                QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-            word_under_cursor = cursor.selectedText()
-            document = self.editor.document()
-            current_line = cursor.blockNumber()
-            match_found = False
-            for i in range(current_line - 1, -1, -1):
-
-                line = document.findBlockByLineNumber(i)
-                if word_under_cursor in line.text():
-                    get_word_pos = line.text().find(word_under_cursor)
-                    cursor.setPosition(line.position() + get_word_pos)
-                    self.editor.setTextCursor(cursor)
-                    match_found = True
-                    break
-
-            if not match_found:
-
-                for i in range(document.lineCount() - 1, current_line, -1):
-
-                    line = document.findBlockByLineNumber(i)
-                    if word_under_cursor in line.text():
-                        get_word_pos = line.text().find(word_under_cursor)
-                        cursor.setPosition(line.position() + get_word_pos)
-                        self.editor.setTextCursor(cursor)
-                        break
+            self._handle_39(cursor)
 
 
 @register_handler
@@ -197,8 +186,20 @@ class EditHandler(BaseHandler):
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
+
+        elif key == Qt.Key_S and modifiers == Qt.ShiftModifier:
+            super().to_insert_mode()
+            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+
+        elif key == Qt.Key_S:
+            super().to_insert_mode()
+            cursor.deleteChar()
+
         elif key == Qt.Key_X:
             cursor.deleteChar()
+
         elif key == Qt.Key_D and event.modifiers() == Qt.ShiftModifier:
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()

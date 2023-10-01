@@ -1,6 +1,6 @@
 from __future__ import annotations
-import pathlib
 
+import pathlib
 from typing import cast
 from importlib import import_module
 
@@ -8,8 +8,8 @@ from PySide2.QtGui import QKeyEvent
 from PySide2.QtCore import Qt, QEvent, QObject
 from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
 
-from .handlers_core import get_handlers
 from .editor_modes import Modes, EditorMode
+from .handlers_core import get_handlers
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
@@ -61,9 +61,7 @@ class VimInsertMode(QObject):
             event.type() == QEvent.KeyPress and
             (event.key() == Qt.Key_Escape and EditorMode.mode == Modes.INSERT)
         ):
-            # TODO: Cursor width should be width of character
-            char_width = self.editor.fontMetrics().width(" ")
-            self.editor.setCursorWidth(char_width)
+            self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
             EditorMode.mode = Modes.NORMAL
             return True
         return False
@@ -92,9 +90,11 @@ def main():
 
     window = QMainWindow()
     window.setGeometry(100, 100, 800, 600)
+
     editor = QPlainTextEdit()
+
     editor.setPlainText(sampletext)
-    editor.setCursorWidth(18)
+    editor.setCursorWidth(editor.fontMetrics().width(" "))
     window.setCentralWidget(editor)
 
     normal_mode = VimNormalMode(editor)

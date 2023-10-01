@@ -8,9 +8,9 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from .editor_modes import Modes, EditorMode
 
+NormalModeHandlerType = Callable[[QPlainTextEdit], Any]
 
-NormalModeHandler = Callable[[QPlainTextEdit], Any]
-_NORM_HANDLERS: List[NormalModeHandler] = []
+_NORM_HANDLERS: List[NormalModeHandlerType] = []
 
 
 class BaseHandler(ABC):
@@ -36,13 +36,13 @@ class BaseHandler(ABC):
     def handle(self, cursor: QTextCursor, event: QKeyEvent): ...
 
 
-def register_handler(handler: NormalModeHandler):
+def register_handler(handler: NormalModeHandlerType):
     _NORM_HANDLERS.append(handler)
 
 
-def unregister_handler(handler: NormalModeHandler):
+def unregister_handler(handler: NormalModeHandlerType):
     _NORM_HANDLERS.remove(handler)
 
 
-def get_handlers() -> List[NormalModeHandler]:
+def get_handlers() -> List[NormalModeHandlerType]:
     return _NORM_HANDLERS
