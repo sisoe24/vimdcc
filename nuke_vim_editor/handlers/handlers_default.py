@@ -2,8 +2,8 @@ from __future__ import annotations
 import re
 from typing import List
 
-from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtCore import Qt
+from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..handlers_core import BaseHandler, register_normal_handler
@@ -15,6 +15,8 @@ class MovementHandler(BaseHandler):
         super().__init__(editor)
 
     def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+
+        key = event.key()
 
         if key_sequence == "w":
             cursor.movePosition(QTextCursor.NextWord)
@@ -216,54 +218,47 @@ class EditHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
+    def _delete_line(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+
+    def _delete_word(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
+        cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+
+    def _delete_from_cursor(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+
     def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
-
         if key_sequence == "dd":
-            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+            self._delete_line(cursor)
             return True
 
         if key_sequence == "dw":
-            cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+            self._delete_word(cursor)
             return True
 
-        count = re.search(r'\w(\d+)\w', key_sequence)
-        if count:
-            for _ in range(int(count[1])):
-                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-                cursor.removeSelectedText()
-            return True
-
-        if key_sequence == "cc":
+        if key_sequence == "cc" or key_sequence == "S" and 'shift' in modifiers:
             super().to_insert_mode()
-            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+            self._delete_line(cursor)
             return True
 
         if key_sequence == "cw":
             super().to_insert_mode()
-            cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+            self._delete_word(cursor)
             return True
 
         if key_sequence == 'C' and 'shift' in modifiers:
             super().to_insert_mode()
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+            self._delete_from_cursor(cursor)
             return True
 
-        if key_sequence == 'S' and 'shift' in modifiers:
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+        if key_sequence == 'D' and 'shift' in modifiers:
+            self._delete_from_cursor(cursor)
             return True
 
         if key_sequence == 's':
@@ -274,10 +269,21 @@ class EditHandler(BaseHandler):
         if key_sequence == 'x':
             cursor.deleteChar()
             return True
-        
-        if key_sequence == 'D' and 'shift' in modifiers:
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
+
+        count = re.search(r'\w(\d+)\w', key_sequence)
+        if count:
+            for _ in range(int(count[1])):
+                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+                cursor.removeSelectedText()
             return True
 
         return False
+
+# lorem ipsum dolor sit amet consectetur adipiscing
+
+# incididunt ut labore et dolore magna aliqua
+# esto es una prueba manzanita
+
+
+def main(name): print(f'Hello {name}!')

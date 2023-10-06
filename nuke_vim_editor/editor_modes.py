@@ -1,8 +1,7 @@
-import contextlib
 from enum import Enum, auto
 from typing import List, cast
 
-from PySide2.QtGui import QKeyEvent
+from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QObject, QTimer, Signal
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -14,20 +13,14 @@ class Modes(Enum):
     NORMAL = auto()
     INSERT = auto()
     VISUAL = auto()
-    WAIT_FOR_SECOND_KEY = auto()
+    COMMAND = auto()
 
 
 class EditorMode:
     mode = Modes.NORMAL
 
 
-class EditorKeyTimeout:
-    timeout = 200
-
-
 class NormalMode(QObject):
-
-    on_status_bar_updated = Signal(str, str)
 
     operators = [
         Qt.Key_C,
@@ -58,15 +51,31 @@ class NormalMode(QObject):
     def _reset_key_sequence(self):
         self.key_sequence = ""
 
+    def arrow_keys(self, cursor: QTextCursor, key_event: QKeyEvent):
+        # TODO: Add settings to enable/disable arrow keys
+        key = key_event.key()
+        if key == Qt.Key_Left:
+            cursor.movePosition(QTextCursor.Left)
+            return True
+        if key == Qt.Key_Right:
+            cursor.movePosition(QTextCursor.Right)
+            return True
+        if key == Qt.Key_Up:
+            cursor.movePosition(QTextCursor.Up)
+            return True
+        if key == Qt.Key_Down:
+            cursor.movePosition(QTextCursor.Down)
+            return True
+        return False
+
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
             assert False, "This event filter should only be installed on a QPlainTextEdit"
 
-        if EditorMode.mode == Modes.INSERT:
+        if EditorMode.mode != Modes.NORMAL:
             return False
 
         if event.type() == QEvent.KeyPress:
-            cursor = watched.textCursor()
             key_event = cast(QKeyEvent, event)
 
             modifiers = key_event.modifiers()
@@ -78,10 +87,21 @@ class NormalMode(QObject):
             self.key_sequence += key_event.text()
             status_bar.emit("NORMAL", self.key_sequence)
 
+            if self.key_sequence == ":":
+                status_bar.emit("COMMAND", self.key_sequence)
+                EditorMode.mode = Modes.COMMAND
+                self.key_sequence = ""
+                return True
+
             if key_event.key() == Qt.Key_Escape:
+                status_bar.emit("NORMAL", self.key_sequence)
                 self.state = Modes.NORMAL
                 self.key_sequence = ""
-                status_bar.emit("NORMAL", self.key_sequence)
+                return True
+
+            cursor = watched.textCursor()
+            if self.arrow_keys(cursor, key_event):
+                watched.setTextCursor(cursor)
                 return True
 
             for handler in self._handlers:
@@ -111,7 +131,30 @@ class InsertMode(QObject):
         if not isinstance(watched, QPlainTextEdit):
             assert False, "This event filter should only be installed on a QPlainTextEdit"
 
-        if EditorMode.mode == Modes.NORMAL:
+        if EditorMode.mode != Modes.INSERT:
+            return False
+
+        print("InsertMode")
+
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            status_bar.emit("NORMAL", "")
+            self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
+            EditorMode.mode = Modes.NORMAL
+            return True
+        return False
+
+
+class VisualMode(QObject):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__()
+        self.editor = editor
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, "This event filter should only be installed on a QPlainTextEdit"
+
+        if EditorMode.mode != Modes.VISUAL:
             return False
 
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
@@ -120,3 +163,31 @@ class InsertMode(QObject):
             EditorMode.mode = Modes.NORMAL
             return True
         return False
+
+
+class CommandMode(QObject):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__()
+        self.editor = editor
+        self.key_sequence = ""
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, "This event filter should only be installed on a QPlainTextEdit"
+
+        if EditorMode.mode != Modes.COMMAND:
+            return False
+
+        if event.type() == QEvent.KeyPress:
+            key_event = cast(QKeyEvent, event)
+
+            if key_event.key() == Qt.Key_Escape:
+                status_bar.emit("NORMAL", "")
+                self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
+                EditorMode.mode = Modes.NORMAL
+                return True
+
+            self.key_sequence += key_event.text()
+            status_bar.emit("COMMAND", self.key_sequence)
+
+            return True

@@ -4,17 +4,14 @@ from importlib import import_module
 
 from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit, QVBoxLayout, QWidget
 
-from .editor_modes import InsertMode, NormalMode
+from .editor_modes import CommandMode, InsertMode, NormalMode
 from .handlers_core import get_normal_handlers
-from .event_bus import event_bus
 from .status_bar import status_bar
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
 
-# TODO: Add options for arrow keys
-# TODO: Add options for removing mouse
 # TODO: Jump to line
 # TODO: undo/redo
 # TODO: Highlighting
@@ -55,11 +52,13 @@ def main():
     editor.installEventFilter(normal_mode)
 
     status_bar.register(window.statusBar())
-    # event_bus.subscribe("status_bar_updated", status_bar.showMessage)
     window.statusBar().showMessage("NORMAL")
 
     insert_mode = InsertMode(editor)
     editor.installEventFilter(insert_mode)
+
+    command_mode = CommandMode(editor)
+    editor.installEventFilter(command_mode)
 
     window.show()
     app.exec_()
