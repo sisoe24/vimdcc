@@ -2,10 +2,12 @@
 import pathlib
 from importlib import import_module
 
-from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
+from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit, QVBoxLayout, QWidget
 
 from .editor_modes import InsertMode, NormalMode
 from .handlers_core import get_normal_handlers
+from .event_bus import event_bus
+from .status_bar import status_bar
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
@@ -32,6 +34,7 @@ for i in range(10):
 '''.lstrip()
 
 
+
 def main():
     app = QApplication([])
     font = app.font()
@@ -50,6 +53,10 @@ def main():
 
     normal_mode = NormalMode(editor, get_normal_handlers())
     editor.installEventFilter(normal_mode)
+
+    status_bar.register(window.statusBar())
+    # event_bus.subscribe("status_bar_updated", status_bar.showMessage)
+    window.statusBar().showMessage("NORMAL")
 
     insert_mode = InsertMode(editor)
     editor.installEventFilter(insert_mode)

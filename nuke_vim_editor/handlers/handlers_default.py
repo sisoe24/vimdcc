@@ -1,4 +1,6 @@
 from __future__ import annotations
+import re
+from typing import List
 
 from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtCore import Qt
@@ -12,31 +14,55 @@ class MovementHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, event: QKeyEvent):
-        key = event.key()
-        if key == Qt.Key_H:
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+
+        if key_sequence == "w":
+            cursor.movePosition(QTextCursor.NextWord)
+            return True
+
+        if key_sequence == "h":
             cursor.movePosition(QTextCursor.Left)
-        elif key == Qt.Key_L:
+            return True
+
+        if key_sequence == "l":
             cursor.movePosition(QTextCursor.Right)
-        elif key == Qt.Key_K:
+            return True
+
+        if key_sequence == "k":
             cursor.movePosition(QTextCursor.Up)
-        elif key == Qt.Key_J:
+            return True
+
+        if key_sequence == "j":
             cursor.movePosition(QTextCursor.Down)
-        elif key == Qt.Key_Dollar:
+            return True
+
+        if key_sequence == "$":
             cursor.movePosition(QTextCursor.EndOfLine)
-        elif key == Qt.Key_0:
+            return True
+
+        if key_sequence == "0":
             cursor.movePosition(QTextCursor.StartOfLine)
-        elif key == Qt.Key_AsciiCircum:
+            return True
+
+        if key_sequence == "^":
             cursor.movePosition(QTextCursor.StartOfLine)
             # HACK: Dont know if there is a better way to do this
             if cursor.block().text()[0] == " ":
                 cursor.movePosition(QTextCursor.NextWord)
-        elif key == Qt.Key_W:
+                return True
+
+        if key_sequence == "w":
             cursor.movePosition(QTextCursor.NextWord)
-        elif key == Qt.Key_B:
+            return True
+
+        if key_sequence == "b":
             cursor.movePosition(QTextCursor.PreviousWord)
-        elif key == Qt.Key_E:
+            return True
+
+        if key_sequence == "e":
             cursor.movePosition(QTextCursor.EndOfWord)
+
+        return False
 
 
 @register_normal_handler
@@ -44,15 +70,17 @@ class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, event: QKeyEvent):
-        key = event.key()
-        modifiers = event.modifiers()
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
-        if modifiers == Qt.ShiftModifier and key == Qt.Key_G:
+        if key_sequence == 'G' and 'shift' in modifiers:
             cursor.movePosition(QTextCursor.End)
+            return True
 
-        # Paragraph down
-        elif key == 125:
+        if key_sequence == "gg":
+            cursor.movePosition(QTextCursor.Start)
+            return True
+
+        if key_sequence == "}":
             document = self.editor.document()
             for i in range(cursor.blockNumber() + 1, document.lineCount() + 1):
                 current_line = document.findBlockByLineNumber(i)
@@ -63,9 +91,9 @@ class DocumentHandler(BaseHandler):
 
             cursor.movePosition(QTextCursor.NextBlock)
 
-        # Paragraph up
-        elif key == 123:
+            return True
 
+        if key_sequence == "{":
             document = self.editor.document()
             for i in range(cursor.blockNumber() - 1, -1, -1):
                 current_line = document.findBlockByLineNumber(i)
@@ -75,6 +103,9 @@ class DocumentHandler(BaseHandler):
                     break
 
             cursor.movePosition(QTextCursor.PreviousBlock)
+            return True
+
+        return False
 
 
 @register_normal_handler
@@ -123,15 +154,17 @@ class SearchHandler(BaseHandler):
     def _handle_7(self, cursor: QTextCursor):
         self._find_word_in_document(cursor, "down")
 
-    def handle(self, cursor: QTextCursor, event: QKeyEvent):
-        key = event.key()
-        modifiers = event.modifiers()
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
-        # Pound sign
-        if key == 35:
+        if key_sequence == '#':
             self._handle_7(cursor)
-        elif key == 42:
+            return True
+
+        if key_sequence == "*":
             self._handle_39(cursor)
+            return True
+
+        return False
 
 
 @register_normal_handler
@@ -139,38 +172,43 @@ class InsertHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, event: QKeyEvent):
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
-        key = event.key()
-        modifiers = event.modifiers()
-
-        if key == Qt.Key_O and modifiers == Qt.ShiftModifier:
+        if key_sequence == 'O' and 'shift' in modifiers:
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.StartOfLine)
             cursor.insertText("\n")
             cursor.movePosition(QTextCursor.Up)
+            return True
 
-        elif key == Qt.Key_I and modifiers == Qt.ShiftModifier:
+        if key_sequence == 'I' and 'shift' in modifiers:
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.StartOfLine)
             cursor.movePosition(QTextCursor.NextWord)
+            return True
 
-        elif key == Qt.Key_A and modifiers == Qt.ShiftModifier:
+        if key_sequence == 'A' and 'shift' in modifiers:
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine)
+            return True
 
-        elif key == Qt.Key_I:
+        if key_sequence == "i":
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.Right)
+            return True
 
-        elif key == Qt.Key_A:
+        if key_sequence == "a":
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.Left)
+            return True
 
-        elif key == Qt.Key_O:
+        if key_sequence == "o":
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine)
             cursor.insertText("\n")
+            return True
+
+        return False
 
 
 @register_normal_handler
@@ -178,28 +216,68 @@ class EditHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, event: QKeyEvent):
-        key = event.key()
-        modifiers = event.modifiers()
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
-        if key == Qt.Key_C and modifiers == Qt.ShiftModifier:
-            super().to_insert_mode()
+
+        if key_sequence == "dd":
+            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
+            return True
 
-        elif key == Qt.Key_S and modifiers == Qt.ShiftModifier:
+        if key_sequence == "dw":
+            cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            return True
+
+        count = re.search(r'\w(\d+)\w', key_sequence)
+        if count:
+            for _ in range(int(count[1])):
+                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+                cursor.removeSelectedText()
+            return True
+
+        if key_sequence == "cc":
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
+            return True
 
-        elif key == Qt.Key_S:
+        if key_sequence == "cw":
             super().to_insert_mode()
-            cursor.deleteChar()
+            cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            return True
 
-        elif key == Qt.Key_X:
-            cursor.deleteChar()
-
-        elif key == Qt.Key_D and event.modifiers() == Qt.ShiftModifier:
+        if key_sequence == 'C' and 'shift' in modifiers:
+            super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
+            return True
+
+        if key_sequence == 'S' and 'shift' in modifiers:
+            super().to_insert_mode()
+            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            return True
+
+        if key_sequence == 's':
+            super().to_insert_mode()
+            cursor.deleteChar()
+            return True
+
+        if key_sequence == 'x':
+            cursor.deleteChar()
+            return True
+        
+        if key_sequence == 'D' and 'shift' in modifiers:
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            return True
+
+        return False
