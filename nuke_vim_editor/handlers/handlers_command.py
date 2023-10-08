@@ -1,9 +1,11 @@
-from ..handlers_core import BaseHandler, register_normal_handler
-from PySide2.QtWidgets import QPlainTextEdit
+import re
+from typing import Dict, List
+
 from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtCore import Qt
-from typing import Dict, List
-import re
+from PySide2.QtWidgets import QPlainTextEdit
+
+from ..handlers_core import BaseHandler, register_normal_handler
 
 
 @register_normal_handler

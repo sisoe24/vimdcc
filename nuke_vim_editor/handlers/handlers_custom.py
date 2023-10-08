@@ -1,6 +1,7 @@
 
 
 from typing import List
+
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 

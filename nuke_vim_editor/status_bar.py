@@ -1,4 +1,5 @@
 from typing import Optional
+
 from PySide2.QtWidgets import QStatusBar
 
 

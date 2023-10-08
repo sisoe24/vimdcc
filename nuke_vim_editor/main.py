@@ -2,11 +2,12 @@
 import pathlib
 from importlib import import_module
 
-from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit, QVBoxLayout, QWidget
+from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
+                               QPlainTextEdit)
 
-from .editor_modes import CommandMode, InsertMode, NormalMode
-from .handlers_core import get_normal_handlers
 from .status_bar import status_bar
+from .editor_modes import InsertMode, NormalMode, CommandMode
+from .handlers_core import get_normal_handlers
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')

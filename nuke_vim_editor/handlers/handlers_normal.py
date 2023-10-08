@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import re
 from typing import Dict, List
 
-from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
+from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
-from ..registers import Registers
-from ..marks import Marks
 
+from ..marks import Marks
+from ..registers import Registers
 from ..handlers_core import BaseHandler, register_normal_handler
 
 

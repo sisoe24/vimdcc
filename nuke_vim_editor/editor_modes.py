@@ -2,13 +2,13 @@ from enum import Enum, auto
 from typing import List, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
-from PySide2.QtCore import Qt, QEvent, QObject, QTimer, Signal
+from PySide2.QtCore import Qt, QEvent, QTimer, Signal, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .handlers_types import NormalModeHandlerType
-from .status_bar import status_bar
-from .registers import Registers
 from .marks import Marks
+from .registers import Registers
+from .status_bar import status_bar
+from .handlers_types import NormalModeHandlerType
 
 
 class Modes(Enum):
@@ -260,3 +260,12 @@ class CommandMode(QObject):
 
             return True
         return True
+
+
+MODES = [
+    NormalMode,
+    InsertMode,
+    VisualMode,
+    CommandMode,
+    MarksMode,
+]

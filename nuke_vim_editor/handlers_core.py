@@ -5,9 +5,9 @@ from typing import Dict, List
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
+from .status_bar import status_bar
 from .editor_modes import Modes, EditorMode
 from .handlers_types import NormalModeHandlerType
-from .status_bar import status_bar
 
 _NORMAL_HANDLERS: List[NormalModeHandlerType] = []
 _COMMAND_HANDLERS: List[NormalModeHandlerType] = []
