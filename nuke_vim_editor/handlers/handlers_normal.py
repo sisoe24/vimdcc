@@ -1,10 +1,12 @@
 from __future__ import annotations
 import re
-from typing import List
+from typing import Dict, List
 
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
+from ..registers import Registers
+from ..marks import Marks
 
 from ..handlers_core import BaseHandler, register_normal_handler
 
@@ -149,21 +151,14 @@ class SearchHandler(BaseHandler):
 
         return False
 
-    def _handle_39(self, cursor: QTextCursor):
-        self._find_word_in_document(cursor, "up")
-
-    # Usage for the second method
-    def _handle_7(self, cursor: QTextCursor):
-        self._find_word_in_document(cursor, "down")
-
     def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
 
         if key_sequence == '#':
-            self._handle_7(cursor)
+            self._find_word_in_document(cursor, "up")
             return True
 
         if key_sequence == "*":
-            self._handle_39(cursor)
+            self._find_word_in_document(cursor, "down")
             return True
 
         return False
@@ -208,6 +203,52 @@ class InsertHandler(BaseHandler):
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine)
             cursor.insertText("\n")
+            return True
+
+        return False
+
+
+@register_normal_handler
+class MarksHandler(BaseHandler):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+
+        if key_sequence.startswith('m') and len(key_sequence) == 2:
+            Marks.add(
+                key_sequence[1], {
+                    "text": cursor.block().text(),
+                    "position": cursor.position()
+                }
+            )
+            return True
+
+        if key_sequence.startswith('`') and len(key_sequence) == 2:
+
+            mark = Marks.get(key_sequence[1])
+            if mark is None:
+                return True
+
+            cursor.setPosition(mark["position"])
+            return True
+
+        return False
+
+
+@register_normal_handler
+class YankHandler(BaseHandler):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+
+        if key_sequence == 'yy':
+            cursor.movePosition(QTextCursor.StartOfLine)
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            Registers.add(cursor.selectedText())
             return True
 
         return False

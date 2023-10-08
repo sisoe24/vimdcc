@@ -1,6 +1,6 @@
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, List
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
@@ -10,26 +10,19 @@ from .handlers_types import NormalModeHandlerType
 from .status_bar import status_bar
 
 _NORMAL_HANDLERS: List[NormalModeHandlerType] = []
+_COMMAND_HANDLERS: List[NormalModeHandlerType] = []
 
 
 class BaseHandler(ABC):
 
     def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.key_sequence = ""
 
     def editor_state(self):
         return EditorMode.mode
 
     def set_state(self, state: Modes):
         EditorMode.mode = state
-
-    def get_key_sequence(self, event: QKeyEvent) -> str:
-        self.key_sequence += event.text()
-        return self.key_sequence
-
-    def reset_key_sequence(self):
-        self.key_sequence = ""
 
     def to_insert_mode(self):
         status_bar.emit("INSERT", "")

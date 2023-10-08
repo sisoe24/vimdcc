@@ -7,6 +7,8 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from .handlers_types import NormalModeHandlerType
 from .status_bar import status_bar
+from .registers import Registers
+from .marks import Marks
 
 
 class Modes(Enum):
@@ -14,6 +16,7 @@ class Modes(Enum):
     INSERT = auto()
     VISUAL = auto()
     COMMAND = auto()
+    MARKS = auto()
 
 
 class EditorMode:
@@ -99,6 +102,21 @@ class NormalMode(QObject):
                 self.key_sequence = ""
                 return True
 
+            if key_event.key() == Qt.Key_U:
+                self.key_sequence = ""
+                self._editor.undo()
+                return True
+
+            if key_event.key() == Qt.Key_R and modifiers & Qt.ControlModifier:
+                self.key_sequence = ""
+                self._editor.redo()
+                return True
+
+            if key_event.key() == Qt.Key_P:
+                self.key_sequence = ""
+                self._editor.paste()
+                return True
+
             cursor = watched.textCursor()
             if self.arrow_keys(cursor, key_event):
                 watched.setTextCursor(cursor)
@@ -134,8 +152,6 @@ class InsertMode(QObject):
         if EditorMode.mode != Modes.INSERT:
             return False
 
-        print("InsertMode")
-
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
             status_bar.emit("NORMAL", "")
             self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
@@ -165,11 +181,49 @@ class VisualMode(QObject):
         return False
 
 
-class CommandMode(QObject):
+class MarksMode(QObject):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__()
         self.editor = editor
         self.key_sequence = ""
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, "This event filter should only be installed on a QPlainTextEdit"
+
+        if EditorMode.mode != Modes.MARKS:
+            return False
+
+        if event.type() == QEvent.KeyPress:
+            key_event = cast(QKeyEvent, event)
+
+            self.key_sequence += key_event.text()
+
+            if key_event.key() == Qt.Key_Escape:
+                self.key_sequence = ""
+                return True
+
+            if key_event.key() == Qt.Key_Enter:
+                self.key_sequence = ""
+                return True
+
+
+class CommandMode(QObject):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__()
+        self.editor = editor
+        self.key_sequence = ""
+
+    def execute_command(self, command: str):
+        # TODO: Add python command
+        # TODO: Add Nuke command
+
+        commands = {
+            "registers": lambda: print(Registers.get_all()),
+            "marks": lambda: print(Marks.get_all())
+        }
+        commands.get(command.strip(), lambda: print("Unknown command"))()
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
@@ -190,4 +244,19 @@ class CommandMode(QObject):
             self.key_sequence += key_event.text()
             status_bar.emit("COMMAND", self.key_sequence)
 
+            if key_event.key() == Qt.Key_Return:
+                self.execute_command(self.key_sequence)
+                self.key_sequence = ""
+
+                status_bar.emit("NORMAL", "")
+                self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
+                EditorMode.mode = Modes.NORMAL
+                return True
+
+            if key_event.key() == Qt.Key_Backspace:
+                self.key_sequence = self.key_sequence[:-1]
+                status_bar.emit("COMMAND", self.key_sequence)
+                return True
+
             return True
+        return True
