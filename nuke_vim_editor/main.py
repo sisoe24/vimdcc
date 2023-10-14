@@ -7,9 +7,9 @@ from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
 
 from .status_bar import status_bar
 from .editor_modes import InsertMode, NormalMode, CommandMode, VisualLineMode
-from .handlers_core import get_normal_handlers
+from .handlers_core import get_normal_handlers, get_visual_line_handlers
 
-for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
+for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
 
@@ -19,10 +19,14 @@ for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
 
 
 sampletext = '''
-import random
+from random import randint
+
+o = foo.bar.foo.bar,
+solo.trolo.yolo
 
 def main(name):
     print(f"Hello {name}!")
+
 
 for i in range(10):
     if i % 2 == 0:
@@ -35,7 +39,7 @@ for i in range(10):
 def main():
     app = QApplication([])
     font = app.font()
-    font.setFamilies(["JetBrainsMono Nerd Font", "Courier"])
+    font.setFamilies(['JetBrainsMono Nerd Font', 'Courier'])
     font.setPixelSize(30)
     app.setFont(font)
 
@@ -45,11 +49,11 @@ def main():
     editor = QPlainTextEdit()
 
     editor.setPlainText(sampletext)
-    editor.setCursorWidth(editor.fontMetrics().width(" "))
+    editor.setCursorWidth(editor.fontMetrics().width(' '))
     window.setCentralWidget(editor)
 
     status_bar.register(window.statusBar())
-    window.statusBar().showMessage("NORMAL")
+    window.statusBar().showMessage('NORMAL')
 
     normal_mode = NormalMode(editor, get_normal_handlers())
     editor.installEventFilter(normal_mode)
@@ -60,8 +64,8 @@ def main():
     command_mode = CommandMode(editor)
     editor.installEventFilter(command_mode)
 
-    visual_mode = VisualLineMode(editor)
-    editor.installEventFilter(visual_mode)
+    # visual_mode = VisualLineMode(editor, get_visual_line_handlers())
+    # editor.installEventFilter(visual_mode)
 
     window.show()
     app.exec_()

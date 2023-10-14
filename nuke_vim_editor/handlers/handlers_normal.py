@@ -6,9 +6,9 @@ from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..marks import Marks
+from .._types import EventParams
 from ..registers import Registers
 from ..handlers_core import BaseHandler, register_normal_handler
-from .._types import EventParams
 
 
 @register_normal_handler
@@ -27,47 +27,71 @@ class MovementHandler(BaseHandler):
             else QTextCursor.MoveAnchor
         )
 
-        if key_sequence == "w":
+        if key_sequence == 'w':
             cursor.movePosition(QTextCursor.NextWord, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "b":
+        if key_sequence == 'W':
+            while True:
+                cursor.movePosition(QTextCursor.NextCharacter, select)
+                char = self.editor.document().characterAt(cursor.position())
+                print(repr(char))
+                if char == '\u2029' or char.isspace() or char == '' or char == '\n':
+                    cursor.movePosition(QTextCursor.NextCharacter, select)
+                    break
+                if cursor.atEnd():
+                    break
+            return True
+
+        if key_sequence == 'b':
             cursor.movePosition(QTextCursor.PreviousWord, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "e":
+        if key_sequence == 'e':
             print('TODO: e')
             # cursor.movePosition(QTextCursor.EndOfWord, select)
             return True
 
-        if key_sequence == "h":
+        if key_sequence == 'h':
             cursor.movePosition(QTextCursor.Left, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "l":
+        if key_sequence == 'l':
             cursor.movePosition(QTextCursor.Right, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "k":
+        if key_sequence == 'k':
             cursor.movePosition(QTextCursor.Up, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "j":
+        if key_sequence == 'j':
             cursor.movePosition(QTextCursor.Down, select)
+            if params.mode == 'VISUAL_LINE':
+                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             return True
 
-        if key_sequence == "$":
+        if key_sequence == '$':
             cursor.movePosition(QTextCursor.EndOfLine, select)
             return True
 
-        if key_sequence == "0":
+        if key_sequence == '0':
             cursor.movePosition(QTextCursor.StartOfLine, select)
             return True
 
-        if key_sequence == "^":
+        if key_sequence == '^':
             cursor.movePosition(QTextCursor.StartOfLine, select)
             # Dont know if there is a better way to do this
-            if cursor.block().text()[0] == " ":
+            if cursor.block().text()[0] == ' ':
                 cursor.movePosition(QTextCursor.NextWord, select)
 
             return True
@@ -92,19 +116,19 @@ class DocumentHandler(BaseHandler):
             else QTextCursor.MoveAnchor
         )
 
-        if key_sequence == 'G' and 'shift' in modifiers:
+        if key_sequence == 'G':
             cursor.movePosition(QTextCursor.End, select)
             return True
 
-        if key_sequence == "gg":
+        if key_sequence == 'gg':
             cursor.movePosition(QTextCursor.Start, select)
             return True
 
-        if key_sequence == "}":
+        if key_sequence == '}':
             document = self.editor.document()
             for i in range(cursor.blockNumber() + 1, document.lineCount() + 1):
                 current_line = document.findBlockByLineNumber(i)
-                if current_line.text() == "":
+                if current_line.text() == '':
                     cursor.setPosition(current_line.position(), select)
                     cursor.movePosition(QTextCursor.Up, select)
                     break
@@ -113,11 +137,11 @@ class DocumentHandler(BaseHandler):
 
             return True
 
-        if key_sequence == "{":
+        if key_sequence == '{':
             document = self.editor.document()
             for i in range(cursor.blockNumber() - 1, -1, -1):
                 current_line = document.findBlockByLineNumber(i)
-                if current_line.text() == "":
+                if current_line.text() == '':
                     cursor.setPosition(current_line.position(), select)
                     cursor.movePosition(QTextCursor.Down, select)
                     break
@@ -157,7 +181,7 @@ class SearchHandler(BaseHandler):
         document = self.editor.document()
         current_line = cursor.blockNumber()
 
-        if direction == "up":
+        if direction == 'up':
             line_range = range(current_line - 1, -1, -1)
             fallback_range = range(document.lineCount() - 1, current_line, -1)
         else:  # direction == "down"
@@ -235,23 +259,23 @@ class SearchHandler(BaseHandler):
         cursor = params.cursor
 
         if key_sequence == '#':
-            self._find_word_in_document(cursor, "up")
+            self._find_word_in_document(cursor, 'up')
             return True
 
-        if key_sequence == "*":
-            self._find_word_in_document(cursor, "down")
+        if key_sequence == '*':
+            self._find_word_in_document(cursor, 'down')
             return True
 
-        if key_sequence.startswith("f") and len(key_sequence) == 2:
+        if key_sequence.startswith('f') and len(key_sequence) == 2:
             return self.move_cursor(key_sequence, cursor, 'forward', stop_before=False)
 
-        if key_sequence.startswith("F") and len(key_sequence) == 2:
+        if key_sequence.startswith('F') and len(key_sequence) == 2:
             return self.move_cursor(key_sequence, cursor, 'backward', stop_before=False)
 
-        if key_sequence.startswith("t") and len(key_sequence) == 2:
+        if key_sequence.startswith('t') and len(key_sequence) == 2:
             return self.move_cursor(key_sequence, cursor, 'forward', stop_before=True)
 
-        if key_sequence.startswith("T") and len(key_sequence) == 2:
+        if key_sequence.startswith('T') and len(key_sequence) == 2:
             return self.move_cursor(key_sequence, cursor, 'backward', stop_before=True)
 
         if key_sequence == ';':
@@ -283,7 +307,7 @@ class InsertHandler(BaseHandler):
         if key_sequence == 'O' and 'shift' in modifiers:
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.insertText("\n")
+            cursor.insertText('\n')
             cursor.movePosition(QTextCursor.Up)
             return True
 
@@ -298,20 +322,20 @@ class InsertHandler(BaseHandler):
             cursor.movePosition(QTextCursor.EndOfLine)
             return True
 
-        if key_sequence == "i":
+        if key_sequence == 'i':
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.Right)
             return True
 
-        if key_sequence == "a":
+        if key_sequence == 'a':
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.Left)
             return True
 
-        if key_sequence == "o":
+        if key_sequence == 'o':
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine)
-            cursor.insertText("\n")
+            cursor.insertText('\n')
             return True
 
         return False
@@ -331,8 +355,8 @@ class MarksHandler(BaseHandler):
         if key_sequence.startswith('m') and len(key_sequence) == 2:
             Marks.add(
                 key_sequence[1], {
-                    "text": cursor.block().text(),
-                    "position": cursor.position()
+                    'text': cursor.block().text(),
+                    'position': cursor.position()
                 }
             )
             return True
@@ -343,7 +367,7 @@ class MarksHandler(BaseHandler):
             if mark is None:
                 return True
 
-            cursor.setPosition(mark["position"])
+            cursor.setPosition(mark['position'])
             return True
 
         return False
@@ -359,11 +383,24 @@ class YankHandler(BaseHandler):
 
         key_sequence = params.keys
         cursor = params.cursor
+        mode = params.mode
+
+        if key_sequence == 'y' and mode in ['VISUAL', 'VISUAL_LINE']:
+            Registers.add(cursor.selectedText())
+            cursor.clearSelection()
+            return True
+
+        if key_sequence == 'yw':
+            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
+            Registers.add(cursor.selectedText())
+            cursor.clearSelection()
+            return True
 
         if key_sequence == 'yy':
             cursor.movePosition(QTextCursor.StartOfLine)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             Registers.add(cursor.selectedText())
+            cursor.clearSelection()
             return True
 
         return False
@@ -390,6 +427,7 @@ class VisualEditHandler(BaseHandler):
 
         if key_sequence == 'd':
             cursor.removeSelectedText()
+            super().to_normal_mode()
             return True
 
         return False
@@ -426,20 +464,20 @@ class EditHandler(BaseHandler):
             else QTextCursor.MoveAnchor
         )
 
-        if key_sequence == "dd":
+        if key_sequence == 'dd':
             self._delete_line(cursor)
             return True
 
-        if key_sequence == "dw":
+        if key_sequence == 'dw':
             self._delete_word(cursor)
             return True
 
-        if key_sequence == "cc" or key_sequence == "S" and 'shift' in modifiers:
+        if key_sequence == 'cc' or key_sequence == 'S' and 'shift' in modifiers:
             super().to_insert_mode()
             self._delete_line(cursor)
             return True
 
-        if key_sequence == "cw":
+        if key_sequence == 'cw':
             super().to_insert_mode()
             self._delete_word(cursor)
             return True
@@ -468,6 +506,72 @@ class EditHandler(BaseHandler):
                 cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
                 cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
                 cursor.removeSelectedText()
+            return True
+
+        return False
+
+
+@register_normal_handler
+class SwapCaseHandler(BaseHandler):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        mode = params.mode
+        cursor = params.cursor
+
+        if key_sequence == 'gu' and mode in ['VISUAL', 'VISUAL_LINE']:
+            text = cursor.selectedText()
+            cursor.removeSelectedText()
+            cursor.insertText(text.lower())
+            super().to_normal_mode()
+            return True
+
+        if key_sequence == 'gU':
+            text = cursor.selectedText()
+            cursor.removeSelectedText()
+            cursor.insertText(text.upper())
+            super().to_normal_mode()
+            return True
+
+        if key_sequence in ['g~', '~']:
+            text = cursor.selectedText()
+            cursor.removeSelectedText()
+            cursor.insertText(text.swapcase())
+            super().to_normal_mode()
+
+            return True
+
+        return False
+
+
+@register_normal_handler
+class MissingHandler(BaseHandler):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        mode = params.mode
+        cursor = params.cursor
+
+        if key_sequence == 'r':
+            print('TODO: r')
+            return True
+
+        if key_sequence == 'J':
+            print('TODO: J')
+            return True
+
+        if key_sequence == '<<':
+            print('TODO: <<')
+            return True
+
+        if key_sequence == '>>':
+            print('TODO: >>')
             return True
 
         return False

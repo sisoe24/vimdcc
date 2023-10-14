@@ -1,19 +1,20 @@
-from enum import Enum, auto
-from typing import Any, Callable, List, NamedTuple
+from enum import Enum
+from typing import Any, List, Callable, NamedTuple
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-NormalModeHandlerType = Callable[[QPlainTextEdit], Any]
+HandlerType = Callable[[QPlainTextEdit], Any]
 
 
 class Modes(str, Enum):
-    NORMAL = "NORMAL"
-    INSERT = "INSERT"
-    VISUAL = "VISUAL"
-    VISUAL_LINE = "VISUAL_LINE"
-    COMMAND = "COMMAND"
-    MARKS = "MARKS"
+    NORMAL = 'NORMAL'
+    INSERT = 'INSERT'
+    VISUAL = 'VISUAL'
+    VISUAL_LINE = 'VISUAL_LINE'
+    COMMAND = 'COMMAND'
+    MARKS = 'MARKS'
+    SEARCH = 'SEARCH'
 
 
 class EventParams(NamedTuple):
@@ -22,4 +23,4 @@ class EventParams(NamedTuple):
     modifiers: List[str]
     event: QKeyEvent
     visual: bool
-    mode: Modes     
+    mode: Modes
