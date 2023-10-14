@@ -86,12 +86,18 @@ class DocumentHandler(BaseHandler):
         modifiers = params.modifiers
         cursor = params.cursor
 
+        select = (
+            QTextCursor.KeepAnchor
+            if params.visual
+            else QTextCursor.MoveAnchor
+        )
+
         if key_sequence == 'G' and 'shift' in modifiers:
-            cursor.movePosition(QTextCursor.End)
+            cursor.movePosition(QTextCursor.End, select)
             return True
 
         if key_sequence == "gg":
-            cursor.movePosition(QTextCursor.Start)
+            cursor.movePosition(QTextCursor.Start, select)
             return True
 
         if key_sequence == "}":
@@ -99,11 +105,11 @@ class DocumentHandler(BaseHandler):
             for i in range(cursor.blockNumber() + 1, document.lineCount() + 1):
                 current_line = document.findBlockByLineNumber(i)
                 if current_line.text() == "":
-                    cursor.setPosition(current_line.position())
-                    cursor.movePosition(QTextCursor.Up)
+                    cursor.setPosition(current_line.position(), select)
+                    cursor.movePosition(QTextCursor.Up, select)
                     break
 
-            cursor.movePosition(QTextCursor.NextBlock)
+            cursor.movePosition(QTextCursor.NextBlock, select)
 
             return True
 
@@ -112,11 +118,11 @@ class DocumentHandler(BaseHandler):
             for i in range(cursor.blockNumber() - 1, -1, -1):
                 current_line = document.findBlockByLineNumber(i)
                 if current_line.text() == "":
-                    cursor.setPosition(current_line.position())
-                    cursor.movePosition(QTextCursor.Down)
+                    cursor.setPosition(current_line.position(), select)
+                    cursor.movePosition(QTextCursor.Down, select)
                     break
 
-            cursor.movePosition(QTextCursor.PreviousBlock)
+            cursor.movePosition(QTextCursor.PreviousBlock, select)
             return True
 
         return False
@@ -358,6 +364,32 @@ class YankHandler(BaseHandler):
             cursor.movePosition(QTextCursor.StartOfLine)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             Registers.add(cursor.selectedText())
+            return True
+
+        return False
+
+
+@register_normal_handler
+class VisualEditHandler(BaseHandler):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        cursor = params.cursor
+
+        if not params.visual:
+            return False
+
+        if key_sequence == 'c':
+            cursor.removeSelectedText()
+            super().to_insert_mode()
+            return True
+
+        if key_sequence == 'd':
+            cursor.removeSelectedText()
             return True
 
         return False

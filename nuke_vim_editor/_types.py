@@ -8,11 +8,12 @@ NormalModeHandlerType = Callable[[QPlainTextEdit], Any]
 
 
 class Modes(str, Enum):
-    NORMAL = auto()
-    INSERT = auto()
-    VISUAL = auto()
-    COMMAND = auto()
-    MARKS = auto()
+    NORMAL = "NORMAL"
+    INSERT = "INSERT"
+    VISUAL = "VISUAL"
+    VISUAL_LINE = "VISUAL_LINE"
+    COMMAND = "COMMAND"
+    MARKS = "MARKS"
 
 
 class EventParams(NamedTuple):
@@ -21,4 +22,4 @@ class EventParams(NamedTuple):
     modifiers: List[str]
     event: QKeyEvent
     visual: bool
-    mode: Modes
+    mode: Modes     

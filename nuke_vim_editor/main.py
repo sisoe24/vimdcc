@@ -6,7 +6,7 @@ from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
                                QPlainTextEdit)
 
 from .status_bar import status_bar
-from .editor_modes import InsertMode, NormalMode, CommandMode, VisualMode
+from .editor_modes import InsertMode, NormalMode, CommandMode, VisualLineMode
 from .handlers_core import get_normal_handlers
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
@@ -60,8 +60,8 @@ def main():
     command_mode = CommandMode(editor)
     editor.installEventFilter(command_mode)
 
-    # visual_mode = VisualMode(editor)
-    # editor.installEventFilter(visual_mode)
+    visual_mode = VisualLineMode(editor)
+    editor.installEventFilter(visual_mode)
 
     window.show()
     app.exec_()
