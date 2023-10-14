@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, List
 
-from PySide2.QtGui import QKeyEvent, QTextCursor, QTextDocument
-from PySide2.QtCore import Qt
+from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..marks import Marks
 from ..registers import Registers
 from ..handlers_core import BaseHandler, register_normal_handler
-from .._types import Modes
+from .._types import EventParams
 
 
 @register_normal_handler
@@ -18,63 +16,61 @@ class MovementHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
 
-        key = event.key()
+        key_sequence = params.keys
+        cursor = params.cursor
 
         select = (
-            QTextCursor.MoveAnchor
-            if self.editor_state() == Modes.NORMAL
-            else QTextCursor.KeepAnchor
+            QTextCursor.KeepAnchor
+            if params.visual
+            else QTextCursor.MoveAnchor
         )
-        print("➡ select :", select)
 
         if key_sequence == "w":
             cursor.movePosition(QTextCursor.NextWord, select)
             return True
 
-        if key_sequence == "h":
-            cursor.movePosition(QTextCursor.Left)
-            return True
-
-        if key_sequence == "l":
-            cursor.movePosition(QTextCursor.Right)
-            return True
-
-        if key_sequence == "k":
-            cursor.movePosition(QTextCursor.Up)
-            return True
-
-        if key_sequence == "j":
-            cursor.movePosition(QTextCursor.Down)
-            return True
-
-        if key_sequence == "$":
-            cursor.movePosition(QTextCursor.EndOfLine)
-            return True
-
-        if key_sequence == "0":
-            cursor.movePosition(QTextCursor.StartOfLine)
-            return True
-
-        if key_sequence == "^":
-            cursor.movePosition(QTextCursor.StartOfLine)
-            # Dont know if there is a better way to do this
-            if cursor.block().text()[0] == " ":
-                cursor.movePosition(QTextCursor.NextWord)
-
-            return True
-
-        if key_sequence == "w":
-            cursor.movePosition(QTextCursor.NextWord)
-            return True
-
         if key_sequence == "b":
-            cursor.movePosition(QTextCursor.PreviousWord)
+            cursor.movePosition(QTextCursor.PreviousWord, select)
             return True
 
         if key_sequence == "e":
-            cursor.movePosition(QTextCursor.EndOfWord)
+            print('TODO: e')
+            # cursor.movePosition(QTextCursor.EndOfWord, select)
+            return True
+
+        if key_sequence == "h":
+            cursor.movePosition(QTextCursor.Left, select)
+            return True
+
+        if key_sequence == "l":
+            cursor.movePosition(QTextCursor.Right, select)
+            return True
+
+        if key_sequence == "k":
+            cursor.movePosition(QTextCursor.Up, select)
+            return True
+
+        if key_sequence == "j":
+            cursor.movePosition(QTextCursor.Down, select)
+            return True
+
+        if key_sequence == "$":
+            cursor.movePosition(QTextCursor.EndOfLine, select)
+            return True
+
+        if key_sequence == "0":
+            cursor.movePosition(QTextCursor.StartOfLine, select)
+            return True
+
+        if key_sequence == "^":
+            cursor.movePosition(QTextCursor.StartOfLine, select)
+            # Dont know if there is a better way to do this
+            if cursor.block().text()[0] == " ":
+                cursor.movePosition(QTextCursor.NextWord, select)
+
+            return True
 
         return False
 
@@ -84,7 +80,11 @@ class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        modifiers = params.modifiers
+        cursor = params.cursor
 
         if key_sequence == 'G' and 'shift' in modifiers:
             cursor.movePosition(QTextCursor.End)
@@ -222,7 +222,11 @@ class SearchHandler(BaseHandler):
         key_sequence = ' ' + self.last_search_char  # Placeholder for the first character
         return self.move_cursor(key_sequence, cursor, direction, self.last_search_stop_before)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        modifiers = params.modifiers
+        cursor = params.cursor
 
         if key_sequence == '#':
             self._find_word_in_document(cursor, "up")
@@ -264,7 +268,11 @@ class InsertHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        modifiers = params.modifiers
+        cursor = params.cursor
 
         if key_sequence == 'O' and 'shift' in modifiers:
             super().to_insert_mode()
@@ -309,7 +317,10 @@ class MarksHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        cursor = params.cursor
 
         if key_sequence.startswith('m') and len(key_sequence) == 2:
             Marks.add(
@@ -338,7 +349,10 @@ class YankHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        cursor = params.cursor
 
         if key_sequence == 'yy':
             cursor.movePosition(QTextCursor.StartOfLine)
@@ -368,7 +382,17 @@ class EditHandler(BaseHandler):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         cursor.removeSelectedText()
 
-    def handle(self, cursor: QTextCursor, key_sequence: str, modifiers: List[str], event: QKeyEvent):
+    def handle(self, params: EventParams):
+
+        key_sequence = params.keys
+        modifiers = params.modifiers
+        cursor = params.cursor
+
+        select = (
+            QTextCursor.KeepAnchor
+            if params.visual
+            else QTextCursor.MoveAnchor
+        )
 
         if key_sequence == "dd":
             self._delete_line(cursor)
@@ -415,11 +439,3 @@ class EditHandler(BaseHandler):
             return True
 
         return False
-
-# lorem ipsum dolor sit amet consectetur adipiscing
-
-# incididunt ut labore et dolore magna aliqua
-# esto es una prueba manzanita
-
-
-def main(name): print(f'Hello {name}!')

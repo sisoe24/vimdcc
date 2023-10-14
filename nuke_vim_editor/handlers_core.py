@@ -2,12 +2,11 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from .status_bar import status_bar
 from .editor_modes import Modes, EditorMode
-from ._types import NormalModeHandlerType
+from ._types import NormalModeHandlerType, EventParams
 
 _NORMAL_HANDLERS: List[NormalModeHandlerType] = []
 _COMMAND_HANDLERS: List[NormalModeHandlerType] = []
@@ -36,23 +35,17 @@ class BaseHandler(ABC):
         self.editor.setCursorWidth(self.editor.fontMetrics().width(" "))
         self.editor.viewport().update()
 
-    def should_handle(self, cursor: QTextCursor, event: QKeyEvent, key_sequence: str) -> bool:
+    def should_handle(self, params: EventParams) -> bool:
         return True
 
     @abstractmethod
-    def handle(self, cursor: QTextCursor, key_sequence: str,
-               modifiers: List[str], event: QKeyEvent) -> bool: ...
+    def handle(self, params: EventParams) -> bool: ...
     """Handle the key sequence and return True if the key sequence was handled.
     
     If the key sequence was handled, the cursor will be updated and the key sequence will be reset.
 
     Args:
-
-        cursor (QTextCursor): The cursor of the editor
-        key_sequence (str): The key sequence that was pressed (e.g. "i", "a", "w")
-        modifiers (List[str]): The modifiers that were pressed (e.g. ["Shift", "Ctrl"])
-        event (QKeyEvent): The event that was triggered
-    
+        params (EventParams): The event parameters
     Returns:
         bool: True if the key sequence was handled, False otherwise
     
