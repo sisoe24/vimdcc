@@ -10,6 +10,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 from ..marks import Marks
 from ..registers import Registers
 from ..handlers_core import BaseHandler, register_normal_handler
+from .._types import Modes
 
 
 @register_normal_handler
@@ -21,8 +22,15 @@ class MovementHandler(BaseHandler):
 
         key = event.key()
 
+        select = (
+            QTextCursor.MoveAnchor
+            if self.editor_state() == Modes.NORMAL
+            else QTextCursor.KeepAnchor
+        )
+        print("➡ select :", select)
+
         if key_sequence == "w":
-            cursor.movePosition(QTextCursor.NextWord)
+            cursor.movePosition(QTextCursor.NextWord, select)
             return True
 
         if key_sequence == "h":
@@ -51,10 +59,11 @@ class MovementHandler(BaseHandler):
 
         if key_sequence == "^":
             cursor.movePosition(QTextCursor.StartOfLine)
-            # HACK: Dont know if there is a better way to do this
+            # Dont know if there is a better way to do this
             if cursor.block().text()[0] == " ":
                 cursor.movePosition(QTextCursor.NextWord)
-                return True
+
+            return True
 
         if key_sequence == "w":
             cursor.movePosition(QTextCursor.NextWord)
@@ -242,7 +251,7 @@ class SearchHandler(BaseHandler):
         if key_sequence == ',':
             self.repeat_last_search(cursor, reverse=True)
             return True
-        
+
         if key_sequence == 'n':
             print(self.last_word_under_cursor)
             return True

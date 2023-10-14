@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from .status_bar import status_bar
 from .editor_modes import Modes, EditorMode
-from .handlers_types import NormalModeHandlerType
+from ._types import NormalModeHandlerType
 
 _NORMAL_HANDLERS: List[NormalModeHandlerType] = []
 _COMMAND_HANDLERS: List[NormalModeHandlerType] = []

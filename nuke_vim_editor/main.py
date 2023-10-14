@@ -6,7 +6,7 @@ from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
                                QPlainTextEdit)
 
 from .status_bar import status_bar
-from .editor_modes import InsertMode, NormalMode, CommandMode
+from .editor_modes import InsertMode, NormalMode, CommandMode, VisualMode
 from .handlers_core import get_normal_handlers
 
 for module in pathlib.Path(__file__).parent.glob("handlers/*.py"):
@@ -32,7 +32,6 @@ for i in range(10):
 '''.lstrip()
 
 
-
 def main():
     app = QApplication([])
     font = app.font()
@@ -49,17 +48,20 @@ def main():
     editor.setCursorWidth(editor.fontMetrics().width(" "))
     window.setCentralWidget(editor)
 
-    normal_mode = NormalMode(editor, get_normal_handlers())
-    editor.installEventFilter(normal_mode)
-
     status_bar.register(window.statusBar())
     window.statusBar().showMessage("NORMAL")
+
+    normal_mode = NormalMode(editor, get_normal_handlers())
+    editor.installEventFilter(normal_mode)
 
     insert_mode = InsertMode(editor)
     editor.installEventFilter(insert_mode)
 
     command_mode = CommandMode(editor)
     editor.installEventFilter(command_mode)
+
+    # visual_mode = VisualMode(editor)
+    # editor.installEventFilter(visual_mode)
 
     window.show()
     app.exec_()
