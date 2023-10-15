@@ -500,7 +500,7 @@ class EditHandler(BaseHandler):
             cursor.deleteChar()
             return True
 
-        count = re.search(r'\w(\d+)\w', key_sequence)
+        count = re.search(r'd(\d+)\w', key_sequence)
         if count:
             for _ in range(int(count[1])):
                 cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)

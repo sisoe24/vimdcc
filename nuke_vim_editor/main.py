@@ -2,26 +2,18 @@
 import pathlib
 from importlib import import_module
 
-from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
-                               QPlainTextEdit)
+from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
 
 from .status_bar import status_bar
-from .editor_modes import InsertMode, NormalMode, CommandMode, VisualLineMode
-from .handlers_core import get_normal_handlers, get_visual_line_handlers
+from .editor_modes import EDITOR_MODES
 
 for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
-
-# TODO: Jump to line
-# TODO: undo/redo
-# TODO: Highlighting
-
-
 sampletext = '''
 from random import randint
 
-o = foo.bar.foo.bar,
+o = foo.bar.foo.bar, solo.torlo
 solo.trolo.yolo
 
 def main(name):
@@ -55,17 +47,11 @@ def main():
     status_bar.register(window.statusBar())
     window.statusBar().showMessage('NORMAL')
 
-    normal_mode = NormalMode(editor, get_normal_handlers())
-    editor.installEventFilter(normal_mode)
-
-    insert_mode = InsertMode(editor)
-    editor.installEventFilter(insert_mode)
-
-    command_mode = CommandMode(editor)
-    editor.installEventFilter(command_mode)
-
-    # visual_mode = VisualLineMode(editor, get_visual_line_handlers())
-    # editor.installEventFilter(visual_mode)
+    pool = []
+    for mode in EDITOR_MODES:
+        _m = mode(editor)
+        pool.append(_m)
+        editor.installEventFilter(_m)
 
     window.show()
     app.exec_()

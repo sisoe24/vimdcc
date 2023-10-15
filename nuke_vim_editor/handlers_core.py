@@ -4,9 +4,9 @@ from typing import List
 
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ._types import EventParams, HandlerType
+from ._types import Modes, EventParams, HandlerType
 from .status_bar import status_bar
-from .editor_modes import Modes, EditorMode
+from .editor_state import EditorState
 
 _NORMAL_HANDLERS: List[HandlerType] = []
 _COMMAND_HANDLERS: List[HandlerType] = []
@@ -19,20 +19,20 @@ class BaseHandler(ABC):
         self.editor = editor
 
     def get_state(self):
-        return EditorMode.mode
+        return EditorState.mode
 
     def set_state(self, state: Modes):
-        EditorMode.mode = state
+        EditorState.mode = state
 
     def to_normal_mode(self):
         status_bar.emit('NORMAL', '')
-        EditorMode.mode = Modes.NORMAL
+        EditorState.mode = Modes.NORMAL
         self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
         self.editor.viewport().update()
 
     def to_insert_mode(self):
         status_bar.emit('INSERT', '')
-        EditorMode.mode = Modes.INSERT
+        EditorState.mode = Modes.INSERT
         self.editor.setCursorWidth(2)
         self.editor.viewport().update()
 
