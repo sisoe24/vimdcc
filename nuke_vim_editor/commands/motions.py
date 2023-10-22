@@ -2,7 +2,7 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from .._types import EventParams
-from .base_command import Command
+from ..commands_core import Command
 
 
 class MoveWordForward(Command):

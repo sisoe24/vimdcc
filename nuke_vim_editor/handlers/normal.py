@@ -9,8 +9,8 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from ..marks import Marks
 from .._types import EventParams
-from ..commands import Command
 from ..registers import Registers
+from ..commands_core import Command
 from ..handlers_core import BaseHandler, register_normal_handler
 from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,

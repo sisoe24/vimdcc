@@ -1,4 +1,4 @@
-from .._types import EventParams
+from ._types import EventParams
 
 
 class Command:

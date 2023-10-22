@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
 from .status_bar import status_bar
 from .editor_modes import EDITOR_MODES
 
-for module in pathlib.Path(__file__).parent.glob('*.py'):
+for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
 
