@@ -16,13 +16,15 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,
                                 MoveWordForward, MoveWordBackward,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
+from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
+                                 MoveDocumentDown, MoveParagraphDown)
 
 
 @register_normal_handler
 class MotionHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.command_map: Dict[str, Command] = {
+        self.commands: Dict[str, Command] = {
             'w': MoveWordForward(editor, 'NORMAL'),
             'b': MoveWordBackward(editor, 'NORMAL'),
             'e': MoveWordForwardEnd(editor, 'NORMAL'),
@@ -39,7 +41,7 @@ class MotionHandler(BaseHandler):
         }
 
     def handle(self, params: EventParams):
-        command = self.command_map.get(params.keys)
+        command = self.commands.get(params.keys)
         return command.execute(params) if command else False
 
 
@@ -47,53 +49,16 @@ class MotionHandler(BaseHandler):
 class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self.commands: Dict[str, Command] = {
+            'G': MoveDocumentDown(editor, 'NORMAL'),
+            'gg': MoveDocumentUp(editor, 'NORMAL'),
+            '{': MoveParagraphUp(editor, 'NORMAL'),
+            '}': MoveParagraphDown(editor, 'NORMAL'),
+        }
 
     def handle(self, params: EventParams):
-
-        key_sequence = params.keys
-        modifiers = params.modifiers
-        cursor = params.cursor
-
-        select = (
-            QTextCursor.KeepAnchor
-            if params.visual
-            else QTextCursor.MoveAnchor
-        )
-
-        if key_sequence == 'G':
-            cursor.movePosition(QTextCursor.End, select)
-            return True
-
-        if key_sequence == 'gg':
-            cursor.movePosition(QTextCursor.Start, select)
-            return True
-
-        if key_sequence == '}':
-            document = self.editor.document()
-            for i in range(cursor.blockNumber() + 1, document.lineCount() + 1):
-                current_line = document.findBlockByLineNumber(i)
-                if current_line.text() == '':
-                    cursor.setPosition(current_line.position(), select)
-                    cursor.movePosition(QTextCursor.Up, select)
-                    break
-
-            cursor.movePosition(QTextCursor.NextBlock, select)
-
-            return True
-
-        if key_sequence == '{':
-            document = self.editor.document()
-            for i in range(cursor.blockNumber() - 1, -1, -1):
-                current_line = document.findBlockByLineNumber(i)
-                if current_line.text() == '':
-                    cursor.setPosition(current_line.position(), select)
-                    cursor.movePosition(QTextCursor.Down, select)
-                    break
-
-            cursor.movePosition(QTextCursor.PreviousBlock, select)
-            return True
-
-        return False
+        command = self.commands.get(params.keys)
+        return command.execute(params) if command else False
 
 
 @register_normal_handler
