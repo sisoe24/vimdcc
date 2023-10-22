@@ -1,102 +1,46 @@
 from __future__ import annotations
 
 import re
+from typing import Dict
 
 from PySide2.QtGui import QTextCursor, QTextDocument
+from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..marks import Marks
 from .._types import EventParams
+from ..commands import Command
 from ..registers import Registers
 from ..handlers_core import BaseHandler, register_normal_handler
+from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
+                                MoveWordLeft, MoveLineStart, MoveWordRight,
+                                MoveWordForward, MoveWordBackward,
+                                MoveToStartOfBlock, MoveWordForwardEnd)
 
 
 @register_normal_handler
-class MovementHandler(BaseHandler):
+class MotionHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self.command_map: Dict[str, Command] = {
+            'w': MoveWordForward(editor, 'NORMAL'),
+            'b': MoveWordBackward(editor, 'NORMAL'),
+            'e': MoveWordForwardEnd(editor, 'NORMAL'),
+            # 'W': self.move_word_forward,
+            # 'B': self.move_word_backward,
+            # 'E': self.move_word_forward,
+            'h': MoveWordLeft(editor, 'NORMAL'),
+            'l': MoveWordRight(editor, 'NORMAL'),
+            'k': MoveLineUp(editor, 'NORMAL'),
+            'j': MoveLineDown(editor, 'NORMAL'),
+            '$': MoveLineEnd(editor, 'NORMAL'),
+            '0': MoveLineStart(editor, 'NORMAL'),
+            '^': MoveToStartOfBlock(editor, 'NORMAL'),
+        }
 
     def handle(self, params: EventParams):
-
-        key_sequence = params.keys
-        cursor = params.cursor
-
-        select = (
-            QTextCursor.KeepAnchor
-            if params.visual
-            else QTextCursor.MoveAnchor
-        )
-
-        if key_sequence == 'w':
-            cursor.movePosition(QTextCursor.NextWord, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == 'W':
-            while True:
-                cursor.movePosition(QTextCursor.NextCharacter, select)
-                char = self.editor.document().characterAt(cursor.position())
-                print(repr(char))
-                if char == '\u2029' or char.isspace() or char == '' or char == '\n':
-                    cursor.movePosition(QTextCursor.NextCharacter, select)
-                    break
-                if cursor.atEnd():
-                    break
-            return True
-
-        if key_sequence == 'b':
-            cursor.movePosition(QTextCursor.PreviousWord, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == 'e':
-            print('TODO: e')
-            # cursor.movePosition(QTextCursor.EndOfWord, select)
-            return True
-
-        if key_sequence == 'h':
-            cursor.movePosition(QTextCursor.Left, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == 'l':
-            cursor.movePosition(QTextCursor.Right, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == 'k':
-            cursor.movePosition(QTextCursor.Up, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == 'j':
-            cursor.movePosition(QTextCursor.Down, select)
-            if params.mode == 'VISUAL_LINE':
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            return True
-
-        if key_sequence == '$':
-            cursor.movePosition(QTextCursor.EndOfLine, select)
-            return True
-
-        if key_sequence == '0':
-            cursor.movePosition(QTextCursor.StartOfLine, select)
-            return True
-
-        if key_sequence == '^':
-            cursor.movePosition(QTextCursor.StartOfLine, select)
-            # Dont know if there is a better way to do this
-            if cursor.block().text()[0] == ' ':
-                cursor.movePosition(QTextCursor.NextWord, select)
-
-            return True
-
-        return False
+        command = self.command_map.get(params.keys)
+        return command.execute(params) if command else False
 
 
 @register_normal_handler
@@ -335,7 +279,15 @@ class InsertHandler(BaseHandler):
         if key_sequence == 'o':
             super().to_insert_mode()
             cursor.movePosition(QTextCursor.EndOfLine)
-            cursor.insertText('\n')
+            start = cursor.position()
+            cursor.movePosition(QTextCursor.StartOfLine)
+            cursor.movePosition(QTextCursor.Down)
+            start_line_pos = cursor.position()
+            cursor.movePosition(QTextCursor.NextWord)
+            next_word_pos = cursor.position()
+            spaces = next_word_pos - start_line_pos
+            cursor.setPosition(start)
+            cursor.insertText('\n' + ' ' * spaces)
             return True
 
         return False
@@ -411,26 +363,27 @@ class VisualEditHandler(BaseHandler):
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self.command_map = {
+            'c': self.cut_text,
+            'd': self.delete_text,
+        }
 
     def handle(self, params: EventParams):
-
-        key_sequence = params.keys
-        cursor = params.cursor
-
         if not params.visual:
             return False
 
-        if key_sequence == 'c':
-            cursor.removeSelectedText()
-            super().to_insert_mode()
-            return True
+        command = self.command_map.get(params.keys)
+        return command(params) if command else False
 
-        if key_sequence == 'd':
-            cursor.removeSelectedText()
-            super().to_normal_mode()
-            return True
+    def delete_text(self, params: EventParams) -> bool:
+        params.cursor.removeSelectedText()
+        super().to_normal_mode()
+        return True
 
-        return False
+    def cut_text(self, params: EventParams) -> bool:
+        params.cursor.removeSelectedText()
+        super().to_insert_mode()
+        return True
 
 
 @register_normal_handler
@@ -500,6 +453,22 @@ class EditHandler(BaseHandler):
             cursor.deleteChar()
             return True
 
+        if key_sequence == 'J':
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+            cursor.insertText(' ')
+            return True
+
+        if key_sequence.startswith('r') and len(key_sequence) == 2:
+            cursor.movePosition(QTextCursor.NextCharacter)
+            cursor.deletePreviousChar()
+            cursor.insertText(key_sequence[1])
+            return True
+
         count = re.search(r'd(\d+)\w', key_sequence)
         if count:
             for _ in range(int(count[1])):
@@ -553,25 +522,20 @@ class MissingHandler(BaseHandler):
         super().__init__(editor)
 
     def handle(self, params: EventParams):
-
         key_sequence = params.keys
         mode = params.mode
         cursor = params.cursor
 
-        if key_sequence == 'r':
-            print('TODO: r')
-            return True
-
-        if key_sequence == 'J':
-            print('TODO: J')
+        if key_sequence == 'R':
+            print('TODO: Redo Mode')
             return True
 
         if key_sequence == '<<':
-            print('TODO: <<')
+            print('TODO: << (Shift Left)')
             return True
 
         if key_sequence == '>>':
-            print('TODO: >>')
+            print('TODO: >> (Shift Right)')
             return True
 
         return False

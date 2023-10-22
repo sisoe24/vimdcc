@@ -187,7 +187,7 @@ class NormalMode(QObject):
             self.editor.undo()
             return True
 
-        if self.key_sequence == 'R':
+        if 'ctrl' in modifiers and self.key_sequence == 'r':
             self.reset_key_sequence()
             self.editor.redo()
             return True
@@ -209,7 +209,6 @@ class NormalMode(QObject):
                 modifiers=modifiers,
                 event=key_event,
                 mode=EditorState.mode,
-                visual=EditorState.mode == Modes.VISUAL or EditorState.mode == Modes.VISUAL_LINE,
             )
 
             if not handler.should_handle(params):

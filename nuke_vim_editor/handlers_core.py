@@ -1,6 +1,6 @@
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Type, TypeVar
 
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -53,16 +53,22 @@ class BaseHandler(ABC):
     """
 
 
-def register_normal_handler(handler: HandlerType):
+T = TypeVar('T', bound=BaseHandler)
+
+
+def register_normal_handler(handler: Type[T]) -> Type[T]:
     _NORMAL_HANDLERS.append(handler)
+    return handler
 
 
-def register_command_handler(handler: HandlerType):
+def register_command_handler(handler: Type[T]) -> Type[T]:
     _COMMAND_HANDLERS.append(handler)
+    return handler
 
 
-def register_visual_line_handler(handler: HandlerType):
+def register_visual_line_handler(handler: Type[T]) -> Type[T]:
     _VISUAL_LINE_HANDLERS.append(handler)
+    return handler
 
 
 def get_normal_handlers() -> List[HandlerType]:

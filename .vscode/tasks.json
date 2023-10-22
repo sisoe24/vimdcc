@@ -7,6 +7,21 @@
             "label": "RunApp",
             "type": "shell",
             "command": "poetry run app"
-        }
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "poetry",
+            "args": [
+                "run",
+                "pytest",
+                "-xsl",
+                "-vvv",
+                // "-m quick"
+            ],
+            "group": "test",
+            "hide": true,
+            "problemMatcher": []
+        },
     ]
 }

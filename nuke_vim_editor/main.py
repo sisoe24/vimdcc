@@ -7,25 +7,16 @@ from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
 from .status_bar import status_bar
 from .editor_modes import EDITOR_MODES
 
-for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
+for module in pathlib.Path(__file__).parent.glob('*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
-sampletext = '''
-from random import randint
 
-o = foo.bar.foo.bar, solo.torlo
-solo.trolo.yolo
-
-def main(name):
-    print(f"Hello {name}!")
+def read_sampletext():
+    with open('sampletext.txt', 'r') as f:
+        return f.read()
 
 
-for i in range(10):
-    if i % 2 == 0:
-        main("world")
-    else:
-        main("universe")
-'''.lstrip()
+sampletext = read_sampletext()
 
 
 def main():

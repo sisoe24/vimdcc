@@ -5,12 +5,8 @@ description = ""
 authors = ["virgilsisoe <28490646+sisoe24@users.noreply.github.com>"]
 readme = "README.md"
 
-[tool.poetry.group.test.dependencies]
-pytest-cov = "^4.1.0"
-pytest = "^7.4.2"
-pytest-randomly = "^3.15.0"
-pytest-repeat = "^0.9.1"
-pytest-qt = "^4.2.0"
+[tool.isort]
+length_sort = true
 
 [tool.autopep8]
 max_line_length = 100
@@ -18,12 +14,22 @@ max_line_length = 100
 [tool.poetry.scripts]
 app = "nuke_vim_editor.main:main"
 
+[tool.pytest.ini_options]
+markers = ["quick: mark test"]
+testpaths = ["tests"]
+addopts = ["--cov=nuke_vim_editor", "--cov-report=html"]
+
+
 [tool.poetry.dependencies]
 python = "~3.9"
 pyside2 = "5.15.2"
 
-[tool.isort]
-length_sort = true
+[tool.poetry.group.test.dependencies]
+pytest-cov = "^4.1.0"
+pytest = "^7.4.2"
+pytest-randomly = "^3.15.0"
+pytest-repeat = "^0.9.1"
+pytest-qt = "^4.2.0"
 
 
 [build-system]

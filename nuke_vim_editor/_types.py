@@ -1,4 +1,5 @@
-from typing import Any, List, Callable, NamedTuple
+from typing import Any, List, Callable
+from dataclasses import field, dataclass
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
@@ -8,10 +9,19 @@ from .editor_state import Modes
 HandlerType = Callable[[QPlainTextEdit], Any]
 
 
-class EventParams(NamedTuple):
+@dataclass
+class EventParams:
     cursor: QTextCursor
+    event: QKeyEvent
+
     keys: str
     modifiers: List[str]
-    event: QKeyEvent
-    visual: bool
+
     mode: Modes
+
+    visual: bool = field(init=False)
+    anchor: QTextCursor.MoveMode = field(init=False)
+
+    def __post_init__(self):
+        self.visual = self.mode in [Modes.VISUAL, Modes.VISUAL_LINE]
+        self.anchor = QTextCursor.KeepAnchor if self.visual else QTextCursor.MoveAnchor
