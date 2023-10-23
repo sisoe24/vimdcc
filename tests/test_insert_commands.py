@@ -6,7 +6,7 @@ from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor._types import Modes, EventParams
-from nuke_vim_editor.handlers.normal import DocumentHandler
+from nuke_vim_editor.handlers.normal import InsertHandler
 
 
 @pytest.fixture()
@@ -15,8 +15,8 @@ def editor(qtbot: QtBot) -> QPlainTextEdit:
 
 
 @pytest.fixture()
-def handler(editor: QPlainTextEdit) -> DocumentHandler:
-    return DocumentHandler(editor)
+def handler(editor: QPlainTextEdit) -> InsertHandler:
+    return InsertHandler(editor)
 
 
 @dataclass
@@ -29,15 +29,15 @@ class MotionTest:
 
 
 @pytest.mark.parametrize('data', [
-    MotionTest(['gg'], 'foo\nbar\nfoo\nbar', 7, 'f', 0),
-    MotionTest(['G'], 'foo\nbar\nfoo\nbar', 0, 'r', 14),
-    MotionTest(['{'], 'foo\n\nbar\n\nfoo\n\nbar', 7, '\n', 4),
-    MotionTest(['}'], 'foo\n\nbar\n\nfoo\n\nbar', 0, '\n', 4),
-    MotionTest(['}', '}'], 'foo\n\nbar\n\nfoo\n\nbar', 0, '\n', 9),
-    MotionTest(['}', '}', '}', '}'], 'foo\n\nbar\n\nfoo\n\nbar', 0, 'r', 17),
-    MotionTest(['{', '{'], 'foo\n\nbar\n\nfoo\n\nbar', 9, 'f', 0),
+    MotionTest(['i'], 'abc', 1, 'a', 0),
+    MotionTest(['I'], 'abc', 3, 'a', 0),
+    MotionTest(['I'], 'abc', 0, 'a', 0),
+    MotionTest(['a'], 'abc', 1, 'c', 2),
+    MotionTest(['A'], 'foo bar foo bar', 0, '', 15),
+    MotionTest(['o'], 'abc', 0, '', 4),
+    MotionTest(['O'], 'abc', 3, '\n', 0),
 ])
-def test_move_document_no_selection(handler: DocumentHandler, data: MotionTest) -> None:
+def test_move_document_no_selection(handler: InsertHandler, data: MotionTest) -> None:
     editor = handler.editor
     editor.setPlainText(data.text)
 
@@ -59,7 +59,9 @@ def test_move_document_no_selection(handler: DocumentHandler, data: MotionTest) 
     cursor = editor.textCursor()
     position = cursor.position()
 
-    assert editor.toPlainText()[position] == data.expected_text
+    if data.expected_text:
+        assert editor.toPlainText()[position] == data.expected_text
+
     assert cursor.position() == data.expected_pos
     assert cursor.anchor() == data.expected_pos
     assert cursor.hasSelection() is False

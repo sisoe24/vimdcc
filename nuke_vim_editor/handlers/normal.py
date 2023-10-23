@@ -10,8 +10,11 @@ from PySide2.QtWidgets import QPlainTextEdit
 from ..marks import Marks
 from .._types import EventParams
 from ..registers import Registers
+from ..status_bar import status_bar
 from ..commands_core import Command
 from ..handlers_core import BaseHandler, register_normal_handler
+from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
+                               Inserto)
 from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,
                                 MoveWordForward, MoveWordBackward,
@@ -28,9 +31,6 @@ class MotionHandler(BaseHandler):
             'w': MoveWordForward(editor, 'NORMAL'),
             'b': MoveWordBackward(editor, 'NORMAL'),
             'e': MoveWordForwardEnd(editor, 'NORMAL'),
-            # 'W': self.move_word_forward,
-            # 'B': self.move_word_backward,
-            # 'E': self.move_word_forward,
             'h': MoveWordLeft(editor, 'NORMAL'),
             'l': MoveWordRight(editor, 'NORMAL'),
             'k': MoveLineUp(editor, 'NORMAL'),
@@ -59,6 +59,27 @@ class DocumentHandler(BaseHandler):
     def handle(self, params: EventParams):
         command = self.commands.get(params.keys)
         return command.execute(params) if command else False
+
+
+@register_normal_handler
+class InsertHandler(BaseHandler):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.commands: Dict[str, Command] = {
+            'i': Inserti(editor, 'NORMAL'),
+            'I': InsertI(editor, 'NORMAL'),
+            'a': Inserta(editor, 'NORMAL'),
+            'A': InsertA(editor, 'NORMAL'),
+            'o': Inserto(editor, 'NORMAL'),
+            'O': InsertO(editor, 'NORMAL'),
+        }
+
+    def handle(self, params: EventParams):
+        command = self.commands.get(params.keys)
+        if command and command.execute(params):
+            super().to_insert_mode()
+            return True
+        return False
 
 
 @register_normal_handler
@@ -197,62 +218,6 @@ class SearchHandler(BaseHandler):
 
         if key_sequence == 'n':
             print(self.last_word_under_cursor)
-            return True
-
-        return False
-
-
-@register_normal_handler
-class InsertHandler(BaseHandler):
-    def __init__(self, editor: QPlainTextEdit):
-        super().__init__(editor)
-
-    def handle(self, params: EventParams):
-
-        key_sequence = params.keys
-        modifiers = params.modifiers
-        cursor = params.cursor
-
-        if key_sequence == 'O' and 'shift' in modifiers:
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.insertText('\n')
-            cursor.movePosition(QTextCursor.Up)
-            return True
-
-        if key_sequence == 'I' and 'shift' in modifiers:
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.movePosition(QTextCursor.NextWord)
-            return True
-
-        if key_sequence == 'A' and 'shift' in modifiers:
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.EndOfLine)
-            return True
-
-        if key_sequence == 'i':
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.Right)
-            return True
-
-        if key_sequence == 'a':
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.Left)
-            return True
-
-        if key_sequence == 'o':
-            super().to_insert_mode()
-            cursor.movePosition(QTextCursor.EndOfLine)
-            start = cursor.position()
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.movePosition(QTextCursor.Down)
-            start_line_pos = cursor.position()
-            cursor.movePosition(QTextCursor.NextWord)
-            next_word_pos = cursor.position()
-            spaces = next_word_pos - start_line_pos
-            cursor.setPosition(start)
-            cursor.insertText('\n' + ' ' * spaces)
             return True
 
         return False
@@ -487,20 +452,26 @@ class MissingHandler(BaseHandler):
         super().__init__(editor)
 
     def handle(self, params: EventParams):
+
+        missing = [
+            'p',
+            'P',
+            'u',
+            'U',
+            'r',
+            'R',
+            '<<',
+            '>>',
+            'W',
+            'E',
+            'B'
+            '.'
+        ]
+
         key_sequence = params.keys
-        mode = params.mode
-        cursor = params.cursor
-
-        if key_sequence == 'R':
-            print('TODO: Redo Mode')
-            return True
-
-        if key_sequence == '<<':
-            print('TODO: << (Shift Left)')
-            return True
-
-        if key_sequence == '>>':
-            print('TODO: >> (Shift Right)')
+        if key_sequence in missing:
+            print(f'Not implemented yet: {key_sequence}')
+            status_bar.emit('NORMAL', f'Not implemented yet: {key_sequence}')
             return True
 
         return False
