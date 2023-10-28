@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import re
-import json
 from typing import Dict
 
 from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .._types import EventParams
-from ..commands_core import Command
+from ..command import Command
 from ..handlers_core import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
@@ -16,6 +14,7 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,
                                 MoveWordForward, MoveWordBackward,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
+from ..event_parameters import EventParams
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
@@ -134,33 +133,15 @@ class YankHandler(BaseHandler):
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self._load()
 
-    def _load(self):
-        with open('registers.json') as f:
-            self.registers = json.load(f)
-
-    def _save(self):
-        with open('registers.json', 'w') as f:
-            json.dump(self.registers, f)
-
-    def clear(self):
-        self.registers = {
-            'named': {},
-            'numbered': {},
-            'last_search': {},
-            'marks': {}
-        }
-        self._save()
-
-    def _add_to_register(self, register: Registers, cursor: QTextCursor):
+    def _add_to_register(self, register, cursor: QTextCursor):
         self.registers[register][self.named] = cursor.selectedText()
         cursor.clearSelection()
 
     def yank_line(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        self._add_to_register('named', cursor)
+        self.registers.update('named', '0', cursor.selectedText())
         return True
 
     def handle(self, params: EventParams):
@@ -168,22 +149,15 @@ class YankHandler(BaseHandler):
         key_sequence = params.keys
         cursor = params.cursor
         mode = params.mode
-        return False
 
-        if key_sequence.startswith('"') and len(key_sequence) == 3:
-            pass
+        print('➡ key_sequence :', key_sequence)
+        if key_sequence == 'y':
+            if mode not in ['VISUAL', 'VISUAL_LINE', 'YANK']:
+                print('yank line')
+                return self.yank_line(cursor)
 
-        if key_sequence == 'y' and mode in ['VISUAL', 'VISUAL_LINE']:
-            self._add_to_register(cursor)
+            self.registers.update('named', '0', cursor.blockNumber())
             return True
-
-        if key_sequence == 'yw':
-            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-            self._add_to_register(cursor)
-            return True
-
-        if key_sequence == 'yy':
-            return self.yank_line(cursor)
 
         return False
 

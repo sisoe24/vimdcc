@@ -6,8 +6,9 @@ from PySide2.QtGui import QTextCursor
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from nuke_vim_editor._types import Modes, EventParams
+from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.handlers.normal import MotionHandler, SwapCaseHandler
+from nuke_vim_editor.event_parameters import EventParams
 
 
 @pytest.fixture()

@@ -1,15 +1,16 @@
 import json
-from typing import Any, Dict, List, Union, Optional, cast
+from typing import List, Union, Optional, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QTimer, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ._types import EventParams, HandlerType
+from ._types import HandlerType
 from .registers import Registers
 from .status_bar import status_bar
 from .editor_state import Modes, EditorState
 from .handlers_core import get_normal_handlers, get_visual_line_handlers
+from .event_parameters import EventParams
 
 OPERATORS = [
     Qt.Key_C,
@@ -281,9 +282,9 @@ class NormalMode(QObject):
         return False
 
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
-        print('parse init EditorState.mode:', EditorState.mode)
 
         cursor = editor.textCursor()
+        position = cursor.position()
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
@@ -317,7 +318,7 @@ class NormalMode(QObject):
             self.change_mode(Modes.VISUAL, self.key_sequence)
             return True
 
-        if self.key_sequence == 'y':
+        if self.key_sequence == 'y' and not EditorState.mode == Modes.YANK:
             EditorState.mode = Modes.YANK
             self.key_sequence = ''
 
@@ -365,10 +366,12 @@ class NormalMode(QObject):
 
         if execute and EditorState.mode == Modes.YANK:
             text = cursor.selectedText()
-            print('➡ text :', text)
+            print('➡ copy text :', text)
 
             cursor.clearSelection()
+            cursor.setPosition(position)
             editor.setTextCursor(cursor)
+
             EditorState.mode = Modes.NORMAL
             return True
 

@@ -1,8 +1,8 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .._types import EventParams
-from ..commands_core import Command
+from ..command import Command
+from ..event_parameters import EventParams
 
 # TODO: When Calling O, o commands, the cursor should keep the same column
 # position. If the line is empty, the cursor should be placed at the first

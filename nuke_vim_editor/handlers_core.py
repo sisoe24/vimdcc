@@ -5,9 +5,11 @@ from typing import Any, Dict, List, Type, Literal, TypeVar, TypedDict
 
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ._types import Modes, EventParams, HandlerType
+from ._types import HandlerType
 from .status_bar import status_bar
+from .editor_modes import Modes
 from .editor_state import EditorState
+from .event_parameters import EventParams
 
 _NORMAL_HANDLERS: List[HandlerType] = []
 _COMMAND_HANDLERS: List[HandlerType] = []

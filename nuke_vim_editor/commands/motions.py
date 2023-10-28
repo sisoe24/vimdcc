@@ -1,8 +1,8 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .._types import EventParams
-from ..commands_core import Command
+from ..command import Command
+from ..event_parameters import EventParams
 
 
 class MoveWordForward(Command):
@@ -51,7 +51,7 @@ class MoveWordForwardEnd(Command):
 
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
-        elif params.mode == 'VISUAL':
+        elif params.mode in ['VISUAL', 'YANK']:
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
         return True
 

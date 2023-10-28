@@ -1,8 +1,8 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .._types import EventParams
 from ..handlers_core import BaseHandler, register_visual_line_handler
+from ..event_parameters import EventParams
 
 
 @register_visual_line_handler
