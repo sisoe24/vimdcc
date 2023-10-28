@@ -1,4 +1,8 @@
 
+import json
+from typing import Dict, List
+from dataclasses import dataclass
+
 import pytest
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
@@ -17,36 +21,53 @@ def handler(editor: QPlainTextEdit) -> MarksHandler:
     return MarksHandler(editor)
 
 
-# @dataclass
-# class MotionTest:
-#     motion: List[str]
-#     text: str
-#     cursor_start: int
-#     expected_text: str
-#     expected_pos: int
+def marks() -> Dict[str, int]:
+    with open('marks.json', 'r') as f:
+        return json.load(f)
 
 
-def test_set_mark(handler: MarksHandler) -> None:
+@dataclass
+class MotionTest:
+    motion: List[str]
+    jump_to: int
+
+
+@pytest.mark.parametrize('data', [
+    MotionTest(['m', '1'], 4),
+    MotionTest(['m', 'a'], 2),
+    MotionTest(['m', 'm'], 7),
+])
+def test_set_mark(handler: MarksHandler, data: MotionTest) -> None:
     editor = handler.editor
     editor.setPlainText('foo\nbar\nfoo\nbar')
 
     params = EventParams(
         cursor=editor.textCursor(),
-        keys='m',
+        keys='',
         modifiers=[],
         event=None,
         mode=Modes.NORMAL
     )
 
-    params.cursor.setPosition(7)
-    params.keys += 'm1'
+    params.cursor.setPosition(data.jump_to)
+
+    for motion in data.motion:
+        params.keys += motion
+        handler.handle(params)
+
+    editor.setTextCursor(params.cursor)
+
+    assert handler.marks[data.motion[-1]] == data.jump_to
+
+    # reset cursor
+    params.cursor.setPosition(0)
+    editor.setTextCursor(params.cursor)
+
+    assert editor.textCursor().position() == 0
+
+    params.keys = f'`{data.motion[-1]}'
 
     handler.handle(params)
     editor.setTextCursor(params.cursor)
 
-    params.cursor.setPosition(0)
-
-    cursor = editor.textCursor()
-    position = cursor.position()
-
-    assert position == 7
+    assert editor.textCursor().position() == data.jump_to
