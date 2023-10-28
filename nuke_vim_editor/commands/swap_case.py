@@ -17,7 +17,6 @@ def create_swap_case_command(mode: SwapMode):
         def execute(self, params: EventParams):
             cursor = params.cursor
             text = cursor.selectedText()
-            print('➡ text :', text)
             cursor.removeSelectedText()
             cursor.insertText(getattr(text, mode)())
             return True

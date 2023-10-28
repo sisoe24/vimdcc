@@ -7,7 +7,7 @@ from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor._types import Modes, EventParams
-from nuke_vim_editor.handlers.normal import SwapCaseHandler
+from nuke_vim_editor.handlers.normal import MotionHandler, SwapCaseHandler
 
 
 @pytest.fixture()
@@ -16,8 +16,13 @@ def editor(qtbot: QtBot) -> QPlainTextEdit:
 
 
 @pytest.fixture()
-def handler(editor: QPlainTextEdit) -> SwapCaseHandler:
+def swapCaseHandler(editor: QPlainTextEdit) -> SwapCaseHandler:
     return SwapCaseHandler(editor)
+
+
+@pytest.fixture()
+def motionHandler(editor: QPlainTextEdit) -> MotionHandler:
+    return MotionHandler(editor)
 
 
 @dataclass
@@ -34,8 +39,8 @@ class MotionTest:
     MotionTest(['gu'], 'AB', 'ab', 0, 2),
     MotionTest(['gU'], 'ab', 'AB', 0, 2),
 ])
-def test_swap_case_motion(handler: SwapCaseHandler, data: MotionTest):
-    editor = handler.editor
+def test_swap_case_motion(swapCaseHandler: SwapCaseHandler, data: MotionTest):
+    editor = swapCaseHandler.editor
     editor.setPlainText(data.text)
 
     params = EventParams(
@@ -50,7 +55,51 @@ def test_swap_case_motion(handler: SwapCaseHandler, data: MotionTest):
     params.cursor.setPosition(data.cursor_end, QTextCursor.KeepAnchor)
 
     params.keys = data.motion[0]
-    handler.handle(params)
+    swapCaseHandler.handle(params)
+    editor.setTextCursor(params.cursor)
+
+    assert editor.toPlainText() == data.expected_text
+
+
+@dataclass
+class MotionSelectionTest:
+    motion: str
+    command: str
+    text: str
+    expected_text: str
+    cursor_start: int
+    cursor_end: int
+
+
+@pytest.mark.parametrize('data', [
+    MotionSelectionTest('e', 'g~', 'aBa', 'AbA', 0, 3),
+    MotionSelectionTest('e', 'gu', 'AB', 'ab', 0, 2),
+    MotionSelectionTest('e', 'gU', 'ab', 'AB', 0, 2),
+])
+def test_swap_case_motion_with_motion(
+    motionHandler: MotionHandler,
+    swapCaseHandler: SwapCaseHandler,
+    data: MotionTest
+):
+    editor = motionHandler.editor
+    editor.setPlainText(data.text)
+
+    params = EventParams(
+        cursor=editor.textCursor(),
+        keys=data.motion,
+        modifiers=[],
+        event=None,
+        mode=Modes.VISUAL
+    )
+
+    params.cursor.setPosition(data.cursor_start)
+    params.keys = data.motion
+
+    motionHandler.handle(params)
+
+    params.keys = data.command
+    swapCaseHandler.handle(params)
+
     editor.setTextCursor(params.cursor)
 
     assert editor.toPlainText() == data.expected_text
