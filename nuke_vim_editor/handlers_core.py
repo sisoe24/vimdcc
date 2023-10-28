@@ -1,6 +1,7 @@
 
+import json
 from abc import ABC, abstractmethod
-from typing import List, Type, TypeVar
+from typing import Any, Dict, List, Type, Literal, TypeVar, TypedDict
 
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -13,10 +14,66 @@ _COMMAND_HANDLERS: List[HandlerType] = []
 _VISUAL_LINE_HANDLERS: List[HandlerType] = []
 
 
+class RegistersTypes(TypedDict):
+    named: Dict[str, str]
+    numbered: Dict[str, str]
+    last_search: Dict[str, str]
+    marks: Dict[str, int]
+
+
+RegisterName = Literal['named', 'numbered', 'last_search', 'marks']
+
+
+class Registers:
+    _registers: RegistersTypes = {
+        'named': {},
+        'numbered': {},
+        'last_search': {},
+        'marks': {},
+    }
+
+    def __new__(cls, *args: Any, **kwargs: Any):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(Registers, cls).__new__(
+                cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self):
+        # TODO: Expose this as a setting
+        if 'persistent_registers':
+            self._load()
+        else:
+            self.clear()
+
+    def _load(self):
+        with open('registers.json') as f:
+            data = json.load(f)
+            if data:
+                self._registers = data
+
+    def _save(self):
+        with open('registers.json', 'w') as f:
+            json.dump(self._registers, f)
+
+    def update(self, name: RegisterName, key: str, value: Any) -> None:
+        self._registers[name][key] = value
+        self._save()
+
+    def get(self, name: RegisterName, key: str) -> Any:
+        print('➡ name :', name)
+        return self._registers[name].get(key, '')
+
+    def clear(self):
+        for register in self._registers.values():
+            register.clear()
+        self._save()
+
+
 class BaseHandler(ABC):
 
     def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
+        self.registers = Registers()
 
     def get_state(self):
         return EditorState.mode

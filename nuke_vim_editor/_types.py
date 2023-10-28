@@ -25,6 +25,6 @@ class EventParams:
     status_bar: _StatusBar = field(init=False)
 
     def __post_init__(self):
-        self.visual = self.mode in [Modes.VISUAL, Modes.VISUAL_LINE]
+        self.visual = self.mode in [Modes.VISUAL, Modes.VISUAL_LINE, Modes.YANK]
         self.anchor = QTextCursor.KeepAnchor if self.visual else QTextCursor.MoveAnchor
         self.status_bar = status_bar

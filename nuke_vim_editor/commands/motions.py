@@ -53,7 +53,6 @@ class MoveWordForwardEnd(Command):
             params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
         elif params.mode == 'VISUAL':
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
-
         return True
 
     def move_to_next_end_word(self, params: EventParams):

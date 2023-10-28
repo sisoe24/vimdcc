@@ -8,7 +8,6 @@ from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
 from .._types import EventParams
-from ..registers import Registers
 from ..commands_core import Command
 from ..handlers_core import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
@@ -102,37 +101,17 @@ class SwapCaseHandler(BaseHandler):
 
 @register_normal_handler
 class MarksHandler(BaseHandler):
-    marks: Dict[str, int] = {}
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-        # TODO: Expose this as a setting
-        if 'persistent_marks':
-            self._load_marks()
-        else:
-            self.marks = {}
-            self._save_marks()
-
-    def _load_marks(self):
-        with open('marks.json') as f:
-            self.marks = json.load(f)
-
-    def _save_marks(self):
-        with open('marks.json', 'w') as f:
-            json.dump(self.marks, f)
-
-    def _update_marks(self, key: str, pos: int):
-        self.marks[key] = pos
-        self._save_marks()
-
     def set_mark(self, key: str, params: EventParams):
-        self._update_marks(key, params.cursor.position())
+        self.registers.update('marks', key, params.cursor.position())
         return True
 
     def move_to_mark(self, key: str, params: EventParams):
-        if self.marks.get(key):
-            params.cursor.setPosition(self.marks[key])
+        pos = self.registers.get('marks', key)
+        if pos:
+            params.cursor.setPosition(pos)
         else:
             params.status_bar.emit('NORMAL', f'{key} mark not set')
 
@@ -155,30 +134,56 @@ class YankHandler(BaseHandler):
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self._load()
+
+    def _load(self):
+        with open('registers.json') as f:
+            self.registers = json.load(f)
+
+    def _save(self):
+        with open('registers.json', 'w') as f:
+            json.dump(self.registers, f)
+
+    def clear(self):
+        self.registers = {
+            'named': {},
+            'numbered': {},
+            'last_search': {},
+            'marks': {}
+        }
+        self._save()
+
+    def _add_to_register(self, register: Registers, cursor: QTextCursor):
+        self.registers[register][self.named] = cursor.selectedText()
+        cursor.clearSelection()
+
+    def yank_line(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.StartOfLine)
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        self._add_to_register('named', cursor)
+        return True
 
     def handle(self, params: EventParams):
 
         key_sequence = params.keys
         cursor = params.cursor
         mode = params.mode
+        return False
+
+        if key_sequence.startswith('"') and len(key_sequence) == 3:
+            pass
 
         if key_sequence == 'y' and mode in ['VISUAL', 'VISUAL_LINE']:
-            Registers.add(cursor.selectedText())
-            cursor.clearSelection()
+            self._add_to_register(cursor)
             return True
 
         if key_sequence == 'yw':
             cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-            Registers.add(cursor.selectedText())
-            cursor.clearSelection()
+            self._add_to_register(cursor)
             return True
 
         if key_sequence == 'yy':
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            Registers.add(cursor.selectedText())
-            cursor.clearSelection()
-            return True
+            return self.yank_line(cursor)
 
         return False
 

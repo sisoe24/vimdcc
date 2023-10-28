@@ -123,8 +123,10 @@ class CommandMode(QObject):
         self.key_sequence = ''
 
     def execute_command(self, command: str):
-        # TODO: Add python command
-        # TODO: Add Nuke command
+        # TODO: Add python
+        # TODO: Add Nuke
+        # TODO: Add clear registers
+        # TODO: Add clear marks
 
         commands = {
             'registers': lambda: print(Registers.get_all()),
@@ -271,16 +273,17 @@ class NormalMode(QObject):
         if not isinstance(watched, QPlainTextEdit):
             assert False, 'This event filter should only be installed on a QPlainTextEdit'
 
-        if EditorState.mode not in [Modes.NORMAL, Modes.VISUAL, Modes.VISUAL_LINE]:
+        if EditorState.mode not in [Modes.NORMAL, Modes.VISUAL, Modes.VISUAL_LINE, Modes.YANK]:
             return False
 
         if event.type() == QEvent.KeyPress:
             return self.parse_keys(watched, event)
         return False
 
-    def parse_keys(self, watched: QPlainTextEdit, event: QEvent):
+    def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
+        print('parse init EditorState.mode:', EditorState.mode)
 
-        cursor = watched.textCursor()
+        cursor = editor.textCursor()
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
@@ -301,17 +304,24 @@ class NormalMode(QObject):
             self.change_mode(Modes.SEARCH, self.key_sequence)
             return True
 
-        if self.key_sequence == 'V' and modifiers == ['shift']:
+        if self.key_sequence == 'V':
             # self.change_mode(Modes.VISUAL_LINE, self.key_sequence)
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            watched.setTextCursor(cursor)
+            editor.setTextCursor(cursor)
             self.change_mode(Modes.VISUAL, self.key_sequence)
             EditorState.mode = Modes.VISUAL_LINE
             return True
 
         if self.key_sequence == 'v':
             self.change_mode(Modes.VISUAL, self.key_sequence)
+            return True
+
+        if self.key_sequence == 'y':
+            EditorState.mode = Modes.YANK
+            self.key_sequence = ''
+
+            # self.change_mode(Modes.YANK, self.key_sequence)
             return True
 
         if self.key_sequence == 'u':
@@ -330,9 +340,10 @@ class NormalMode(QObject):
             return True
 
         if self.arrow_keys(cursor, key_event):
-            watched.setTextCursor(cursor)
+            editor.setTextCursor(cursor)
             return True
 
+        execute = False
         for handler in self._handlers:
 
             params = EventParams(
@@ -347,9 +358,19 @@ class NormalMode(QObject):
                 continue
 
             if handler.handle(params):
-                watched.setTextCursor(cursor)
+                editor.setTextCursor(cursor)
                 self.reset_key_sequence()
+                execute = True
                 break
+
+        if execute and EditorState.mode == Modes.YANK:
+            text = cursor.selectedText()
+            print('➡ text :', text)
+
+            cursor.clearSelection()
+            editor.setTextCursor(cursor)
+            EditorState.mode = Modes.NORMAL
+            return True
 
         return True
 

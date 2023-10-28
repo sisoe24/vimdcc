@@ -9,6 +9,7 @@ class Modes(str, Enum):
     COMMAND = 'COMMAND'
     MARKS = 'MARKS'
     SEARCH = 'SEARCH'
+    YANK = 'YANK'
 
 
 class _EditorState:
