@@ -102,32 +102,34 @@ class SwapCaseHandler(BaseHandler):
 
 @register_normal_handler
 class MarksHandler(BaseHandler):
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def handle(self, params: EventParams):
+    def set_mark(self, key: str, params: EventParams):
+        Marks.add(key, {
+            'text': params.cursor.block().text(),
+            'position': params.cursor.position()
+        })
+        return True
 
+    def move_to_mark(self, key: str, params: EventParams):
+        mark = Marks.get(key)
+
+        if mark:
+            params.cursor.setPosition(mark['position'])
+        else:
+            params.status_bar.emit('NORMAL', f'{key} mark not set')
+
+        return True
+
+    def handle(self, params: EventParams):
         key_sequence = params.keys
-        cursor = params.cursor
 
         if key_sequence.startswith('m') and len(key_sequence) == 2:
-            Marks.add(
-                key_sequence[1], {
-                    'text': cursor.block().text(),
-                    'position': cursor.position()
-                }
-            )
-            return True
+            return self.set_mark(key_sequence[1], params)
 
         if key_sequence.startswith('`') and len(key_sequence) == 2:
-
-            mark = Marks.get(key_sequence[1])
-            if mark is None:
-                return True
-
-            cursor.setPosition(mark['position'])
-            return True
+            return self.move_to_mark(key_sequence[1], params)
 
         return False
 

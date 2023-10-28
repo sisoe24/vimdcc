@@ -92,6 +92,132 @@ class VisualLineMode(QObject):
         return True
 
 
+class InsertMode(QObject):
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(parent)
+        self.editor = editor
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+
+        if EditorState.mode != Modes.INSERT:
+            return False
+
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            status_bar.emit('NORMAL', '')
+            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+            EditorState.mode = Modes.NORMAL
+            return True
+
+        return False
+
+
+class CommandMode(QObject):
+
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(parent)
+        self.editor = editor
+        self.key_sequence = ''
+
+    def execute_command(self, command: str):
+        # TODO: Add python command
+        # TODO: Add Nuke command
+
+        commands = {
+            'registers': lambda: print(Registers.get_all()),
+            'marks': lambda: print(Marks.get_all())
+        }
+        commands.get(command.strip(), lambda: print('Unknown command'))()
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+
+        if EditorState.mode != Modes.COMMAND:
+            return False
+
+        return self.parse_keys(event) if event.type() == QEvent.KeyPress else True
+
+    def parse_keys(self, event: QEvent):
+
+        key_event = cast(QKeyEvent, event)
+        self.key_sequence += key_event.text()
+        status_bar.emit('COMMAND', self.key_sequence)
+
+        if key_event.key() == Qt.Key_Escape:
+            return self.exit_mode()
+
+        if key_event.key() == Qt.Key_Return:
+            self.execute_command(self.key_sequence)
+            self.key_sequence = ''
+            return self.exit_mode()
+
+        if key_event.key() == Qt.Key_Backspace:
+            self.key_sequence = self.key_sequence[:-1]
+            status_bar.emit('COMMAND', self.key_sequence)
+            return True
+
+        return True
+
+    def exit_mode(self):
+        status_bar.emit('NORMAL', '')
+        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+        EditorState.mode = Modes.NORMAL
+        return True
+
+
+class SearchMode(QObject):
+
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(parent)
+        self.editor = editor
+        self.key_sequence = ''
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+
+        if EditorState.mode != Modes.SEARCH:
+            return False
+
+        return self.parse_keys(watched, event) if event.type() == QEvent.KeyPress else True
+
+    def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
+
+        cursor = editor.textCursor()
+        key_event = cast(QKeyEvent, event)
+        self.key_sequence += key_event.text()
+        status_bar.emit('SEARCH', self.key_sequence)
+
+        if key_event.key() == Qt.Key_Escape:
+            return self.exit_mode()
+
+        if key_event.key() == Qt.Key_Return:
+            return self.go_to_text(editor, cursor)
+
+        if key_event.key() == Qt.Key_Backspace:
+            self.key_sequence = self.key_sequence[:-1]
+            status_bar.emit('SEARCH', self.key_sequence)
+            return True
+
+        return True
+
+    def go_to_text(self, editor: QPlainTextEdit, cursor: QTextCursor):
+        document = editor.document().toPlainText()
+        find = document.find(self.key_sequence.strip())
+        cursor.setPosition(find)
+        self.editor.setTextCursor(cursor)
+        self.key_sequence = ''
+        return self.exit_mode()
+
+    def exit_mode(self):
+        status_bar.emit('NORMAL', '')
+        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+        EditorState.mode = Modes.NORMAL
+        return True
+
+
 class NormalMode(QObject):
 
     def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
@@ -219,132 +345,6 @@ class NormalMode(QObject):
                 self.reset_key_sequence()
                 break
 
-        return True
-
-
-class InsertMode(QObject):
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorState.mode != Modes.INSERT:
-            return False
-
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
-            status_bar.emit('NORMAL', '')
-            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-            EditorState.mode = Modes.NORMAL
-            return True
-
-        return False
-
-
-class CommandMode(QObject):
-
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
-        self.key_sequence = ''
-
-    def execute_command(self, command: str):
-        # TODO: Add python command
-        # TODO: Add Nuke command
-
-        commands = {
-            'registers': lambda: print(Registers.get_all()),
-            'marks': lambda: print(Marks.get_all())
-        }
-        commands.get(command.strip(), lambda: print('Unknown command'))()
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorState.mode != Modes.COMMAND:
-            return False
-
-        return self.parse_keys(event) if event.type() == QEvent.KeyPress else True
-
-    def parse_keys(self, event: QEvent):
-
-        key_event = cast(QKeyEvent, event)
-        self.key_sequence += key_event.text()
-        status_bar.emit('COMMAND', self.key_sequence)
-
-        if key_event.key() == Qt.Key_Escape:
-            return self.exit_mode()
-
-        if key_event.key() == Qt.Key_Return:
-            self.execute_command(self.key_sequence)
-            self.key_sequence = ''
-            return self.exit_mode()
-
-        if key_event.key() == Qt.Key_Backspace:
-            self.key_sequence = self.key_sequence[:-1]
-            status_bar.emit('COMMAND', self.key_sequence)
-            return True
-
-        return True
-
-    def exit_mode(self):
-        status_bar.emit('NORMAL', '')
-        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-        EditorState.mode = Modes.NORMAL
-        return True
-
-
-class SearchMode(QObject):
-
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
-        self.key_sequence = ''
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorState.mode != Modes.SEARCH:
-            return False
-
-        return self.parse_keys(watched, event) if event.type() == QEvent.KeyPress else True
-
-    def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
-
-        cursor = editor.textCursor()
-        key_event = cast(QKeyEvent, event)
-        self.key_sequence += key_event.text()
-        status_bar.emit('SEARCH', self.key_sequence)
-
-        if key_event.key() == Qt.Key_Escape:
-            return self.exit_mode()
-
-        if key_event.key() == Qt.Key_Return:
-            return self.go_to_text(editor, cursor)
-
-        if key_event.key() == Qt.Key_Backspace:
-            self.key_sequence = self.key_sequence[:-1]
-            status_bar.emit('SEARCH', self.key_sequence)
-            return True
-
-        return True
-
-    def go_to_text(self, editor: QPlainTextEdit, cursor: QTextCursor):
-        document = editor.document().toPlainText()
-        find = document.find(self.key_sequence.strip())
-        cursor.setPosition(find)
-        self.editor.setTextCursor(cursor)
-        self.key_sequence = ''
-        return self.exit_mode()
-
-    def exit_mode(self):
-        status_bar.emit('NORMAL', '')
-        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-        EditorState.mode = Modes.NORMAL
         return True
 
 
