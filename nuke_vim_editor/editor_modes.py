@@ -1,10 +1,10 @@
-from typing import List, Union, Optional, cast
+import json
+from typing import Any, Dict, List, Union, Optional, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QTimer, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .marks import Marks
 from ._types import EventParams, HandlerType
 from .registers import Registers
 from .status_bar import status_bar
@@ -26,7 +26,9 @@ MODIFIERS = {
 }
 
 
-def extract_modifiers(modifiers: Union[Qt.KeyboardModifiers, Qt.KeyboardModifier]) -> List[str]:
+def extract_modifiers(
+    modifiers: Union[Qt.KeyboardModifiers, Qt.KeyboardModifier]
+) -> List[str]:
     return [
         name for name, modifier in MODIFIERS.items()
         if modifiers & modifier
@@ -126,9 +128,13 @@ class CommandMode(QObject):
 
         commands = {
             'registers': lambda: print(Registers.get_all()),
-            'marks': lambda: print(Marks.get_all())
+            'marks': self.get_marks
         }
         commands.get(command.strip(), lambda: print('Unknown command'))()
+
+    def get_marks(self):
+        with open('marks.json') as f:
+            print(json.load(f))
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):

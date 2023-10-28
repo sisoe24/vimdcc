@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import re
+import json
 from typing import Dict
 
 from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..marks import Marks
 from .._types import EventParams
 from ..registers import Registers
 from ..commands_core import Command
@@ -102,21 +102,37 @@ class SwapCaseHandler(BaseHandler):
 
 @register_normal_handler
 class MarksHandler(BaseHandler):
+    marks: Dict[str, int] = {}
+
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
+        # TODO: Expose this as a setting
+        if 'persistent_marks':
+            self._load_marks()
+        else:
+            self.marks = {}
+            self._save_marks()
+
+    def _load_marks(self):
+        with open('marks.json') as f:
+            self.marks = json.load(f)
+
+    def _save_marks(self):
+        with open('marks.json', 'w') as f:
+            json.dump(self.marks, f)
+
+    def _update_marks(self, key: str, pos: int):
+        self.marks[key] = pos
+        self._save_marks()
+
     def set_mark(self, key: str, params: EventParams):
-        Marks.add(key, {
-            'text': params.cursor.block().text(),
-            'position': params.cursor.position()
-        })
+        self._update_marks(key, params.cursor.position())
         return True
 
     def move_to_mark(self, key: str, params: EventParams):
-        mark = Marks.get(key)
-
-        if mark:
-            params.cursor.setPosition(mark['position'])
+        if self.marks.get(key):
+            params.cursor.setPosition(self.marks[key])
         else:
             params.status_bar.emit('NORMAL', f'{key} mark not set')
 
