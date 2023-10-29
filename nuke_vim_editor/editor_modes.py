@@ -1,9 +1,12 @@
 import json
+from bisect import bisect_left
 from typing import List, Union, Optional, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QTimer, QObject
 from PySide2.QtWidgets import QPlainTextEdit
+
+from nuke_vim_editor.commands.search import SearchCommand
 
 from .registers import Registers
 from .status_bar import status_bar
@@ -116,12 +119,18 @@ class CommandMode(QObject):
         return True
 
 
+Positions = List[int]
+
+
 class SearchMode(QObject):
+
+    search_registry: Positions = []
 
     def __init__(self, editor: QPlainTextEdit, parent=None):
         super().__init__(parent)
         self.editor = editor
         self.key_sequence = ''
+        self.search_command = SearchCommand(self.editor)
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
@@ -143,7 +152,7 @@ class SearchMode(QObject):
             return self.exit_mode()
 
         if key_event.key() == Qt.Key_Return:
-            return self.go_to_text(editor, cursor)
+            return self.go_to_text(cursor)
 
         if key_event.key() == Qt.Key_Backspace:
             self.key_sequence = self.key_sequence[:-1]
@@ -152,10 +161,15 @@ class SearchMode(QObject):
 
         return True
 
-    def go_to_text(self, editor: QPlainTextEdit, cursor: QTextCursor):
-        document = editor.document().toPlainText()
-        find = document.find(self.key_sequence.strip())
-        cursor.setPosition(find)
+    def go_to_text(self, cursor: QTextCursor):
+        self.search_command.find(self.key_sequence)
+        next_position = self.search_command.find_next_down(cursor.position())
+
+        if not next_position:
+            return True
+
+        cursor.setPosition(next_position)
+
         self.editor.setTextCursor(cursor)
         self.key_sequence = ''
         return self.exit_mode()

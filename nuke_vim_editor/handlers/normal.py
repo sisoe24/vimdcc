@@ -10,8 +10,7 @@ from ..base_command import Command
 from ..handler_base import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
-from ..commands.search import (SearchNext, SearchForward, SearchBackward,
-                               SearchPrevious, SearchUnderCursor)
+from ..commands.search import SearchCommand
 from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,
                                 MoveWordForward, MoveWordBackward,
@@ -287,22 +286,50 @@ class EditHandler(BaseHandler):
 
 @register_normal_handler
 class SearchHandler(BaseHandler):
-    last_match = None
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, Command] = {
-            '/': SearchForward(editor, 'NORMAL'),
-            '?': SearchBackward(editor, 'NORMAL'),
-            'n': SearchNext(editor, 'NORMAL'),
-            'N': SearchPrevious(editor, 'NORMAL'),
-            '*': SearchUnderCursor(editor, 'NORMAL'),
-            '#': SearchUnderCursor(editor, 'NORMAL')
+        self.commands = {
+            'n': self.search_down,
+            'N': self.search_up,
+            '*': self.search_down_under_cursor,
+            '#': self.search_up_under_cursor
         }
 
     def handle(self, params: EventParams) -> bool:
         command = self.commands.get(params.keys)
-        return command.execute(params) if command else False
+        return command(params) if command else False
+
+    def search_up(self, params: EventParams):
+        pos = SearchCommand.find_next_up(params.cursor.position())
+        if pos is None:
+            return False
+        params.cursor.setPosition(pos)
+        return True
+
+    def search_down(self, params: EventParams):
+        pos = SearchCommand.find_next_down(params.cursor.position())
+        if pos is None:
+            return False
+        params.cursor.setPosition(pos)
+        return True
+
+    def get_word_under_cursor(self, cursor: QTextCursor) -> str:
+        initial_position = cursor.position()
+        cursor.select(QTextCursor.WordUnderCursor)
+        text = cursor.selectedText()
+        cursor.setPosition(initial_position)
+        return text
+
+    def search_down_under_cursor(self, params: EventParams):
+        print('search up under cursor DOWN')
+        SearchCommand.find(self.get_word_under_cursor(params.cursor))
+        return self.search_down(params)
+
+    def search_up_under_cursor(self, params: EventParams):
+        print('search up under cursor UP')
+        SearchCommand.find(self.get_word_under_cursor(params.cursor))
+        return self.search_up(params)
 
 
 @register_normal_handler
@@ -411,14 +438,6 @@ class _SearchHandler(BaseHandler):
         modifiers = params.modifiers
         cursor = params.cursor
 
-        if key_sequence == '#':
-            self._find_word_in_document(cursor, 'up')
-            return True
-
-        if key_sequence == '*':
-            self._find_word_in_document(cursor, 'down')
-            return True
-
         if key_sequence.startswith('f') and len(key_sequence) == 2:
             return self.move_cursor(key_sequence, cursor, 'forward', stop_before=False)
 
@@ -437,10 +456,6 @@ class _SearchHandler(BaseHandler):
 
         if key_sequence == ',':
             self.repeat_last_search(cursor, reverse=True)
-            return True
-
-        if key_sequence == 'n':
-            print(self.last_word_under_cursor)
             return True
 
         return False

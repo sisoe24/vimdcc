@@ -84,7 +84,6 @@ class Registers:
         self._save()
 
     def get(self, name: RegisterName, key: str) -> Any:
-        print('➡ name :', name)
         return self._registers[name].get(key, '')
 
     def clear(self):
