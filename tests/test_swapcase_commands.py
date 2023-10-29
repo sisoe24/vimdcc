@@ -8,7 +8,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.handlers.normal import MotionHandler, SwapCaseHandler
-from nuke_vim_editor.event_parameters import EventParams
+from nuke_vim_editor.handler_parameters import EventParams
 
 
 @pytest.fixture()

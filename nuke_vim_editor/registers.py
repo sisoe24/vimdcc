@@ -1,4 +1,5 @@
-from typing import Dict
+import json
+from typing import Any, Dict, Literal, TypedDict
 
 from PySide2.QtGui import QClipboard
 
@@ -7,7 +8,7 @@ def increment(index: int) -> str:
     return chr(ord('a') + index - 9) if index >= 9 else str(index + 1)
 
 
-class Registers:
+class __Registers:
     _registers: Dict[str, str] = {}
     _register_index = 0
 
@@ -35,3 +36,58 @@ class Registers:
             cls._register_index += 1
 
         QClipboard().setText(text, QClipboard.Clipboard)
+
+
+class RegistersTypes(TypedDict):
+    named: Dict[str, str]
+    numbered: Dict[str, str]
+    last_search: Dict[str, str]
+    marks: Dict[str, int]
+
+
+RegisterName = Literal['named', 'numbered', 'last_search', 'marks']
+
+
+class Registers:
+    _registers: RegistersTypes = {
+        'named': {},
+        'numbered': {},
+        'last_search': {},
+        'marks': {},
+    }
+
+    def __new__(cls, *args: Any, **kwargs: Any):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(Registers, cls).__new__(
+                cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self):
+        # TODO: Expose this as a setting
+        if 'persistent_registers':
+            self._load()
+        else:
+            self.clear()
+
+    def _load(self):
+        with open('registers.json') as f:
+            data = json.load(f)
+            if data:
+                self._registers = data
+
+    def _save(self):
+        with open('registers.json', 'w') as f:
+            json.dump(self._registers, f)
+
+    def update(self, name: RegisterName, key: str, value: Any) -> None:
+        self._registers[name][key] = value
+        self._save()
+
+    def get(self, name: RegisterName, key: str) -> Any:
+        print('➡ name :', name)
+        return self._registers[name].get(key, '')
+
+    def clear(self):
+        for register in self._registers.values():
+            register.clear()
+        self._save()

@@ -12,12 +12,12 @@ class Modes(str, Enum):
     YANK = 'YANK'
 
 
-class _EditorState:
+class _EditorMode:
     _mode: Modes = Modes.NORMAL
 
     def __new__(cls):
         if hasattr(cls, '_instance') is False:
-            cls._instance = super(_EditorState, cls).__new__(cls)
+            cls._instance = super(_EditorMode, cls).__new__(cls)
         return cls._instance
 
     @property
@@ -29,4 +29,4 @@ class _EditorState:
         self._mode = mode
 
 
-EditorState = _EditorState()
+EditorMode = _EditorMode()

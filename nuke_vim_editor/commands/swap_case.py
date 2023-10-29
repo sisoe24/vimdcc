@@ -2,8 +2,8 @@ from typing import Literal
 
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command import Command
-from ..event_parameters import EventParams
+from ..base_command import Command
+from ..handler_parameters import EventParams
 
 SwapMode = Literal['swapcase', 'upper', 'lower']
 

@@ -27,7 +27,7 @@ def main():
     app.setFont(font)
 
     window = QMainWindow()
-    window.setGeometry(100, 100, 800, 600)
+    window.setGeometry(100, 100, 1000, 600)
 
     editor = QPlainTextEdit()
 

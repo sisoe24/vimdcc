@@ -1,7 +1,7 @@
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..handlers_core import BaseHandler, register_normal_handler
-from ..event_parameters import EventParams
+from ..handler_base import BaseHandler, register_normal_handler
+from ..handler_parameters import EventParams
 
 
 @register_normal_handler

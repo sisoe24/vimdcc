@@ -6,18 +6,20 @@ from typing import Dict
 from PySide2.QtGui import QTextCursor, QTextDocument
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command import Command
-from ..handlers_core import BaseHandler, register_normal_handler
+from ..base_command import Command
+from ..handler_base import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
+from ..commands.search import (SearchNext, SearchForward, SearchBackward,
+                               SearchPrevious, SearchUnderCursor)
 from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveWordLeft, MoveLineStart, MoveWordRight,
                                 MoveWordForward, MoveWordBackward,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
-from ..event_parameters import EventParams
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
+from ..handler_parameters import EventParams
 
 
 @register_normal_handler
@@ -150,7 +152,6 @@ class YankHandler(BaseHandler):
         cursor = params.cursor
         mode = params.mode
 
-        print('➡ key_sequence :', key_sequence)
         if key_sequence == 'y':
             if mode not in ['VISUAL', 'VISUAL_LINE', 'YANK']:
                 print('yank line')
@@ -286,6 +287,26 @@ class EditHandler(BaseHandler):
 
 @register_normal_handler
 class SearchHandler(BaseHandler):
+    last_match = None
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.commands: Dict[str, Command] = {
+            '/': SearchForward(editor, 'NORMAL'),
+            '?': SearchBackward(editor, 'NORMAL'),
+            'n': SearchNext(editor, 'NORMAL'),
+            'N': SearchPrevious(editor, 'NORMAL'),
+            '*': SearchUnderCursor(editor, 'NORMAL'),
+            '#': SearchUnderCursor(editor, 'NORMAL')
+        }
+
+    def handle(self, params: EventParams) -> bool:
+        command = self.commands.get(params.keys)
+        return command.execute(params) if command else False
+
+
+@register_normal_handler
+class _SearchHandler(BaseHandler):
     last_match = None
 
     def __init__(self, editor: QPlainTextEdit):

@@ -1,4 +1,4 @@
-from .event_parameters import EventParams
+from .handler_parameters import EventParams
 
 
 class Command:
