@@ -7,8 +7,6 @@ class Modes(str, Enum):
     VISUAL = 'VISUAL'
     VISUAL_LINE = 'VISUAL_LINE'
     COMMAND = 'COMMAND'
-    MARKS = 'MARKS'
-    SEARCH = 'SEARCH'
     YANK = 'YANK'
 
 

@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.handlers.normal import MarksHandler
-from nuke_vim_editor.handler_parameters import EventParams
+from nuke_vim_editor.handler_parameters import HandlerParams
 
 
 @pytest.fixture()
@@ -42,7 +42,7 @@ def test_set_mark(handler: MarksHandler, data: MotionTest) -> None:
     editor = handler.editor
     editor.setPlainText('foo\nbar\nfoo\nbar')
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys='',
         modifiers=[],

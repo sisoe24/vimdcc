@@ -8,7 +8,7 @@ from .registers import Registers
 from .status_bar import status_bar
 from .editor_modes import Modes
 from .editor_state import EditorMode
-from .handler_parameters import EventParams
+from .handler_parameters import HandlerParams
 
 HandlerType = Callable[[QPlainTextEdit], Any]
 
@@ -39,11 +39,11 @@ class BaseHandler(ABC):
         self.editor.setCursorWidth(2)
         self.editor.viewport().update()
 
-    def should_handle(self, params: EventParams) -> bool:
+    def should_handle(self, params: HandlerParams) -> bool:
         return True
 
     @abstractmethod
-    def handle(self, params: EventParams) -> bool:
+    def handle(self, params: HandlerParams) -> bool:
         """Handle the key sequence and return True if the key sequence was handled.
 
         If the key sequence was handled, the cursor will be updated and the key sequence will be reset.

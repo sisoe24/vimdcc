@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.handlers.normal import MotionHandler
-from nuke_vim_editor.handler_parameters import EventParams
+from nuke_vim_editor.handler_parameters import HandlerParams
 
 
 @pytest.fixture()
@@ -21,8 +21,8 @@ def handler(editor: QPlainTextEdit) -> MotionHandler:
 
 
 @pytest.fixture(scope='function')
-def params(editor: QPlainTextEdit) -> EventParams:
-    return EventParams(
+def params(editor: QPlainTextEdit) -> HandlerParams:
+    return HandlerParams(
         cursor=editor.textCursor(),
         keys='',
         modifiers=[],
@@ -72,7 +72,7 @@ def test_motion_no_select(
     editor = handler.editor
     editor.setPlainText(data.text)
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys=data.motion,
         modifiers=[],
@@ -127,7 +127,7 @@ def test_motion_select(
     editor = handler.editor
     editor.setPlainText(data.text)
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys=data.motion,
         modifiers=[],

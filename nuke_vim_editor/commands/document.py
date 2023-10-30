@@ -2,7 +2,7 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..base_command import Command
-from ..handler_parameters import EventParams
+from ..handler_parameters import HandlerParams
 
 
 class MoveDocumentUp(Command):
@@ -10,7 +10,7 @@ class MoveDocumentUp(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Start, params.anchor)
         return True
 
@@ -20,7 +20,7 @@ class MoveDocumentDown(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.End, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
@@ -32,7 +32,7 @@ class MoveParagraphUp(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
         document = self.editor.document()
         paragraphs_left = False
@@ -55,7 +55,7 @@ class MoveParagraphDown(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
         document = self.editor.document()
 

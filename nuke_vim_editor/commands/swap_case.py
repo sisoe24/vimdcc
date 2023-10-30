@@ -3,7 +3,7 @@ from typing import Literal
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..base_command import Command
-from ..handler_parameters import EventParams
+from ..handler_parameters import HandlerParams
 
 SwapMode = Literal['swapcase', 'upper', 'lower']
 
@@ -14,7 +14,7 @@ def create_swap_case_command(mode: SwapMode):
             self.editor = editor
             self.mode = mode
 
-        def execute(self, params: EventParams):
+        def execute(self, params: HandlerParams):
             cursor = params.cursor
             text = cursor.selectedText()
             cursor.removeSelectedText()

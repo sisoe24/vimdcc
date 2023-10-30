@@ -2,7 +2,7 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..base_command import Command
-from ..handler_parameters import EventParams
+from ..handler_parameters import HandlerParams
 
 
 class MoveWordForward(Command):
@@ -10,7 +10,7 @@ class MoveWordForward(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
 
         position = params.cursor.position()
@@ -28,7 +28,7 @@ class MoveWordForwardEnd(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
 
         cursor = params.cursor
         has_seen_alnum = False
@@ -55,7 +55,7 @@ class MoveWordForwardEnd(Command):
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
         return True
 
-    def move_to_next_end_word(self, params: EventParams):
+    def move_to_next_end_word(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
         params.cursor.movePosition(QTextCursor.EndOfWord, params.anchor)
         params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
@@ -66,7 +66,7 @@ class MoveWordBackward(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.PreviousWord, params.anchor)
 
         position = params.cursor.position()
@@ -84,7 +84,7 @@ class MoveWordLeft(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Left, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
@@ -96,7 +96,7 @@ class MoveWordRight(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Right, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
@@ -108,7 +108,7 @@ class MoveLineUp(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Up, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
@@ -120,7 +120,7 @@ class MoveLineDown(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Down, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
@@ -132,7 +132,7 @@ class MoveLineStart(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
         return True
 
@@ -142,7 +142,7 @@ class MoveLineEnd(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
@@ -154,7 +154,7 @@ class MoveToStartOfBlock(Command):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
         # Dont know if there is a better way to do this
         if params.cursor.block().text()[0] == ' ':

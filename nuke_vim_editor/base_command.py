@@ -1,6 +1,6 @@
-from .handler_parameters import EventParams
+from .handler_parameters import HandlerParams
 
 
 class Command:
-    def execute(self, params: EventParams) -> bool:
+    def execute(self, params: HandlerParams) -> bool:
         raise NotImplementedError

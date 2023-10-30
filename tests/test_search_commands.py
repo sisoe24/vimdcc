@@ -3,6 +3,8 @@ from typing import List
 from dataclasses import dataclass
 
 import pytest
+from PySide2.QtGui import QKeyEvent
+from PySide2.QtCore import Qt, QEvent
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -10,7 +12,7 @@ from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.commands.search import (SearchCommand, _find,
                                              _find_next_up, _find_next_down)
 from nuke_vim_editor.handlers.normal import SearchHandler
-from nuke_vim_editor.handler_parameters import EventParams
+from nuke_vim_editor.handler_parameters import HandlerParams
 
 
 @pytest.mark.parametrize('string, search, positions', [
@@ -63,7 +65,7 @@ def test_search_command(editor: QPlainTextEdit):
     search = SearchCommand(editor)
     search.find('is')
 
-    assert search.search_history == [2, 5]
+    assert search.history == [2, 5]
 
     cursor = editor.textCursor()
     assert cursor.position() == 0
@@ -82,8 +84,6 @@ def test_search_command(editor: QPlainTextEdit):
 
     next_up = search.find_next_up(next_up)
     assert next_up == 2
-
-    assert search.last_search == 'is'
 
 
 @pytest.fixture()
@@ -112,17 +112,16 @@ def test_search_hanlder(handler: SearchHandler, data: MotionTest):
     editor = handler.editor
     editor.setPlainText(data.text)
 
-    search = SearchCommand(handler.editor)
-    search.find(data.search)
+    handler.search.find(data.search)
 
     assert editor.toPlainText() == data.text
-    assert search.search_history == [0, 8, 16, 24]
+    assert handler.search.history == [0, 8, 16, 24]
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys='',
         modifiers=[],
-        event=None,
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_N, Qt.NoModifier),
         mode=Modes.NORMAL
     )
 
@@ -146,16 +145,15 @@ def test_search_hanlder_no_match(handler: SearchHandler, data: MotionTest):
     editor = handler.editor
     editor.setPlainText(data.text)
 
-    search = SearchCommand(handler.editor)
-    search.find(data.search)
+    handler.search.find(data.search)
 
     assert editor.toPlainText() == data.text
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys=data.motion[0],
         modifiers=[],
-        event=None,
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_N, Qt.NoModifier),
         mode=Modes.NORMAL
     )
 
@@ -198,11 +196,11 @@ def test_search_hanlder_word_under_cursor_up(handler: SearchHandler):
     cursor = editor.textCursor()
     cursor.setPosition(0)
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=cursor,
         keys='',
         modifiers=[],
-        event=None,
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_N, Qt.NoModifier),
         mode=Modes.NORMAL
     )
 

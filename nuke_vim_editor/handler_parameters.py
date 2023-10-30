@@ -8,7 +8,7 @@ from .editor_state import Modes
 
 
 @dataclass
-class EventParams:
+class HandlerParams:
     cursor: QTextCursor
     event: QKeyEvent
 

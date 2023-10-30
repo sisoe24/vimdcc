@@ -4,6 +4,7 @@ import re
 from typing import Dict
 
 from PySide2.QtGui import QTextCursor, QTextDocument
+from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..base_command import Command
@@ -18,7 +19,10 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
-from ..handler_parameters import EventParams
+from ..handler_parameters import HandlerParams
+
+# TODO: Fix SearchHandler Tests
+# TODO: Add SearchLineHandler Tests
 
 
 @register_normal_handler
@@ -38,7 +42,7 @@ class MotionHandler(BaseHandler):
             '^': MoveToStartOfBlock(editor, 'NORMAL'),
         }
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         command = self.commands.get(params.keys)
         return command.execute(params) if command else False
 
@@ -54,7 +58,7 @@ class DocumentHandler(BaseHandler):
             '}': MoveParagraphDown(editor, 'NORMAL'),
         }
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         command = self.commands.get(params.keys)
         return command.execute(params) if command else False
 
@@ -72,7 +76,7 @@ class InsertHandler(BaseHandler):
             'O': InsertO(editor, 'NORMAL'),
         }
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         command = self.commands.get(params.keys)
         if command and command.execute(params):
             super().to_insert_mode()
@@ -91,7 +95,7 @@ class SwapCaseHandler(BaseHandler):
             'gU': SwapUpper(editor, 'NORMAL'),
         }
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         command = self.commands.get(params.keys)
         if command and command.execute(params):
             super().to_normal_mode()
@@ -104,11 +108,11 @@ class MarksHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
 
-    def set_mark(self, key: str, params: EventParams):
+    def set_mark(self, key: str, params: HandlerParams):
         self.registers.update('marks', key, params.cursor.position())
         return True
 
-    def move_to_mark(self, key: str, params: EventParams):
+    def move_to_mark(self, key: str, params: HandlerParams):
         pos = self.registers.get('marks', key)
         if pos:
             params.cursor.setPosition(pos)
@@ -117,7 +121,7 @@ class MarksHandler(BaseHandler):
 
         return True
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         key_sequence = params.keys
 
         if key_sequence.startswith('m') and len(key_sequence) == 2:
@@ -127,6 +131,153 @@ class MarksHandler(BaseHandler):
             return self.move_to_mark(key_sequence[1], params)
 
         return False
+
+
+@register_normal_handler
+class SearchHandler(BaseHandler):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.commands = {
+            'n': self.go_down,
+            'N': self.go_up,
+            '*': self.search_down_under_cursor,
+            '#': self.search_up_under_cursor,
+        }
+        self.search = SearchCommand(editor)
+
+    def handle(self, params: HandlerParams) -> bool:
+        key = params.event.key()
+        key_sequence = params.keys
+
+        if key_sequence.startswith('?') and key == 16777220:
+            return self.search_word_up(params, key_sequence[1:])
+
+        if key_sequence.startswith('/') and key == 16777220:
+            return self.search_word_down(params, key_sequence[1:])
+
+        command = self.commands.get(params.keys)
+        return command(params) if command else False
+
+    def get_word_under_cursor(self, cursor: QTextCursor) -> str:
+        initial_position = cursor.position()
+        cursor.select(QTextCursor.WordUnderCursor)
+        text = cursor.selectedText()
+        cursor.setPosition(initial_position)
+        return text
+
+    def _search_down(self, params: HandlerParams, key: str):
+        self.search.find(key)
+        return self.go_down(params)
+
+    def _search_up(self, params: HandlerParams, key: str):
+        self.search.find(key)
+        return self.go_up(params)
+
+    def search_down_under_cursor(self, params: HandlerParams):
+        return self._search_down(params, self.get_word_under_cursor(params.cursor))
+
+    def search_up_under_cursor(self, params: HandlerParams):
+        return self._search_up(params, self.get_word_under_cursor(params.cursor))
+
+    def search_word_up(self, params: HandlerParams, key: str):
+        return self._search_up(params, key)
+
+    def search_word_down(self, params: HandlerParams, key: str):
+        return self._search_down(params, key)
+
+    def go_up(self, params: HandlerParams):
+        pos = self.search.find_next_up(params.cursor.position())
+        if pos is not None:
+            params.cursor.setPosition(pos)
+        return True
+
+    def go_down(self, params: HandlerParams):
+        pos = self.search.find_next_down(params.cursor.position())
+        if pos is not None:
+            params.cursor.setPosition(pos)
+        return True
+
+
+@register_normal_handler
+class SearchLineHandler(BaseHandler):
+    last_match = None
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.search = SearchCommand(editor)
+        self.commands = {
+            ';': self.search_forward_again,
+            ',': self.search_backward_again,
+        }
+
+    def search_forward(self, params: HandlerParams, key: str):
+        cursor = params.cursor
+        self.search.find(key)
+        pos = self.search.find_next_down(cursor.position())
+        if pos is None:
+            return False
+        cursor.setPosition(pos)
+        return True
+
+    def search_backward(self, params: HandlerParams, key: str):
+        cursor = params.cursor
+        self.search.find(key)
+        pos = self.search.find_next_up(cursor.position())
+        if pos is None:
+            return False
+        cursor.setPosition(pos)
+        return True
+
+    def search_forward_before(self, params: HandlerParams, key: str):
+        if not self.search_forward(params, key):
+            return False
+        params.cursor.movePosition(QTextCursor.PreviousCharacter)
+        return True
+
+    def search_backward_before(self, params: HandlerParams, key: str):
+        if not self.search_backward(params, key):
+            return False
+        params.cursor.movePosition(QTextCursor.NextCharacter)
+        return True
+
+    def search_forward_again(self, params: HandlerParams):
+        pos = self.search.find_next_down(params.cursor.position())
+        if pos is None:
+            return False
+        params.cursor.setPosition(pos)
+        return True
+
+    def search_backward_again(self, params: HandlerParams):
+        pos = self.search.find_next_up(params.cursor.position())
+        if pos is None:
+            return False
+        params.cursor.setPosition(pos)
+        return True
+
+    def handle(self, params: HandlerParams):
+        keys = params.keys
+
+        if keys.startswith('f') and len(keys) == 2:
+            self.search_forward(params, keys[1])
+            return True
+
+        if keys.startswith('t') and len(keys) == 2:
+            self.search_forward_before(params, keys[1])
+            return True
+
+        if keys.startswith('F') and len(keys) == 2:
+            self.search_backward(params, keys[1])
+            return True
+
+        if keys.startswith('T') and len(keys) == 2:
+            self.search_backward_before(params, keys[1])
+            return True
+
+        commands = self.commands.get(keys)
+        return commands(params) if commands else False
+
+## TODO: Implement ###
 
 
 @register_normal_handler
@@ -145,10 +296,11 @@ class YankHandler(BaseHandler):
         self.registers.update('named', '0', cursor.selectedText())
         return True
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
 
         key_sequence = params.keys
         cursor = params.cursor
+        modifiers = params.modifiers
         mode = params.mode
 
         if key_sequence == 'y':
@@ -157,6 +309,18 @@ class YankHandler(BaseHandler):
                 return self.yank_line(cursor)
 
             self.registers.update('named', '0', cursor.blockNumber())
+            return True
+
+        if key_sequence == 'u':
+            self.editor.undo()
+            return True
+
+        if 'ctrl' in modifiers and key_sequence == 'r':
+            self.editor.redo()
+            return True
+
+        if key_sequence == 'p':
+            self.editor.paste()
             return True
 
         return False
@@ -172,19 +336,19 @@ class VisualEditHandler(BaseHandler):
             'd': self.delete_text,
         }
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
         if not params.visual:
             return False
 
         command = self.command_map.get(params.keys)
         return command(params) if command else False
 
-    def delete_text(self, params: EventParams) -> bool:
+    def delete_text(self, params: HandlerParams) -> bool:
         params.cursor.removeSelectedText()
         super().to_normal_mode()
         return True
 
-    def cut_text(self, params: EventParams) -> bool:
+    def cut_text(self, params: HandlerParams) -> bool:
         params.cursor.removeSelectedText()
         super().to_insert_mode()
         return True
@@ -209,7 +373,7 @@ class EditHandler(BaseHandler):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         cursor.removeSelectedText()
 
-    def handle(self, params: EventParams):
+    def handle(self, params: HandlerParams):
 
         key_sequence = params.keys
         modifiers = params.modifiers
@@ -279,183 +443,6 @@ class EditHandler(BaseHandler):
                 cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
                 cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
                 cursor.removeSelectedText()
-            return True
-
-        return False
-
-
-@register_normal_handler
-class SearchHandler(BaseHandler):
-
-    def __init__(self, editor: QPlainTextEdit):
-        super().__init__(editor)
-        self.commands = {
-            'n': self.search_down,
-            'N': self.search_up,
-            '*': self.search_down_under_cursor,
-            '#': self.search_up_under_cursor
-        }
-
-    def handle(self, params: EventParams) -> bool:
-        command = self.commands.get(params.keys)
-        return command(params) if command else False
-
-    def search_up(self, params: EventParams):
-        pos = SearchCommand.find_next_up(params.cursor.position())
-        if pos is None:
-            return False
-        params.cursor.setPosition(pos)
-        return True
-
-    def search_down(self, params: EventParams):
-        pos = SearchCommand.find_next_down(params.cursor.position())
-        if pos is None:
-            return False
-        params.cursor.setPosition(pos)
-        return True
-
-    def get_word_under_cursor(self, cursor: QTextCursor) -> str:
-        initial_position = cursor.position()
-        cursor.select(QTextCursor.WordUnderCursor)
-        text = cursor.selectedText()
-        cursor.setPosition(initial_position)
-        return text
-
-    def search_down_under_cursor(self, params: EventParams):
-        print('search up under cursor DOWN')
-        SearchCommand.find(self.get_word_under_cursor(params.cursor))
-        return self.search_down(params)
-
-    def search_up_under_cursor(self, params: EventParams):
-        print('search up under cursor UP')
-        SearchCommand.find(self.get_word_under_cursor(params.cursor))
-        return self.search_up(params)
-
-
-@register_normal_handler
-class _SearchHandler(BaseHandler):
-    last_match = None
-
-    def __init__(self, editor: QPlainTextEdit):
-        super().__init__(editor)
-        self.last_search_char = None
-        self.last_search_direction = None
-        self.last_search_stop_before = None
-        self.last_word_under_cursor = None
-
-    def _find_word_in_line(self, cursor: QTextCursor, document: QTextDocument, line_number: int, word: str):
-        line = document.findBlockByLineNumber(line_number)
-        if word in line.text():
-            get_word_pos = line.text().find(word)
-            cursor.setPosition(line.position() + get_word_pos)
-            self.editor.setTextCursor(cursor)
-            return True
-        return False
-
-    def _find_word_in_document(self, cursor: QTextCursor, direction: str):
-        cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
-        cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-
-        word_under_cursor = cursor.selectedText()
-        self.last_word_under_cursor = word_under_cursor
-        document = self.editor.document()
-        current_line = cursor.blockNumber()
-
-        if direction == 'up':
-            line_range = range(current_line - 1, -1, -1)
-            fallback_range = range(document.lineCount() - 1, current_line, -1)
-        else:  # direction == "down"
-            line_range = range(current_line + 1, document.lineCount() + 1)
-            fallback_range = range(0, current_line)
-
-        for i in line_range:
-            if self._find_word_in_line(cursor, document, i, word_under_cursor):
-                return True
-
-        for i in fallback_range:
-            if self._find_word_in_line(cursor, document, i, word_under_cursor):
-                return True
-
-        return False
-
-    def move_cursor(self, key_sequence, cursor, direction='forward', stop_before=False):
-        if len(key_sequence) == 2:
-            target_char = key_sequence[1]
-            cursor_position = cursor.position()
-            block_position = cursor.block().position()
-
-            # Calculate the relative cursor position within the current line
-            relative_cursor_position = cursor_position - block_position
-
-            # Get the text of the current line
-            current_line = cursor.block().text()
-
-            if direction == 'forward':
-                # Only consider the part of the line after the cursor
-                line_to_search = current_line[relative_cursor_position + 1:]
-                find_result = line_to_search.find(target_char)
-            else:
-                # Only consider the part of the line before the cursor
-                line_to_search = current_line[:relative_cursor_position]
-                find_result = line_to_search.rfind(target_char)
-
-            if find_result == -1:
-                return False
-
-            # Calculate the new cursor position in the context of the entire document
-            if direction == 'forward':
-                new_cursor_position = block_position + relative_cursor_position + 1 + find_result
-            else:
-                new_cursor_position = block_position + find_result
-
-            if stop_before and direction == 'forward':
-                new_cursor_position -= 1
-            elif stop_before and direction == 'backward':
-                new_cursor_position += 1
-
-            self.last_search_char = target_char
-            self.last_search_direction = direction
-            self.last_search_stop_before = stop_before
-
-            cursor.setPosition(new_cursor_position)
-            return True
-        return False
-
-    def repeat_last_search(self, cursor, reverse=False):
-        if self.last_search_char is None:
-            return False  # No previous search to repeat
-
-        direction = self.last_search_direction
-        if reverse:
-            direction = 'backward' if direction == 'forward' else 'forward'
-
-        key_sequence = ' ' + self.last_search_char  # Placeholder for the first character
-        return self.move_cursor(key_sequence, cursor, direction, self.last_search_stop_before)
-
-    def handle(self, params: EventParams):
-
-        key_sequence = params.keys
-        modifiers = params.modifiers
-        cursor = params.cursor
-
-        if key_sequence.startswith('f') and len(key_sequence) == 2:
-            return self.move_cursor(key_sequence, cursor, 'forward', stop_before=False)
-
-        if key_sequence.startswith('F') and len(key_sequence) == 2:
-            return self.move_cursor(key_sequence, cursor, 'backward', stop_before=False)
-
-        if key_sequence.startswith('t') and len(key_sequence) == 2:
-            return self.move_cursor(key_sequence, cursor, 'forward', stop_before=True)
-
-        if key_sequence.startswith('T') and len(key_sequence) == 2:
-            return self.move_cursor(key_sequence, cursor, 'backward', stop_before=True)
-
-        if key_sequence == ';':
-            self.repeat_last_search(cursor, reverse=False)
-            return True
-
-        if key_sequence == ',':
-            self.repeat_last_search(cursor, reverse=True)
             return True
 
         return False

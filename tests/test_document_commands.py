@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from nuke_vim_editor.editor_modes import Modes
 from nuke_vim_editor.handlers.normal import DocumentHandler
-from nuke_vim_editor.handler_parameters import EventParams
+from nuke_vim_editor.handler_parameters import HandlerParams
 
 
 @pytest.fixture()
@@ -42,7 +42,7 @@ def test_move_document_no_selection(handler: DocumentHandler, data: MotionTest) 
     editor = handler.editor
     editor.setPlainText(data.text)
 
-    params = EventParams(
+    params = HandlerParams(
         cursor=editor.textCursor(),
         keys=data.motion,
         modifiers=[],
