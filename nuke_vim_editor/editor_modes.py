@@ -72,7 +72,7 @@ class CommandMode(QObject):
         # TODO: Add clear marks
 
         commands = {
-            'registers': lambda: print(Registers().get_register('marks')),
+            'registers': lambda: print(Registers()._registers),
             'marks': lambda: print(Registers().get_register('marks')),
         }
         commands.get(command.strip(), lambda: print('Unknown command'))()
