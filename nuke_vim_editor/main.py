@@ -11,12 +11,9 @@ for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
 
-def read_sampletext():
-    with open('sampletext.txt', 'r') as f:
+def read_sample():
+    with open('sample.txt', 'r') as f:
         return f.read()
-
-
-sampletext = read_sampletext()
 
 
 def main():
@@ -31,7 +28,7 @@ def main():
 
     editor = QPlainTextEdit()
 
-    editor.setPlainText(sampletext)
+    editor.setPlainText(read_sample())
     editor.setCursorWidth(editor.fontMetrics().width(' '))
     window.setCentralWidget(editor)
 
