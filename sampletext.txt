@@ -1,7 +1,0 @@
-foo bar foo bar
-0123456789A
-
-another test
-0123456789B
-
-test
