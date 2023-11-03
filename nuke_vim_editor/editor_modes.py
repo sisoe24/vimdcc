@@ -72,14 +72,10 @@ class CommandMode(QObject):
         # TODO: Add clear marks
 
         commands = {
-            'registers': lambda: print(Registers.get_all()),
-            'marks': self.get_marks
+            'registers': lambda: print(Registers().get_register('marks')),
+            'marks': lambda: print(Registers().get_register('marks')),
         }
         commands.get(command.strip(), lambda: print('Unknown command'))()
-
-    def get_marks(self):
-        with open('marks.json') as f:
-            print(json.load(f))
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
