@@ -86,6 +86,9 @@ class Registers:
     def get(self, name: RegisterName, key: str) -> Any:
         return self._registers[name].get(key, '')
 
+    def get_register(self, name: RegisterName) -> Dict[str, Any]:
+        return self._registers[name]
+
     def clear(self):
         for register in self._registers.values():
             register.clear()
