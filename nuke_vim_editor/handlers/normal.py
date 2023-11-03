@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-from typing import Dict
+from typing import Dict, Optional
 
-from PySide2.QtGui import QTextCursor, QTextDocument
+from PySide2.QtGui import QTextCursor
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
@@ -201,7 +201,6 @@ class SearchHandler(BaseHandler):
 
 @register_normal_handler
 class SearchLineHandler(BaseHandler):
-    last_match = None
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -211,23 +210,23 @@ class SearchLineHandler(BaseHandler):
             ',': self.search_backward_again,
         }
 
-    def search_forward(self, params: HandlerParams, key: str):
-        cursor = params.cursor
-        self.search.find(key)
-        pos = self.search.find_next_down(cursor.position())
+    def _set_cursor(self, cursor: QTextCursor, pos: Optional[int]):
         if pos is None:
             return False
         cursor.setPosition(pos)
         return True
 
-    def search_backward(self, params: HandlerParams, key: str):
-        cursor = params.cursor
+    def search_forward(self, params: HandlerParams, key: str):
         self.search.find(key)
+        cursor = params.cursor
+        pos = self.search.find_next_down(cursor.position())
+        return self._set_cursor(cursor, pos)
+
+    def search_backward(self, params: HandlerParams, key: str):
+        self.search.find(key)
+        cursor = params.cursor
         pos = self.search.find_next_up(cursor.position())
-        if pos is None:
-            return False
-        cursor.setPosition(pos)
-        return True
+        return self._set_cursor(cursor, pos)
 
     def search_forward_before(self, params: HandlerParams, key: str):
         if not self.search_forward(params, key):
@@ -243,17 +242,11 @@ class SearchLineHandler(BaseHandler):
 
     def search_forward_again(self, params: HandlerParams):
         pos = self.search.find_next_down(params.cursor.position())
-        if pos is None:
-            return False
-        params.cursor.setPosition(pos)
-        return True
+        return self._set_cursor(params.cursor, pos)
 
     def search_backward_again(self, params: HandlerParams):
         pos = self.search.find_next_up(params.cursor.position())
-        if pos is None:
-            return False
-        params.cursor.setPosition(pos)
-        return True
+        return self._set_cursor(params.cursor, pos)
 
     def handle(self, params: HandlerParams):
         keys = params.keys
