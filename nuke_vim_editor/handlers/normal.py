@@ -21,9 +21,6 @@ from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
 from ..handler_parameters import HandlerParams
 
-# TODO: Fix SearchHandler Tests
-# TODO: Add SearchLineHandler Tests
-
 
 @register_normal_handler
 class MotionHandler(BaseHandler):
