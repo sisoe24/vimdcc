@@ -7,7 +7,7 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..base_command import Command
+from ..command_base import Command
 from ..handler_base import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)

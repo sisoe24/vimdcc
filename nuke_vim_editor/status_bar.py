@@ -3,7 +3,7 @@ from typing import Optional
 from PySide2.QtWidgets import QStatusBar
 
 
-class _StatusBar:
+class StatusBar:
     status_bar: Optional[QStatusBar] = None
 
     @classmethod
@@ -21,4 +21,4 @@ class _StatusBar:
         return cls.status_bar.currentMessage() if cls.status_bar else ''
 
 
-status_bar = _StatusBar()
+status_bar = StatusBar()

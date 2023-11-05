@@ -5,8 +5,6 @@ from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
-from nuke_vim_editor.commands.search import SearchCommand
-
 from .registers import Registers
 from .status_bar import status_bar
 from .editor_state import Modes, EditorMode
