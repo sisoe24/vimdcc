@@ -187,6 +187,43 @@ def test_search_hanlder_word_under_cursor(
     assert handler.get_word_under_cursor(cursor) == word
 
 
+def test_search_hanlder_search(handler: SearchHandler):
+    editor = handler.editor
+    editor.setPlainText('foo bar foo bar foo bar foo')
+
+    SearchCommand(handler.editor)
+
+    cursor = editor.textCursor()
+    cursor.setPosition(0)
+
+    params = HandlerParams(
+        cursor=cursor,
+        keys='?',
+        modifiers=[],
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier),
+        mode=Modes.NORMAL
+    )
+
+    params.keys += 'foo'
+    handler.handle(params)
+
+    # go back
+    assert params.cursor.position() == 24
+
+    params = HandlerParams(
+        cursor=cursor,
+        keys='/',
+        modifiers=[],
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier),
+        mode=Modes.NORMAL
+    )
+
+    # go forward
+    params.keys += 'foo'
+    handler.handle(params)
+    assert params.cursor.position() == 0
+
+
 def test_search_hanlder_word_under_cursor_up(handler: SearchHandler):
     editor = handler.editor
     editor.setPlainText('foo bar foo bar foo bar foo')
@@ -227,3 +264,41 @@ def test_search_hanlder_word_under_cursor_up(handler: SearchHandler):
 
     handler.search_up_under_cursor(params)
     assert params.cursor.position() == 16
+
+
+def test_search_hanlder_go_next_previous(handler: SearchHandler):
+    editor = handler.editor
+    editor.setPlainText('foo bar foo bar foo bar foo')
+
+    word = 'foo'
+
+    SearchCommand(handler.editor)
+
+    cursor = editor.textCursor()
+    cursor.setPosition(0)
+
+    params = HandlerParams(
+        cursor=cursor,
+        keys='',
+        modifiers=[],
+        event=QKeyEvent(QEvent.KeyPress, Qt.Key_N, Qt.NoModifier),
+        mode=Modes.NORMAL
+    )
+
+    handler.search_word_down(params, word)
+
+    assert params.cursor.position() == 8
+
+    handler.search_word_down(params, word)
+    assert params.cursor.position() == 16
+
+    handler.search_word_down(params, word)
+    assert params.cursor.position() == 24
+
+    handler.search_word_down(params, word)
+    assert params.cursor.position() == 0
+
+    handler.search_word_up(params, word)
+    assert params.cursor.position() == 24
+
+    assert handler.search.history == [0, 8, 16, 24]
