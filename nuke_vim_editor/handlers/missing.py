@@ -13,7 +13,7 @@ class MissingHandler(BaseHandler):
     def handle(self, params: HandlerParams):
 
         missing = [
-            'p', 'P', 'u', 'U', 'r', 'R', '<<', '>>', 'W', 'E', 'B', '.', 'zz',
+            'p', 'P', 'u', 'U', 'R', '<<', '>>', 'W', 'E', 'B', '.', 'zz',
         ]
 
         key_sequence = params.keys
