@@ -11,7 +11,7 @@ from PySide2.QtWidgets import (QWidget, QLineEdit, QSplitter, QTextEdit,
 def get_script_editor():
     se = None
     for widget in QApplication.allWidgets():
-        if "scripteditor.1" in widget.objectName():
+        if 'scripteditor.1' in widget.objectName():
             se = widget
     return se
 
@@ -39,6 +39,6 @@ input.setPlainText("nuke.createNode('Read')")
 
 input.setCursorWidth(10)
 
-input.setPlainText(f"{random.random()}")
-input.appendPlainText(f"{random.random()}")
-input.appendPlainText(f"{random.random()}")
+input.setPlainText(f'{random.random()}')
+input.appendPlainText(f'{random.random()}')
+input.appendPlainText(f'{random.random()}')
