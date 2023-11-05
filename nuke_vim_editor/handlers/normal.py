@@ -267,8 +267,6 @@ class SearchLineHandler(BaseHandler):
         commands = self.commands.get(keys)
         return commands(params) if commands else False
 
-## TODO: Implement ###
-
 
 @register_normal_handler
 class YankHandler(BaseHandler):
@@ -348,91 +346,69 @@ class VisualEditHandler(BaseHandler):
 class EditHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self.commands = {
+            'x': self._delete_char,
+            'X': self._delete_char_before,
+            'J': self._join_lines,
+            's': self._delete_char_insert,
+            'S': self._delete_line_insert,
+            'cc': self._delete_line_insert,
+            'C': self._delete_from_cursor_insert,
+            'D': self._delete_from_cursor,
+            'dd': self._delete_line,
+        }
+
+    def _delete_from_cursor(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+        return True
+
+    def _delete_from_cursor_insert(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        self._delete_from_cursor(cursor)
+        return True
+
+    def _delete_char(self, cursor: QTextCursor):
+        cursor.deleteChar()
+        return True
+
+    def _delete_char_before(self, cursor: QTextCursor):
+        cursor.movePosition(QTextCursor.PreviousCharacter)
+        cursor.deleteChar()
+        return True
+
+    def _delete_char_insert(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        cursor.deleteChar()
+        return True
+
+    def _replace_char(self, cursor: QTextCursor, key: str):
+
+        cursor.movePosition(QTextCursor.NextCharacter)
+        cursor.deletePreviousChar()
+        cursor.insertText(key)
+        return True
 
     def _delete_line(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         cursor.removeSelectedText()
+        return True
 
-    def _delete_word(self, cursor: QTextCursor):
-        cursor.movePosition(QTextCursor.StartOfWord, QTextCursor.MoveAnchor)
-        cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
-        cursor.removeSelectedText()
+    def _delete_line_insert(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        self._delete_line(cursor)
+        return True
 
-    def _delete_from_cursor(self, cursor: QTextCursor):
-        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        cursor.removeSelectedText()
+    def _join_lines(self, cursor: QTextCursor):
+        print('join lines')
+        return True
 
     def handle(self, params: HandlerParams):
+        keys = params.keys
 
-        key_sequence = params.keys
-        modifiers = params.modifiers
-        cursor = params.cursor
+        if keys.startswith('r') and len(keys) == 2:
+            return self._replace_char(params.cursor, keys[1])
 
-        select = (
-            QTextCursor.KeepAnchor
-            if params.visual
-            else QTextCursor.MoveAnchor
-        )
-
-        if key_sequence == 'dd':
-            self._delete_line(cursor)
-            return True
-
-        if key_sequence == 'dw':
-            self._delete_word(cursor)
-            return True
-
-        if key_sequence == 'cc' or key_sequence == 'S' and 'shift' in modifiers:
-            super().to_insert_mode()
-            self._delete_line(cursor)
-            return True
-
-        if key_sequence == 'cw':
-            super().to_insert_mode()
-            self._delete_word(cursor)
-            return True
-
-        if key_sequence == 'C' and 'shift' in modifiers:
-            super().to_insert_mode()
-            self._delete_from_cursor(cursor)
-            return True
-
-        if key_sequence == 'D' and 'shift' in modifiers:
-            self._delete_from_cursor(cursor)
-            return True
-
-        if key_sequence == 's':
-            super().to_insert_mode()
-            cursor.deleteChar()
-            return True
-
-        if key_sequence == 'x':
-            cursor.deleteChar()
-            return True
-
-        if key_sequence == 'J':
-            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.MoveAnchor)
-            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
-            cursor.movePosition(QTextCursor.EndOfWord, QTextCursor.KeepAnchor)
-            cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
-            cursor.insertText(' ')
-            return True
-
-        if key_sequence.startswith('r') and len(key_sequence) == 2:
-            cursor.movePosition(QTextCursor.NextCharacter)
-            cursor.deletePreviousChar()
-            cursor.insertText(key_sequence[1])
-            return True
-
-        count = re.search(r'd(\d+)\w', key_sequence)
-        if count:
-            for _ in range(int(count[1])):
-                cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-                cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-                cursor.removeSelectedText()
-            return True
-
-        return False
+        commands = self.commands.get(keys)
+        return commands(params.cursor) if commands else False
