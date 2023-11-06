@@ -20,6 +20,10 @@ class MoveWordForward(Command):
 
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
+
         return True
 
 
@@ -28,7 +32,13 @@ class MoveWordForwardEnd(Command):
         self.editor = editor
         self.mode = mode
 
+    def move_to_next_end_word(self, params: HandlerParams):
+        params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
+        params.cursor.movePosition(QTextCursor.EndOfWord, params.anchor)
+        params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
+
     def execute(self, params: HandlerParams) -> bool:
+        # BUG: e motion This is not working properly
 
         cursor = params.cursor
         has_seen_alnum = False
@@ -53,12 +63,11 @@ class MoveWordForwardEnd(Command):
             params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
         elif params.mode in ['VISUAL', 'YANK']:
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
-        return True
 
-    def move_to_next_end_word(self, params: HandlerParams):
-        params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
-        params.cursor.movePosition(QTextCursor.EndOfWord, params.anchor)
-        params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
+            params.cursor.removeSelectedText()
+        return True
 
 
 class MoveWordBackward(Command):
@@ -76,6 +85,10 @@ class MoveWordBackward(Command):
 
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
+
         return True
 
 
@@ -88,6 +101,9 @@ class MoveWordLeft(Command):
         params.cursor.movePosition(QTextCursor.Left, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -100,6 +116,8 @@ class MoveWordRight(Command):
         params.cursor.movePosition(QTextCursor.Right, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -112,6 +130,8 @@ class MoveLineUp(Command):
         params.cursor.movePosition(QTextCursor.Up, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -124,6 +144,8 @@ class MoveLineDown(Command):
         params.cursor.movePosition(QTextCursor.Down, params.anchor)
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -134,6 +156,8 @@ class MoveLineStart(Command):
 
     def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -146,6 +170,8 @@ class MoveLineEnd(Command):
         params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -159,4 +185,6 @@ class MoveToStartOfBlock(Command):
         # Dont know if there is a better way to do this
         if params.cursor.block().text()[0] == ' ':
             params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True

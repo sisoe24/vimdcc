@@ -12,6 +12,8 @@ class MoveDocumentUp(Command):
 
     def execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Start, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -24,6 +26,8 @@ class MoveDocumentDown(Command):
         params.cursor.movePosition(QTextCursor.End, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
         return True
 
 
@@ -46,6 +50,9 @@ class MoveParagraphUp(Command):
 
         if not paragraphs_left:
             cursor.movePosition(QTextCursor.Start, params.anchor)
+
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
 
         return True
 
@@ -71,5 +78,8 @@ class MoveParagraphDown(Command):
             cursor.movePosition(QTextCursor.End, params.anchor)
             if not params.visual:
                 cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
+
+        if params.mode in ['DELETE', 'DELETE_INSERT']:
+            params.cursor.removeSelectedText()
 
         return True

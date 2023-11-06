@@ -20,11 +20,11 @@ def main():
     app = QApplication([])
     font = app.font()
     font.setFamilies(['JetBrainsMono Nerd Font', 'Courier'])
-    font.setPixelSize(30)
+    font.setPixelSize(25)
     app.setFont(font)
 
     window = QMainWindow()
-    window.setGeometry(100, 100, 1000, 600)
+    window.setGeometry(100, 100, 1000, 1000)
 
     editor = QPlainTextEdit()
 

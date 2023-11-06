@@ -8,6 +8,8 @@ class Modes(str, Enum):
     VISUAL_LINE = 'VISUAL_LINE'
     COMMAND = 'COMMAND'
     YANK = 'YANK'
+    DELETE = 'DELETE'
+    DELETE_INSERT = 'DELETE_INSERT'
 
 
 class _EditorMode:

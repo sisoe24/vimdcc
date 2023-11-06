@@ -316,6 +316,11 @@ class YankHandler(BaseHandler):
 
 @register_normal_handler
 class VisualEditHandler(BaseHandler):
+    """Visual mode edit handler.
+
+    Although it's called visual edit handler, it handles the commands from the
+    NORMAL mode. I dont have enough reasons to create a new mode for this.
+    """
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -325,7 +330,7 @@ class VisualEditHandler(BaseHandler):
         }
 
     def handle(self, params: HandlerParams):
-        if not params.visual:
+        if params.mode not in ['VISUAL', 'VISUAL_LINE']:
             return False
 
         command = self.command_map.get(params.keys)
@@ -349,7 +354,6 @@ class EditHandler(BaseHandler):
         self.commands = {
             'x': self._delete_char,
             'X': self._delete_char_before,
-            'J': self._join_lines,
             's': self._delete_char_insert,
             'S': self._delete_line_insert,
             'cc': self._delete_line_insert,
@@ -398,10 +402,6 @@ class EditHandler(BaseHandler):
     def _delete_line_insert(self, cursor: QTextCursor):
         super().to_insert_mode()
         self._delete_line(cursor)
-        return True
-
-    def _join_lines(self, cursor: QTextCursor):
-        print('join lines')
         return True
 
     def handle(self, params: HandlerParams):

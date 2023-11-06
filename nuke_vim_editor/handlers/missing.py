@@ -14,6 +14,7 @@ class MissingHandler(BaseHandler):
 
         missing = [
             'p', 'P', 'u', 'U', 'R', '<<', '>>', 'W', 'E', 'B', '.', 'zz',
+            'J'
         ]
 
         key_sequence = params.keys
