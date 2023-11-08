@@ -203,6 +203,11 @@ class NormalMode(BaseMode):
         self.key_sequence += key_event.text().strip()
         status_bar.emit('NORMAL', self.key_sequence)
 
+        self._check_edit_mode('d')
+        self._check_edit_mode('c')
+        self._check_edit_mode('v')
+        self._check_edit_mode('y')
+
         if key_event.key() == Qt.Key_Escape:
             super().to_mode(Modes.NORMAL, '')
             cursor.clearSelection()
@@ -220,12 +225,7 @@ class NormalMode(BaseMode):
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             editor.setTextCursor(cursor)
-            return super().to_mode(Modes.VISUAL)
-
-        self._check_edit_mode('d')
-        self._check_edit_mode('c')
-        self._check_edit_mode('v')
-        self._check_edit_mode('y')
+            return super().to_mode(Modes.VISUAL_LINE)
 
         if self.arrow_keys(cursor, key_event):
             self.editor.setTextCursor(cursor)
@@ -260,15 +260,10 @@ class NormalMode(BaseMode):
             super().to_insert()
             return True
 
-        # if execute and EditorMode.mode == Modes.YANK:
-        #     text = cursor.selectedText()
+        if execute and EditorMode.mode == Modes.YANK:
+            super().to_normal()
+            return True
 
-        #     cursor.clearSelection()
-        #     cursor.setPosition(position)
-        #     editor.setTextCursor(cursor)
-
-        #     EditorMode.mode = Modes.NORMAL
-        #     return True
         return True
 
 

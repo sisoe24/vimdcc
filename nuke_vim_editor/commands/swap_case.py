@@ -2,14 +2,14 @@ from typing import Literal
 
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import Command
+from ..command_base import BaseCommand
 from ..handler_parameters import HandlerParams
 
 SwapMode = Literal['swapcase', 'upper', 'lower']
 
 
 def create_swap_case_command(mode: SwapMode):
-    class SwapCaseCommand(Command):
+    class SwapCaseCommand(BaseCommand):
         def __init__(self, editor: QPlainTextEdit, mode: str):
             self.editor = editor
             self.mode = mode

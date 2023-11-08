@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import re
 from typing import Dict, Optional
 
 from PySide2.QtGui import QTextCursor
-from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import Command
+from ..command_base import BaseCommand
 from ..handler_base import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
@@ -26,7 +24,7 @@ from ..handler_parameters import HandlerParams
 class MotionHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, Command] = {
+        self.commands: Dict[str, BaseCommand] = {
             'w': MoveWordForward(editor, 'NORMAL'),
             'b': MoveWordBackward(editor, 'NORMAL'),
             'e': MoveWordForwardEnd(editor, 'NORMAL'),
@@ -48,7 +46,7 @@ class MotionHandler(BaseHandler):
 class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, Command] = {
+        self.commands: Dict[str, BaseCommand] = {
             'G': MoveDocumentDown(editor, 'NORMAL'),
             'gg': MoveDocumentUp(editor, 'NORMAL'),
             '{': MoveParagraphUp(editor, 'NORMAL'),
@@ -64,7 +62,7 @@ class DocumentHandler(BaseHandler):
 class InsertHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, Command] = {
+        self.commands: Dict[str, BaseCommand] = {
             'i': Inserti(editor, 'NORMAL'),
             'I': InsertI(editor, 'NORMAL'),
             'a': Inserta(editor, 'NORMAL'),
@@ -85,7 +83,7 @@ class InsertHandler(BaseHandler):
 class SwapCaseHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, Command] = {
+        self.commands: Dict[str, BaseCommand] = {
             '~': SwapCase(editor, 'NORMAL'),
             'g~': SwapCase(editor, 'NORMAL'),
             'gu': SwapLower(editor, 'NORMAL'),
@@ -273,45 +271,54 @@ class YankHandler(BaseHandler):
 
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self.commands = {
+            'yy': self.yank_line,
+            'Y': self.yank_line,
+            'u': self._undo,
+            'ctrl+r': self._redo,
+            'p': self._paste,
+            'P': self._paste,
+            '"': self._set_register,
+        }
+
+    def _paste(self, params: HandlerParams):
+        print('paste')
+        return True
+
+    def _paste_before(self, params: HandlerParams):
+        print('paste before')
+        return True
+
+    def _undo(self, params: HandlerParams):
+        print('undo')
+        return True
+
+    def _redo(self, params: HandlerParams):
+        print('redo')
+        return True
+
+    def _set_register(self, params: HandlerParams):
+        print('set register')
+        return True
 
     def _add_to_register(self, register, cursor: QTextCursor):
         self.registers[register][self.named] = cursor.selectedText()
         cursor.clearSelection()
 
-    def yank_line(self, cursor: QTextCursor):
+    def yank_line(self, params: HandlerParams):
+        print('➡ params :', params)
+        cursor = params.cursor
+        pos = cursor.position()
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         self.registers.update('named', '0', cursor.selectedText())
+        cursor.clearSelection()
+        cursor.setPosition(pos)
         return True
 
     def handle(self, params: HandlerParams):
-
-        key_sequence = params.keys
-        cursor = params.cursor
-        modifiers = params.modifiers
-        mode = params.mode
-
-        if key_sequence == 'y':
-            if mode not in ['VISUAL', 'VISUAL_LINE', 'YANK']:
-                print('yank line')
-                return self.yank_line(cursor)
-
-            self.registers.update('named', '0', cursor.blockNumber())
-            return True
-
-        if key_sequence == 'u':
-            self.editor.undo()
-            return True
-
-        if 'ctrl' in modifiers and key_sequence == 'r':
-            self.editor.redo()
-            return True
-
-        if key_sequence == 'p':
-            self.editor.paste()
-            return True
-
-        return False
+        commands = self.commands.get(params.keys)
+        return commands(params) if commands else False
 
 
 @register_normal_handler

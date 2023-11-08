@@ -11,8 +11,19 @@ for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
 
-def read_sample():
+def read_sample(debug=False):
+    s = ''
     with open('sample.txt', 'r') as f:
+
+        if debug:
+            content = f.read()
+            for i in content:
+                if i in ['\n', '\t', '\r']:
+                    s += repr(i) + '\n'
+
+                else:
+                    s += i
+            return s
         return f.read()
 
 

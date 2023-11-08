@@ -1,7 +1,7 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import Command
+from ..command_base import BaseCommand
 from ..handler_parameters import HandlerParams
 
 # TODO: When Calling O, o commands, the cursor should keep the same column
@@ -9,7 +9,7 @@ from ..handler_parameters import HandlerParams
 
 
 def create_insert_command(move_position: QTextCursor.MoveOperation):
-    class InsertCommand(Command):
+    class InsertCommand(BaseCommand):
         def __init__(self, editor: QPlainTextEdit, mode: str):
             self.editor = editor
             self.mode = mode
@@ -21,7 +21,7 @@ def create_insert_command(move_position: QTextCursor.MoveOperation):
     return InsertCommand
 
 
-class InsertO(Command):
+class InsertO(BaseCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
@@ -33,7 +33,7 @@ class InsertO(Command):
         return True
 
 
-class Inserto(Command):
+class Inserto(BaseCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode

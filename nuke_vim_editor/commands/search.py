@@ -24,8 +24,6 @@ def _find_next_up(positions: Positions, position: int):
 
 
 def _find(search: str, text: str):
-    search = search.strip()
-
     positions: Positions = []
     word_len = len(search)
 

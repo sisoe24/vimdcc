@@ -1,42 +1,38 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import Command
+from ..command_base import BaseCommand, MoveCommand
 from ..handler_parameters import HandlerParams
 
 
-class MoveDocumentUp(Command):
+class MoveDocumentUp(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Start, params.anchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveDocumentDown(Command):
+class MoveDocumentDown(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.End, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveParagraphUp(Command):
+class MoveParagraphUp(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
         document = self.editor.document()
         paragraphs_left = False
@@ -51,18 +47,15 @@ class MoveParagraphUp(Command):
         if not paragraphs_left:
             cursor.movePosition(QTextCursor.Start, params.anchor)
 
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
-
         return True
 
 
-class MoveParagraphDown(Command):
+class MoveParagraphDown(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
         document = self.editor.document()
 
@@ -78,8 +71,5 @@ class MoveParagraphDown(Command):
             cursor.movePosition(QTextCursor.End, params.anchor)
             if not params.visual:
                 cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
-
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
 
         return True

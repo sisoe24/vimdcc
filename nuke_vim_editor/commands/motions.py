@@ -1,16 +1,16 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import Command
+from ..command_base import BaseCommand, MoveCommand
 from ..handler_parameters import HandlerParams
 
 
-class MoveWordForward(Command):
+class MoveWordForward(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
 
         position = params.cursor.position()
@@ -18,16 +18,10 @@ class MoveWordForward(Command):
         if character in ['\u2029', '\n']:
             params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
 
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
-
         return True
 
 
-class MoveWordForwardEnd(Command):
+class MoveWordForwardEnd(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
@@ -37,7 +31,7 @@ class MoveWordForwardEnd(Command):
         params.cursor.movePosition(QTextCursor.EndOfWord, params.anchor)
         params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         # BUG: e motion This is not working properly
 
         cursor = params.cursor
@@ -59,23 +53,18 @@ class MoveWordForwardEnd(Command):
                 cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
                 break
 
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
-        elif params.mode in ['VISUAL', 'YANK']:
+        if params.mode in ['VISUAL', 'YANK']:
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
 
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveWordBackward(Command):
+class MoveWordBackward(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.PreviousWord, params.anchor)
 
         position = params.cursor.position()
@@ -83,108 +72,79 @@ class MoveWordBackward(Command):
         if character in ['\u2029', '\n']:
             params.cursor.movePosition(QTextCursor.PreviousWord, params.anchor)
 
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
-
         return True
 
 
-class MoveWordLeft(Command):
+class MoveWordLeft(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Left, params.anchor)
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveWordRight(Command):
+class MoveWordRight(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Right, params.anchor)
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveLineUp(Command):
+class MoveLineUp(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Up, params.anchor)
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveLineDown(Command):
+class MoveLineDown(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Down, params.anchor)
-        if params.mode == 'VISUAL_LINE':
-            params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveLineStart(Command):
+class MoveLineStart(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveLineEnd(Command):
+class MoveLineEnd(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
         if not params.visual:
             params.cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
 
 
-class MoveToStartOfBlock(Command):
+class MoveToStartOfBlock(MoveCommand):
     def __init__(self, editor: QPlainTextEdit, mode: str):
         self.editor = editor
         self.mode = mode
 
-    def execute(self, params: HandlerParams) -> bool:
+    def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
         # Dont know if there is a better way to do this
         if params.cursor.block().text()[0] == ' ':
             params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
-            params.cursor.removeSelectedText()
         return True
