@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import BaseCommand
+from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
@@ -24,7 +24,7 @@ from ..handler_parameters import HandlerParams
 class MotionHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, BaseCommand] = {
+        self.commands: Dict[str, MoveCommand] = {
             'w': MoveWordForward(editor, 'NORMAL'),
             'b': MoveWordBackward(editor, 'NORMAL'),
             'e': MoveWordForwardEnd(editor, 'NORMAL'),
@@ -46,7 +46,7 @@ class MotionHandler(BaseHandler):
 class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
-        self.commands: Dict[str, BaseCommand] = {
+        self.commands: Dict[str, MoveCommand] = {
             'G': MoveDocumentDown(editor, 'NORMAL'),
             'gg': MoveDocumentUp(editor, 'NORMAL'),
             '{': MoveParagraphUp(editor, 'NORMAL'),
