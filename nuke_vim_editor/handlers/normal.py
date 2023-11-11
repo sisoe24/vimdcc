@@ -6,7 +6,7 @@ from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand, MoveCommand
-from ..handler_base import BaseHandler, register_normal_handler
+from ..handler_base import Registers, BaseHandler, register_normal_handler
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
 from ..commands.search import SearchCommand
@@ -104,7 +104,7 @@ class MarksHandler(BaseHandler):
         super().__init__(editor)
 
     def set_mark(self, key: str, params: HandlerParams):
-        self.registers.update('marks', key, params.cursor.position())
+        self.registers.add_mark('marks', key, params.cursor.position())
         return True
 
     def move_to_mark(self, key: str, params: HandlerParams):
@@ -130,7 +130,6 @@ class MarksHandler(BaseHandler):
 
 @register_normal_handler
 class SearchHandler(BaseHandler):
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands = {
@@ -162,10 +161,12 @@ class SearchHandler(BaseHandler):
         return text
 
     def _search_down(self, params: HandlerParams, key: str):
+        self.registers.add_last_search(key)
         self.search.find(key)
         return self.go_down(params)
 
     def _search_up(self, params: HandlerParams, key: str):
+        self.registers.add_last_search(key)
         self.search.find(key)
         return self.go_up(params)
 
@@ -196,7 +197,6 @@ class SearchHandler(BaseHandler):
 
 @register_normal_handler
 class SearchLineHandler(BaseHandler):
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.search = SearchCommand(editor)
@@ -268,55 +268,49 @@ class SearchLineHandler(BaseHandler):
 
 @register_normal_handler
 class YankHandler(BaseHandler):
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands = {
             'yy': self.yank_line,
             'Y': self.yank_line,
-            'u': self._undo,
-            'ctrl+r': self._redo,
-            'p': self._paste,
-            'P': self._paste,
-            '"': self._set_register,
+            'p': self.paste,
+            'P': self.paste_before,
         }
 
-    def _paste(self, params: HandlerParams):
-        print('paste')
+    def paste(self, params: HandlerParams):
+        params.cursor.movePosition(QTextCursor.NextCharacter)
+        self.editor.setTextCursor(params.cursor)
+        self.editor.insertPlainText(self.registers.get_named_register_value())
         return True
 
-    def _paste_before(self, params: HandlerParams):
-        print('paste before')
-        return True
-
-    def _undo(self, params: HandlerParams):
-        print('undo')
-        return True
-
-    def _redo(self, params: HandlerParams):
-        print('redo')
+    def paste_before(self, params: HandlerParams):
+        self.editor.insertPlainText(self.registers['numbered'][0])
         return True
 
     def _set_register(self, params: HandlerParams):
-        print('set register')
         return True
 
-    def _add_to_register(self, register, cursor: QTextCursor):
-        self.registers[register][self.named] = cursor.selectedText()
-        cursor.clearSelection()
-
     def yank_line(self, params: HandlerParams):
-        print('➡ params :', params)
         cursor = params.cursor
         pos = cursor.position()
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        self.registers.update('named', '0', cursor.selectedText())
+        self.registers.push(cursor.selectedText() + '\n')
         cursor.clearSelection()
         cursor.setPosition(pos)
         return True
 
     def handle(self, params: HandlerParams):
+        keys = params.keys
+
+        if keys.startswith('"') and len(keys) == 2:
+            self.registers.set_named_register(keys[1])
+            return True
+
+        if keys.startswith("'"):
+            print('clipboard')
+            return True
+
         commands = self.commands.get(params.keys)
         return commands(params) if commands else False
 
@@ -334,6 +328,7 @@ class VisualEditHandler(BaseHandler):
         self.command_map = {
             'c': self.cut_text,
             'd': self.delete_text,
+            'y': self.yank_text,
         }
 
     def handle(self, params: HandlerParams):
@@ -343,12 +338,20 @@ class VisualEditHandler(BaseHandler):
         command = self.command_map.get(params.keys)
         return command(params) if command else False
 
+    def yank_text(self, params: HandlerParams) -> bool:
+        super().add_to_clipboard(params.cursor.selectedText())
+        params.cursor.clearSelection()
+        super().to_normal_mode()
+        return True
+
     def delete_text(self, params: HandlerParams) -> bool:
+        super().add_to_clipboard(params.cursor.selectedText())
         params.cursor.removeSelectedText()
         super().to_normal_mode()
         return True
 
     def cut_text(self, params: HandlerParams) -> bool:
+        super().add_to_clipboard(params.cursor.selectedText())
         params.cursor.removeSelectedText()
         super().to_insert_mode()
         return True
@@ -371,6 +374,7 @@ class EditHandler(BaseHandler):
 
     def _delete_from_cursor(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        super().add_to_clipboard(cursor.selectedText())
         cursor.removeSelectedText()
         return True
 
@@ -394,7 +398,6 @@ class EditHandler(BaseHandler):
         return True
 
     def _replace_char(self, cursor: QTextCursor, key: str):
-
         cursor.movePosition(QTextCursor.NextCharacter)
         cursor.deletePreviousChar()
         cursor.insertText(key)
@@ -403,12 +406,13 @@ class EditHandler(BaseHandler):
     def _delete_line(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        super().add_to_clipboard(cursor.selectedText())
         cursor.removeSelectedText()
         return True
 
     def _delete_line_insert(self, cursor: QTextCursor):
-        super().to_insert_mode()
         self._delete_line(cursor)
+        super().to_insert_mode()
         return True
 
     def handle(self, params: HandlerParams):
