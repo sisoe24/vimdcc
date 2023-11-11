@@ -1,56 +1,43 @@
 import sys
 import json
-from typing import Any, Dict, TypeVar, Optional
+from typing import Dict, Optional, TypedDict
 
-from PySide2.QtGui import QPalette, QKeyEvent, QStandardItem
-from PySide2.QtCore import (Qt, Slot, QRect, QEvent, Signal, QObject,
-                            QModelIndex, QCoreApplication, QStringListModel,
+from PySide2.QtGui import QKeyEvent, QStandardItem
+from PySide2.QtCore import (Qt, Slot, QRect, QEvent, QObject, QModelIndex,
+                            QCoreApplication, QStringListModel,
                             QSortFilterProxyModel)
-from PySide2.QtWidgets import (QLabel, QStyle, QDialog, QWidget, QCheckBox,
-                               QLineEdit, QListView, QSplitter, QHBoxLayout,
-                               QListWidget, QPushButton, QSizePolicy,
-                               QToolButton, QVBoxLayout, QApplication,
-                               QPlainTextEdit, QListWidgetItem,
-                               QDialogButtonBox, QStyledItemDelegate)
+from PySide2.QtWidgets import (QLabel, QDialog, QCheckBox, QLineEdit,
+                               QListView, QSplitter, QSizePolicy, QVBoxLayout,
+                               QApplication, QPlainTextEdit, QDialogButtonBox,
+                               QStyledItemDelegate)
+
+from .registers import Registers
+
+# TODO: Implement delete, copy and clear buttons
+# TODO: Implement elided text delegate
 
 
-def trim_text(text: str, max_length: int = 40):
-    if len(text) > max_length:
-        return f'{text[:max_length // 2]}...{text[-max_length // 2:]}'
-    return text
+class ItemData(TypedDict):
+    preview_text: str
+    value: str
 
 
-Items = Dict[str, str]
-T = TypeVar('T')
+RegisterData = Dict[str, ItemData]
 
 
 class PreviewListModel(QStringListModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.user_data = {}
+
+        self.register_data: RegisterData = {}
 
     def flags(self, index: QModelIndex):
         flag = Qt.ItemIsSelectable | ~Qt.ItemIsEditable
         return Qt.ItemFlags(flag)
 
-    def get_register_items(self, name: str) -> Items:
-        with open('registers.json') as f:
-            data = json.load(f)
-
-        if name == 'numbered':
-            return {v.strip(): v for v in data['numbered']}
-
-        if name == 'marks':
-            return {
-                k: v['position']
-                for k, v in data['marks'].items()
-            }
-
-        return data.get(name, {})
-
-    def populate(self, items: Items):
+    def populate(self, items: RegisterData):
         self.setStringList(list(items.keys()))
-        self.user_data = items
+        self.register_data = items
 
 
 class ElidedTextDelegate(QStyledItemDelegate):
@@ -79,17 +66,13 @@ class PreviewListView(QListView):
         self.proxy_model.setFilterKeyColumn(0)
         self.setModel(self.proxy_model)
 
-        # TODO: Implement this delegate
-        # delegate = ElidedTextDelegate()
-        # self.setItemDelegate(delegate)
-
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QListView.SingleSelection)
         self.setSpacing(5)
 
-    def get_item_data(self, index: QModelIndex):
+    def get_item_data(self, index: QModelIndex) -> Optional[ItemData]:
         key = index.data(Qt.DisplayRole)
-        return self._model.user_data.get(key)
+        return self._model.register_data.get(key)
 
 
 class PreviewView(QDialog):
@@ -106,22 +89,6 @@ class PreviewView(QDialog):
 
         self.list_view = PreviewListView()
 
-        # TODO: Implement these buttons
-        self.delete_btn = QToolButton()
-        self.delete_btn.setIcon(self.style().standardIcon(QStyle.SP_TrashIcon))
-
-        self.copy_btn = QToolButton()
-        self.copy_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogApplyButton))
-
-        self.clear_btn = QToolButton()
-        self.clear_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogCancelButton))
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addWidget(self.delete_btn)
-        buttons_layout.addWidget(self.copy_btn)
-        buttons_layout.addWidget(self.clear_btn)
-        buttons_layout.addStretch()
-
         splitter = QSplitter()
         splitter.addWidget(self.list_view)
         splitter.addWidget(self.text_preview)
@@ -134,11 +101,13 @@ class PreviewView(QDialog):
         buttons.rejected.connect(self.reject)
 
         self.search_bar = QLineEdit()
+        self.search_bar.setMaxLength(1)
         self.search_bar.setPlaceholderText('Filter')
         self.search_bar.setFocus()
         self.search_bar.setClearButtonEnabled(True)
 
         self.auto_insert = QCheckBox('Auto insert')
+        self.auto_insert.setChecked(True)
 
         layout = QVBoxLayout()
         layout.addWidget(self.previewer_name)
@@ -146,7 +115,6 @@ class PreviewView(QDialog):
         layout.addWidget(splitter)
         layout.addWidget(buttons)
         layout.addWidget(self.auto_insert)
-        # layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
         self.installEventFilter(self)
@@ -155,12 +123,30 @@ class PreviewView(QDialog):
 
         self.text_value = ''
 
+    def _press_enter_event(self):
+
+        # BUG: This gets called twice when pressing enter on the search bar and
+        # once when pressing enter on the list view.
+
+        index = self.list_view.currentIndex()
+        data = self.list_view.get_item_data(index)
+
+        self.search_bar.clear()
+
+        if not data:
+            self.reject()
+            return False
+
+        self.text_value = data['value']
+        self.accept()
+        return True
+
     def eventFilter(self, watched: QObject, event: QEvent):
         if event.type() == QEvent.KeyPress:
+            # TODO: Handle also alt+j and alt+k
 
             if event.key() in [Qt.Key_Enter, Qt.Key_Return]:
-                return self.press_enter()
-            # TODO: Handle also alt+j and alt+k
+                return self._press_enter_event()
 
             if event.key() in [Qt.Key_Up, Qt.Key_Down]:
                 self.list_view.setFocus()
@@ -172,21 +158,6 @@ class PreviewView(QDialog):
                 return True
 
         return super().eventFilter(watched, event)
-
-    def press_enter(self):
-        index = self.list_view.currentIndex()
-        value = self.list_view.get_item_data(index)
-
-        if not value:
-            self.reject()
-            return False
-
-        self.text_value = value
-        self.accept()
-        return True
-
-    def get_text_value(self) -> Optional[str]:
-        return self.text_value
 
 
 class PreviewController:
@@ -222,24 +193,79 @@ class PreviewController:
     @Slot(QStandardItem)
     def _on_item_clicked(self, index: QModelIndex):
         data = self.list_view.get_item_data(index)
-        self.view.text_preview.setPlainText(str(data) or '')
+        if not data:
+            return
+        self.view.text_preview.setPlainText(data.get('preview_text', ''))
 
-    def init(self, name: str):
+    def init(self, name: str, items: RegisterData):
         self.view.previewer_name.setText(f'<h2>{name}</h2>')
-        self.list_model.populate(self.list_model.get_register_items(name))
+        self.list_model.populate(items)
 
 
 class PreviewRegister:
-    def __init__(self, name: str, parent=None):
-
+    def __init__(self, name: str):
+        self.name = name
         self.view = PreviewView()
         self.controller = PreviewController(self.view)
-        self.controller.init(name)
+        self.controller.init(name, self.prepare_items())
+
+    def get_text_value(self) -> Optional[str]:
+        self.controller.init(self.name, self.prepare_items())
+        return self.view.text_value if self.view.exec_() else None
+
+    def prepare_items(self) -> RegisterData:
+        raise NotImplementedError
+
+
+class PreviewNamedRegister(PreviewRegister):
+    def __init__(self):
+        super().__init__('named')
+
+    def get_text_value(self) -> Optional[str]:
+        """Get the value of the selected named register.
+
+        A named register allows assigning a value or returning the key for assignment.
+
+        """
+        value = super().get_text_value()
+        return value or self.view.search_bar.text()
+
+    def prepare_items(self) -> RegisterData:
+        return {
+            k: {'preview_text': v, 'value': k}
+            for k, v in Registers.get_register('named').items()
+            if v
+        }
+
+
+class PreviewMarkRegister(PreviewRegister):
+    def __init__(self):
+        super().__init__('marks')
+
+    def prepare_items(self) -> RegisterData:
+        return {
+            k: {'preview_text': f'pos:{v["position"]} line:{v["line"]}',
+                'value': v['position']}
+            for k, v in Registers.get_register('marks').items()
+            if v
+        }
+
+
+class PreviewNumberedRegister(PreviewRegister):
+    def __init__(self):
+        super().__init__('numbered')
+        self.view.search_bar.setMaxLength(-1)
+
+    def prepare_items(self) -> RegisterData:
+        return {
+            v.strip(): {'preview_text': v.strip(), 'value': v}
+            for v in Registers.get_register('numbered')
+        }
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PreviewRegister('marks')
+    window = PreviewRegister('numbered')
     window.view.show()
 
     app.exec_()
