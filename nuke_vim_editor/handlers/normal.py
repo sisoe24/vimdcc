@@ -104,13 +104,14 @@ class MarksHandler(BaseHandler):
         super().__init__(editor)
 
     def set_mark(self, key: str, params: HandlerParams):
-        self.registers.add_mark('marks', key, params.cursor.position())
+        current_line_text = params.cursor.block().text().strip()
+        self.registers.add_mark(key, current_line_text, params.cursor.position())
         return True
 
     def move_to_mark(self, key: str, params: HandlerParams):
-        pos = self.registers.get('marks', key)
-        if pos:
-            params.cursor.setPosition(pos)
+        mark = self.registers.get_mark(key)
+        if mark:
+            params.cursor.setPosition(mark['position'])
         else:
             params.status_bar.emit('NORMAL', f'{key} mark not set')
 
