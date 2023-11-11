@@ -16,6 +16,7 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
+from ..registers_preview import PreviewRegister
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
 from ..handler_parameters import HandlerParams
 
@@ -117,11 +118,27 @@ class MarksHandler(BaseHandler):
 
         return True
 
+    def preview_marks(self, params: HandlerParams):
+        previewer = PreviewRegister('marks')
+
+        if not previewer.view.exec_():
+            return False
+
+        value = previewer.view.get_text_value()
+        if not value:
+            return False
+
+        params.cursor.setPosition(int(value))
+        return True
+
     def handle(self, params: HandlerParams):
         key_sequence = params.keys
 
         if key_sequence.startswith('m') and len(key_sequence) == 2:
             return self.set_mark(key_sequence[1], params)
+
+        if key_sequence.startswith("'"):
+            return self.preview_marks(params)
 
         if key_sequence.startswith('`') and len(key_sequence) == 2:
             return self.move_to_mark(key_sequence[1], params)
