@@ -1,16 +1,17 @@
 import sys
 import json
-from typing import Any, Dict
+from typing import Any, Dict, TypeVar, Optional
 
 from PySide2.QtGui import QPalette, QKeyEvent, QStandardItem
 from PySide2.QtCore import (Qt, Slot, QRect, QEvent, Signal, QObject,
-                            QModelIndex, QStringListModel,
+                            QModelIndex, QCoreApplication, QStringListModel,
                             QSortFilterProxyModel)
-from PySide2.QtWidgets import (QLabel, QStyle, QWidget, QLineEdit, QListView,
-                               QSplitter, QHBoxLayout, QListWidget,
-                               QPushButton, QSizePolicy, QToolButton,
-                               QVBoxLayout, QApplication, QPlainTextEdit,
-                               QListWidgetItem, QStyledItemDelegate)
+from PySide2.QtWidgets import (QLabel, QStyle, QDialog, QWidget, QCheckBox,
+                               QLineEdit, QListView, QSplitter, QHBoxLayout,
+                               QListWidget, QPushButton, QSizePolicy,
+                               QToolButton, QVBoxLayout, QApplication,
+                               QPlainTextEdit, QListWidgetItem,
+                               QDialogButtonBox, QStyledItemDelegate)
 
 
 def trim_text(text: str, max_length: int = 40):
@@ -20,6 +21,7 @@ def trim_text(text: str, max_length: int = 40):
 
 
 Items = Dict[str, str]
+T = TypeVar('T')
 
 
 class PreviewListModel(QStringListModel):
@@ -37,6 +39,12 @@ class PreviewListModel(QStringListModel):
 
         if name == 'numbered':
             return {v.strip(): v for v in data['numbered']}
+
+        if name == 'marks':
+            return {
+                k: v['position']
+                for k, v in data['marks'].items()
+            }
 
         return data.get(name, {})
 
@@ -84,8 +92,7 @@ class PreviewListView(QListView):
         return self._model.user_data.get(key)
 
 
-class PreviewView(QWidget):
-    on_enter = Signal(str)
+class PreviewView(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -119,15 +126,26 @@ class PreviewView(QWidget):
         splitter.addWidget(self.list_view)
         splitter.addWidget(self.text_preview)
 
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText('Filter')
         self.search_bar.setFocus()
         self.search_bar.setClearButtonEnabled(True)
 
+        self.auto_insert = QCheckBox('Auto insert')
+
         layout = QVBoxLayout()
         layout.addWidget(self.previewer_name)
         layout.addWidget(self.search_bar)
         layout.addWidget(splitter)
+        layout.addWidget(buttons)
+        layout.addWidget(self.auto_insert)
         # layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
@@ -135,14 +153,13 @@ class PreviewView(QWidget):
         self.list_view.installEventFilter(self)
         self.search_bar.installEventFilter(self)
 
+        self.text_value = ''
+
     def eventFilter(self, watched: QObject, event: QEvent):
         if event.type() == QEvent.KeyPress:
 
             if event.key() in [Qt.Key_Enter, Qt.Key_Return]:
-                index = self.list_view.currentIndex()
-                self.on_enter.emit(self.list_view.get_item_data(index))
-                return True
-
+                return self.press_enter()
             # TODO: Handle also alt+j and alt+k
 
             if event.key() in [Qt.Key_Up, Qt.Key_Down]:
@@ -155,6 +172,21 @@ class PreviewView(QWidget):
                 return True
 
         return super().eventFilter(watched, event)
+
+    def press_enter(self):
+        index = self.list_view.currentIndex()
+        value = self.list_view.get_item_data(index)
+
+        if not value:
+            self.reject()
+            return False
+
+        self.text_value = value
+        self.accept()
+        return True
+
+    def get_text_value(self) -> Optional[str]:
+        return self.text_value
 
 
 class PreviewController:
@@ -177,15 +209,20 @@ class PreviewController:
 
         self.list_view.proxy_model.setFilterFixedString(text)
 
-        if self.list_view.model().rowCount() > 0:
+        row_count = self.list_view.model().rowCount()
+        if row_count > 0:
             first_index = self.list_view.model().index(0, 0)
             self.list_view.setCurrentIndex(first_index)
             self._on_item_clicked(first_index)
 
+        if row_count == 1 and self.view.auto_insert.isChecked():
+            enter_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier)
+            QCoreApplication.sendEvent(self.view, enter_event)
+
     @Slot(QStandardItem)
     def _on_item_clicked(self, index: QModelIndex):
         data = self.list_view.get_item_data(index)
-        self.view.text_preview.setPlainText(data or '')
+        self.view.text_preview.setPlainText(str(data) or '')
 
     def init(self, name: str):
         self.view.previewer_name.setText(f'<h2>{name}</h2>')
@@ -198,12 +235,6 @@ class PreviewRegister:
         self.view = PreviewView()
         self.controller = PreviewController(self.view)
         self.controller.init(name)
-
-        self.view.on_enter.connect(self.on_enter)
-
-    def on_enter(self, text: str):
-        print('----')
-        print('on_enter', text)
 
 
 if __name__ == '__main__':
