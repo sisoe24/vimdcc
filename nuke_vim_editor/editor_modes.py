@@ -135,7 +135,6 @@ class NormalMode(BaseMode):
 
         handlers = handlers or get_normal_handlers()
         self._handlers = [handler(self.editor) for handler in handlers]
-        self.key_sequence = ''
 
     def _check_edit_mode(self, mode: str):
         """Check if the key sequence is a edit mode.
