@@ -84,7 +84,6 @@ class _Registers:
         self._push_to_clipboard(value)
 
     def set_named_register(self, key: str) -> None:
-        print('➡ key :', key)
         self._named_register = key
 
     def get_numbered_register_value(self, index: int) -> Optional[str]:
@@ -92,7 +91,6 @@ class _Registers:
 
     def get_named_register_value(self) -> Optional[str]:
         key = self._named_register
-        print('➡ key :', key)
 
         if not key:
             self.registers['numbered'][0]
@@ -117,14 +115,6 @@ class _Registers:
         for register in self.registers.values():
             register.clear()
         self._save()
-
-    def __getitem__(self, name: RegisterName) -> T:
-        return self.registers[name]
-
-    def __setitem__(self) -> None:
-        raise ValueError(
-            'Cannot set a register directly. Use Registers.update() instead.'
-        )
 
 
 Registers = _Registers()
