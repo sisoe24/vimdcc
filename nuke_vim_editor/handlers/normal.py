@@ -16,7 +16,8 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
-from ..registers_preview import PreviewRegister
+from ..registers_preview import (PreviewRegister, PreviewMarkRegister,
+                                 PreviewNamedRegister, PreviewNumberedRegister)
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
 from ..handler_parameters import HandlerParams
 
@@ -103,6 +104,7 @@ class SwapCaseHandler(BaseHandler):
 class MarksHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
+        self._preview_marks = PreviewMarkRegister()
 
     def set_mark(self, key: str, params: HandlerParams):
         current_line_text = params.cursor.block().text().strip()
@@ -119,16 +121,10 @@ class MarksHandler(BaseHandler):
         return True
 
     def preview_marks(self, params: HandlerParams):
-        previewer = PreviewRegister('marks')
-
-        if not previewer.view.exec_():
-            return False
-
-        value = previewer.view.get_text_value()
-        if not value:
-            return False
-
-        params.cursor.setPosition(int(value))
+        previewer = self._preview_marks
+        value = previewer.get_text_value()
+        if value:
+            params.cursor.setPosition(int(value))
         return True
 
     def handle(self, params: HandlerParams):
@@ -137,13 +133,7 @@ class MarksHandler(BaseHandler):
         if key_sequence.startswith('m') and len(key_sequence) == 2:
             return self.set_mark(key_sequence[1], params)
 
-        if key_sequence.startswith("'"):
-            return self.preview_marks(params)
-
-        if key_sequence.startswith('`') and len(key_sequence) == 2:
-            return self.move_to_mark(key_sequence[1], params)
-
-        return False
+        return self.preview_marks(params) if key_sequence == '`' else False
 
 
 @register_normal_handler
@@ -294,6 +284,11 @@ class YankHandler(BaseHandler):
             'p': self.paste,
             'P': self.paste_before,
         }
+        self._named_register = PreviewNamedRegister()
+        self._numbered_register = PreviewNumberedRegister()
+
+    def _paste(self, text: str):
+        self.editor.insertPlainText(text)
 
     def paste(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.NextCharacter)
@@ -302,7 +297,7 @@ class YankHandler(BaseHandler):
         return True
 
     def paste_before(self, params: HandlerParams):
-        self.editor.insertPlainText(self.registers['numbered'][0])
+        self.editor.insertPlainText(self.registers.get_named_register_value())
         return True
 
     def _set_register(self, params: HandlerParams):
@@ -319,18 +314,26 @@ class YankHandler(BaseHandler):
         return True
 
     def handle(self, params: HandlerParams):
-        keys = params.keys
+        if params.keys == '"':
+            return self.preview_register()
 
-        if keys.startswith('"') and len(keys) == 2:
-            self.registers.set_named_register(keys[1])
-            return True
-
-        if keys.startswith("'"):
-            print('clipboard')
-            return True
+        if params.keys == "'":
+            return self.preview_clipboard()
 
         commands = self.commands.get(params.keys)
         return commands(params) if commands else False
+
+    def preview_clipboard(self):
+        return self._get_preview_value(self._numbered_register)
+
+    def preview_register(self):
+        return self._get_preview_value(self._named_register)
+
+    def _get_preview_value(self, previewer: PreviewRegister):
+        value = previewer.get_text_value()
+        if value:
+            self._paste(value)
+        return True
 
 
 @register_normal_handler
