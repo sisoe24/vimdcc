@@ -324,15 +324,17 @@ class YankHandler(BaseHandler):
         return commands(params) if commands else False
 
     def preview_clipboard(self):
-        return self._get_preview_value(self._numbered_register)
-
-    def preview_register(self):
-        return self._get_preview_value(self._named_register)
-
-    def _get_preview_value(self, previewer: PreviewRegister):
+        previewer = self._numbered_register
         value = previewer.get_text_value()
         if value:
             self._paste(value)
+        return True
+
+    def preview_register(self):
+        previewer = self._named_register
+        value = previewer.get_text_value()
+        if value:
+            self.registers.set_named_register(value)
         return True
 
 
