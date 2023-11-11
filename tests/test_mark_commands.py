@@ -58,7 +58,7 @@ def test_set_mark(handler: MarksHandler, data: MotionTest) -> None:
 
     editor.setTextCursor(params.cursor)
 
-    assert handler.registers.get('marks', data.motion[-1]) == data.jump_to
+    assert handler.registers.get_mark(data.motion[-1])['position'] == data.jump_to
 
     params.cursor.setPosition(0)
     editor.setTextCursor(params.cursor)
