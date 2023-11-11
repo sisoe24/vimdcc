@@ -39,7 +39,7 @@ class RegistersTypes(TypedDict):
     marks: Dict[str, Mark]
 
 
-RegisterName = Literal['named', 'last_search', 'marks']
+RegisterName = Literal['named', 'last_search', 'marks', 'numbered']
 
 T = TypeVar('T', bound=RegisterName)
 
