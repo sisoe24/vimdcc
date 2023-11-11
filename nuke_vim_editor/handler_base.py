@@ -19,7 +19,10 @@ class BaseHandler(ABC):
 
     def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.registers = Registers()
+        self.registers = Registers
+
+    def add_to_clipboard(self, text: str):
+        self.registers.push(text)
 
     def get_state(self):
         return EditorMode.mode
