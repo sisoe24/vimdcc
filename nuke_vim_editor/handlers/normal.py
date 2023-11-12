@@ -284,14 +284,11 @@ class YankHandler(BaseHandler):
     def paste(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.NextCharacter)
         self.editor.setTextCursor(params.cursor)
-        self.editor.insertPlainText(self.registers.get_named_register_value())
+        self._paste(self.registers.get_named_register_value())
         return True
 
     def paste_before(self, params: HandlerParams):
-        self.editor.insertPlainText(self.registers.get_named_register_value())
-        return True
-
-    def _set_register(self, params: HandlerParams):
+        self._paste(self.registers.get_named_register_value())
         return True
 
     def yank_line(self, params: HandlerParams):
