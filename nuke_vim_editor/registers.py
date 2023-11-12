@@ -109,7 +109,10 @@ class _Registers:
         self._named_register = key
 
     def get_numbered_register_value(self, index: int) -> Optional[str]:
-        return self.registers['numbered'][index]
+        try:
+            return self.registers['numbered'][index]
+        except IndexError:
+            return None
 
     def get_named_register_value(self) -> Optional[str]:
         key = self._named_register
