@@ -20,17 +20,6 @@ def handler(editor: QPlainTextEdit) -> MotionHandler:
     return MotionHandler(editor)
 
 
-@pytest.fixture(scope='function')
-def params(editor: QPlainTextEdit) -> HandlerParams:
-    return HandlerParams(
-        cursor=editor.textCursor(),
-        keys='',
-        modifiers=[],
-        event=None,
-        mode=Modes.NORMAL
-    )
-
-
 @dataclass
 class MotionTest:
     motion: List[str]
