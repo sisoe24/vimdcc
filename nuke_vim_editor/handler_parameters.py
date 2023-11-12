@@ -23,6 +23,6 @@ class HandlerParams:
 
     def __post_init__(self):
         self.visual = self.mode in [Modes.VISUAL, Modes.VISUAL_LINE, Modes.YANK,
-                                    Modes.DELETE, Modes.DELETE_INSERT]
+                                    Modes.DELETE, Modes.CHANGE]
         self.anchor = QTextCursor.KeepAnchor if self.visual else QTextCursor.MoveAnchor
         self.status_bar = status_bar

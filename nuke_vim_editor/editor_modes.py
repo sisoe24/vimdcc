@@ -106,7 +106,7 @@ class NormalMode(BaseMode):
                 'v': Modes.VISUAL,
                 'y': Modes.YANK,
                 'd': Modes.DELETE,
-                'c': Modes.DELETE_INSERT,
+                'c': Modes.CHANGE,
             }
             EditorMode.mode = operator_modes[mode]
             self.key_sequence = self.key_sequence[1:]
@@ -135,7 +135,7 @@ class NormalMode(BaseMode):
 
         if EditorMode.mode not in [Modes.NORMAL, Modes.VISUAL,
                                    Modes.VISUAL_LINE, Modes.YANK,
-                                   Modes.DELETE, Modes.DELETE_INSERT]:
+                                   Modes.DELETE, Modes.CHANGE]:
             return False
 
         if event.type() == QEvent.KeyPress:
@@ -199,16 +199,12 @@ class NormalMode(BaseMode):
                 execute = True
                 break
 
-        if execute and EditorMode.mode == Modes.DELETE:
+        if execute and EditorMode.mode in [Modes.DELETE, Modes.YANK]:
             super().to_normal()
             return True
 
-        if execute and EditorMode.mode == Modes.DELETE_INSERT:
+        if execute and EditorMode.mode == Modes.CHANGE:
             super().to_insert()
-            return True
-
-        if execute and EditorMode.mode == Modes.YANK:
-            super().to_normal()
             return True
 
         return True
