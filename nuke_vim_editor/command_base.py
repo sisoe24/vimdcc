@@ -11,7 +11,10 @@ class BaseCommand:
 
 
 class MoveCommand(ABC):
+    initial_position = None
+
     def execute(self, params: HandlerParams) -> bool:
+        self.initial_position = params.cursor.position()
         result = self._do_execute(params)
         self._post_execute(params)
         return result
@@ -38,3 +41,7 @@ class MoveCommand(ABC):
         if params.mode == 'YANK':
             Registers.add(params.cursor.selectedText())
             params.cursor.clearSelection()
+
+            # Restore the cursor position to the initial position
+            if self.initial_position:
+                params.cursor.setPosition(self.initial_position)
