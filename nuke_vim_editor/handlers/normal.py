@@ -267,6 +267,8 @@ class SearchLineHandler(BaseHandler):
 
 @register_normal_handler
 class YankHandler(BaseHandler):
+    LINE_COPY = '<LINE_COPY>'
+
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands = {
@@ -278,17 +280,26 @@ class YankHandler(BaseHandler):
         self._named_register = PreviewNamedRegister()
         self._numbered_register = PreviewNumberedRegister()
 
-    def _paste(self, text: str):
-        self.editor.insertPlainText(text)
+    def _paste(self, params: HandlerParams, text: str):
+        cursor = params.cursor
+        if self.LINE_COPY in text:
+            text = text.replace(self.LINE_COPY, '')
+            cursor.movePosition(QTextCursor.Down)
+            cursor.movePosition(QTextCursor.StartOfLine)
+            cursor.insertText(text)
+            cursor.movePosition(QTextCursor.Up)
+        else:
+            cursor.insertText(text)
+            cursor.movePosition(QTextCursor.PreviousCharacter)
 
     def paste(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.NextCharacter)
         self.editor.setTextCursor(params.cursor)
-        self._paste(self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value())
         return True
 
     def paste_before(self, params: HandlerParams):
-        self._paste(self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value())
         return True
 
     def yank_line(self, params: HandlerParams):
@@ -296,7 +307,7 @@ class YankHandler(BaseHandler):
         pos = cursor.position()
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        self.registers.add(cursor.selectedText() + '\n')
+        self.registers.add(self.LINE_COPY + cursor.selectedText() + '\n')
         cursor.clearSelection()
         cursor.setPosition(pos)
         return True
