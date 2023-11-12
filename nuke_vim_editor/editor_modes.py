@@ -77,50 +77,6 @@ class BaseMode(QObject):
         return True
 
 
-class CommandMode(BaseMode):
-
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
-        self.key_sequence = ''
-
-    def execute_command(self, command: str):
-        # TODO: Add python
-        # TODO: Add Nuke
-
-        commands = {}
-        commands.get(command.strip(), lambda: print('Unknown command'))()
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorMode.mode != Modes.COMMAND:
-            return False
-
-        return self.parse_keys(event) if event.type() == QEvent.KeyPress else True
-
-    def parse_keys(self, event: QEvent):
-
-        key_event = cast(QKeyEvent, event)
-        self.key_sequence += key_event.text()
-        status_bar.emit('COMMAND', self.key_sequence)
-
-        if key_event.key() == Qt.Key_Escape:
-            return super().to_normal()
-
-        if key_event.key() == Qt.Key_Return:
-            self.execute_command(self.key_sequence)
-            return super().to_normal()
-
-        if key_event.key() == Qt.Key_Backspace:
-            self.key_sequence = self.key_sequence[:-1]
-            status_bar.emit('COMMAND', self.key_sequence)
-            return True
-
-        return True
-
-
 class NormalMode(BaseMode):
 
     def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
@@ -212,9 +168,6 @@ class NormalMode(BaseMode):
             self.key_sequence = self.key_sequence[:-1]
             return True
 
-        if self.key_sequence == ':':
-            return super().to_mode(Modes.COMMAND, ':')
-
         if self.key_sequence == 'V':
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
@@ -264,5 +217,4 @@ class NormalMode(BaseMode):
 EDITOR_MODES = [
     NormalMode,
     InsertMode,
-    CommandMode,
 ]
