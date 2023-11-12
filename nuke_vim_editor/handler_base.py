@@ -30,7 +30,7 @@ class BaseHandler(ABC):
         EditorMode.mode = state
 
     def add_to_clipboard(self, text: str):
-        self.registers.push(text)
+        self.registers.add(text)
 
     def to_normal_mode(self):
         status_bar.emit('NORMAL', '')
