@@ -21,14 +21,16 @@ class BaseHandler(ABC):
         self.editor = editor
         self.registers = Registers
 
-    def add_to_clipboard(self, text: str):
-        self.registers.push(text)
-
-    def get_state(self):
+    @property
+    def mode(self):
         return EditorMode.mode
 
-    def set_state(self, state: Modes):
+    @mode.setter
+    def mode(self, state: Modes):
         EditorMode.mode = state
+
+    def add_to_clipboard(self, text: str):
+        self.registers.push(text)
 
     def to_normal_mode(self):
         status_bar.emit('NORMAL', '')
