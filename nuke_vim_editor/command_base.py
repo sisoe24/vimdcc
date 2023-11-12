@@ -31,10 +31,10 @@ class MoveCommand(ABC):
 
     def remove_selected_text(self, params: HandlerParams) -> None:
         if params.mode in ['DELETE', 'DELETE_INSERT']:
-            Registers.push(params.cursor.selectedText())
+            Registers.add(params.cursor.selectedText())
             params.cursor.removeSelectedText()
 
     def yank_selected_text(self, params: HandlerParams) -> None:
         if params.mode == 'YANK':
-            Registers.push(params.cursor.selectedText())
+            Registers.add(params.cursor.selectedText())
             params.cursor.clearSelection()
