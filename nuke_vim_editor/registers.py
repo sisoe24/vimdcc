@@ -1,15 +1,34 @@
+import os
 import json
-from typing import (Any, Dict, List, Generic, Literal, TypeVar, Optional,
-                    TypedDict)
+import pathlib
+import contextlib
+from typing import (Any, Dict, List, Literal, Optional, Protocol, TypedDict,
+                    overload)
+from contextlib import contextmanager
 
 
 def increment(index: int) -> str:
     return chr(ord('a') + index - 9) if index >= 9 else str(index + 1)
 
 
-class _NumberedBuffer:
-    def __init__(self, previous_history: list[str], size: int = 10):
-        self.history: list[str] = previous_history or []
+class Mark(TypedDict):
+    position: int
+    line: str
+
+
+class RegistersTypes(TypedDict):
+    named: Dict[str, str]
+    numbered: List[str]
+    last_search: str
+    marks: Dict[str, Mark]
+
+
+RegisterName = Literal['named', 'last_search', 'marks', 'numbered']
+
+
+class Clipboard:
+    def __init__(self, previous_history: List[str], size: int = 10):
+        self.history: List[str] = previous_history or []
         self.size = size
 
     def add(self, item: str):
@@ -27,21 +46,32 @@ class _NumberedBuffer:
         return str(self.history)
 
 
-class Mark(TypedDict):
-    position: int
-    line: str
+class RegisterFileProtocol(Protocol):
+    def load(self) -> RegistersTypes: ...
+    def save(self, registers: RegistersTypes) -> None: ...
 
 
-class RegistersTypes(TypedDict):
-    named: Dict[str, str]
-    numbered: List[str]
-    last_search: str
-    marks: Dict[str, Mark]
+class RegisterFile:
+    registers: RegistersTypes = {
+        'named': {},
+        'numbered': [],
+        'last_search': '',
+        'marks': {},
+    }
 
+    def __init__(self, register_file: pathlib.Path) -> None:
+        self._register_file = register_file
 
-RegisterName = Literal['named', 'last_search', 'marks', 'numbered']
+    def load(self):
+        if not self._register_file.exists():
+            self.save(self.registers)
 
-T = TypeVar('T', bound=RegisterName)
+        with self._register_file.open() as f:
+            return json.load(f)
+
+    def save(self, registers: RegistersTypes):
+        with self._register_file.open('w') as f:
+            json.dump(registers, f, indent=4)
 
 
 class _Registers:
@@ -52,29 +82,21 @@ class _Registers:
         'marks': {},
     }
 
-    def __init__(self):
-        self._load()
-        self._named_buffer = _NumberedBuffer(self.registers['numbered'])
+    def __init__(self, register_file: RegisterFileProtocol):
+        self.registers_file = register_file
+        self.registers = register_file.load()
+
+        self._clipboard = Clipboard(self.registers['numbered'])
         self._named_register: Optional[str] = None
 
-    def _load(self):
-        with open('registers.json') as f:
-            data = json.load(f)
-            if data:
-                self.registers = data
-
-    def _save(self):
-        with open('registers.json', 'w') as f:
-            json.dump(self.registers, f, indent=4)
-
     def _push_to_clipboard(self, value: str):
-        self._named_buffer.add(value)
-        self.registers['numbered'] = self._named_buffer.history
-        self._save()
+        self._clipboard.add(value)
+        self.registers['numbered'] = self._clipboard.history
+        self.registers_file.save(self.registers)
 
     def add_mark(self, key: str, text: str, pos: int) -> None:
         self.registers['marks'][key] = {'position': pos, 'line': text}
-        self._save()
+        self.registers_file.save(self.registers)
 
     def get_mark(self, key: str) -> Optional[Mark]:
         return self.registers['marks'].get(key)
@@ -93,28 +115,43 @@ class _Registers:
         key = self._named_register
 
         if not key:
-            self.registers['numbered'][0]
-            return
+            return self.registers['numbered'][0]
 
         if key == '/':
             return self.registers['last_search']
 
         return self.registers['named'].get(key)
 
-    def push(self, value: str) -> None:
+    def add(self, value: str) -> None:
         if self._named_register:
             self.registers['named'][self._named_register] = value
 
         self._push_to_clipboard(value)
         self._named_register = None
 
-    def get_register(self, name: RegisterName) -> Any:
+    @overload
+    def get_register(self, name: Literal['marks']) -> Mark: ...
+
+    @overload
+    def get_register(self, name: Literal['last_search']) -> str: ...
+
+    @overload
+    def get_register(self, name: Literal['numbered']) -> List[str]: ...
+
+    @overload
+    def get_register(self, name: Literal['named']) -> Dict[str, str]: ...
+
+    @overload
+    def get_register(self, name: str) -> Any: ...
+
+    def get_register(self, name: str) -> Any:
         return self.registers[name]
 
-    def clear(self):
-        for register in self.registers.values():
-            register.clear()
-        self._save()
+
+def get_register():
+    env_path = os.getenv('REGISTER_DIR')
+    path = env_path or pathlib.Path(__file__).parent.parent
+    return pathlib.Path(path) / 'registers.json'
 
 
-Registers = _Registers()
+Registers = _Registers(RegisterFile(get_register()))
