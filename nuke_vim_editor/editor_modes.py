@@ -87,13 +87,8 @@ class CommandMode(BaseMode):
     def execute_command(self, command: str):
         # TODO: Add python
         # TODO: Add Nuke
-        # TODO: Add clear registers
-        # TODO: Add clear marks
 
-        commands = {
-            'registers': lambda: print(Registers.registers),
-            'marks': lambda: print(Registers.get_register('marks')),
-        }
+        commands = {}
         commands.get(command.strip(), lambda: print('Unknown command'))()
 
     def eventFilter(self, watched: QObject, event: QEvent):
@@ -223,7 +218,7 @@ class NormalMode(BaseMode):
         if self.key_sequence == 'V':
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            editor.setTextCursor(cursor)
+            # editor.setTextCursor(cursor)
             return super().to_mode(Modes.VISUAL_LINE)
 
         if self.arrow_keys(cursor, key_event):
