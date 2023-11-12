@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List
 from dataclasses import dataclass
 
 import pytest
@@ -45,7 +45,6 @@ def test_yank_handler(handler: YankHandler, data: MotionTest):
         mode=Modes.NORMAL
     )
 
-    params.cursor.setPosition(data.cursor_start)
     params.cursor.setPosition(data.cursor_start)
 
     for motion in data.motion:
