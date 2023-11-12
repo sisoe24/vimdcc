@@ -1,6 +1,7 @@
 
 import json
 from typing import Dict, List
+from unittest import mock
 from dataclasses import dataclass
 
 import pytest
@@ -65,7 +66,12 @@ def test_set_mark(handler: MarksHandler, data: MotionTest) -> None:
 
     assert editor.textCursor().position() == 0
 
-    params.keys = f'`{data.motion[-1]}'
+    params.keys = '`'
+
+    # TODO: Too hacky don't like it...
+    preview_marks = mock.Mock()
+    preview_marks.get_text_value = lambda: data.jump_to
+    handler._preview_marks = preview_marks
 
     handler.handle(params)
     editor.setTextCursor(params.cursor)
