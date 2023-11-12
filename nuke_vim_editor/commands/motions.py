@@ -49,11 +49,11 @@ class MoveWordForwardEnd(MoveCommand):
                 break
 
             # this check is only for the first word
-            if character in ['\u2029', '\n', ' ']:
+            if character.isspace():
                 cursor.movePosition(QTextCursor.PreviousCharacter, params.anchor)
                 break
 
-        if params.mode in ['VISUAL', 'YANK']:
+        if params.mode in ['VISUAL', 'YANK', 'DELETE', 'CHANGE']:
             params.cursor.movePosition(QTextCursor.NextCharacter, params.anchor)
 
         return True
@@ -69,7 +69,7 @@ class MoveWordBackward(MoveCommand):
 
         position = params.cursor.position()
         character = params.cursor.document().characterAt(position)
-        if character in ['\u2029', '\n']:
+        if character.isspace():
             params.cursor.movePosition(QTextCursor.PreviousWord, params.anchor)
 
         return True
@@ -101,6 +101,9 @@ class MoveLineUp(MoveCommand):
         self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
+        if params.mode in ['YANK', 'DELETE', 'CHANGE']:
+            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.MoveAnchor)
+            params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
         params.cursor.movePosition(QTextCursor.Up, params.anchor)
         return True
 
@@ -111,6 +114,9 @@ class MoveLineDown(MoveCommand):
         self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
+        if params.mode in ['YANK', 'DELETE', 'CHANGE']:
+            params.cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+            params.cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         params.cursor.movePosition(QTextCursor.Down, params.anchor)
         return True
 
