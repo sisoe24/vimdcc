@@ -126,6 +126,10 @@ class _Registers:
         return self.registers['named'].get(key)
 
     def add(self, value: str) -> None:
+        if value.isspace():
+            # TODO: add a warning
+            return
+
         if self._named_register:
             self.registers['named'][self._named_register] = value
 
