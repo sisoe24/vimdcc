@@ -1,6 +1,5 @@
 
-import json
-from typing import Dict, List
+from typing import List
 from unittest import mock
 from dataclasses import dataclass
 
@@ -21,11 +20,6 @@ def editor(qtbot: QtBot) -> QPlainTextEdit:
 @pytest.fixture()
 def handler(editor: QPlainTextEdit) -> MarksHandler:
     return MarksHandler(editor)
-
-
-def marks() -> Dict[str, int]:
-    with open('marks.json', 'r') as f:
-        return json.load(f)
 
 
 @dataclass
