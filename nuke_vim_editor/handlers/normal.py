@@ -296,7 +296,7 @@ class YankHandler(BaseHandler):
         pos = cursor.position()
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        self.registers.push(cursor.selectedText() + '\n')
+        self.registers.add(cursor.selectedText() + '\n')
         cursor.clearSelection()
         cursor.setPosition(pos)
         return True
