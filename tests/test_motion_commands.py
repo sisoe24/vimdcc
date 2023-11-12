@@ -242,7 +242,7 @@ def test_motion_edit_delete(handler: MotionHandler, data: MotionTest):
         keys='',
         modifiers=[],
         event=None,
-        mode=Modes.CHANGE
+        mode=Modes.DELETE
     )
 
     params.cursor.setPosition(data.cursor_start)
