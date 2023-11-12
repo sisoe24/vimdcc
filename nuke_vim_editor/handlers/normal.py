@@ -111,19 +111,10 @@ class MarksHandler(BaseHandler):
         self.registers.add_mark(key, current_line_text, params.cursor.position())
         return True
 
-    def move_to_mark(self, key: str, params: HandlerParams):
-        mark = self.registers.get_mark(key)
-        if mark:
-            params.cursor.setPosition(mark['position'])
-        else:
-            params.status_bar.emit('NORMAL', f'{key} mark not set')
-
-        return True
-
-    def preview_marks(self, params: HandlerParams):
+    def go_to_mark(self, params: HandlerParams):
         previewer = self._preview_marks
         value = previewer.get_text_value()
-        if value:
+        if value is not None:
             params.cursor.setPosition(int(value))
         return True
 
@@ -133,7 +124,7 @@ class MarksHandler(BaseHandler):
         if key_sequence.startswith('m') and len(key_sequence) == 2:
             return self.set_mark(key_sequence[1], params)
 
-        return self.preview_marks(params) if key_sequence == '`' else False
+        return self.go_to_mark(params) if key_sequence == '`' else False
 
 
 @register_normal_handler
