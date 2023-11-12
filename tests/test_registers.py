@@ -99,3 +99,14 @@ def test_register_add_mark():
 
     assert register.registers['marks'] == {'a': {'position': 1, 'line': 'b'}}
     assert register.get_mark('a') == {'position': 1, 'line': 'b'}
+
+
+def test_register_add_space():
+    register = _Registers(RegisterFileMock())
+
+    register.set_named_register('a')
+    register.add('\u2029')
+
+    assert register.registers['numbered'] == []
+    assert register.get_numbered_register_value(0) is None
+    assert register.get_named_register_value() is None
