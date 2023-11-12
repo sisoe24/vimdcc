@@ -9,7 +9,7 @@ class Modes(str, Enum):
     COMMAND = 'COMMAND'
     YANK = 'YANK'
     DELETE = 'DELETE'
-    DELETE_INSERT = 'DELETE_INSERT'
+    CHANGE = 'CHANGE'
 
 
 class _EditorMode:
