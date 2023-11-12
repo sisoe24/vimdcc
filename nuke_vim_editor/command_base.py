@@ -33,7 +33,7 @@ class MoveCommand(ABC):
             params.cursor.movePosition(params.cursor.StartOfLine, params.cursor.KeepAnchor)
 
     def remove_selected_text(self, params: HandlerParams) -> None:
-        if params.mode in ['DELETE', 'DELETE_INSERT']:
+        if params.mode in ['DELETE', 'CHANGE']:
             Registers.add(params.cursor.selectedText())
             params.cursor.removeSelectedText()
 
@@ -43,5 +43,5 @@ class MoveCommand(ABC):
             params.cursor.clearSelection()
 
             # Restore the cursor position to the initial position
-            if self.initial_position:
+            if self.initial_position is not None:
                 params.cursor.setPosition(self.initial_position)
