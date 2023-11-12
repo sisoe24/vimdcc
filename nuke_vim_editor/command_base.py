@@ -12,15 +12,8 @@ class BaseCommand:
 
 class MoveCommand(ABC):
     def execute(self, params: HandlerParams) -> bool:
-
-        # The common pre-execution steps (if any) go here
-
-        # Delegate the execution to the subclass
         result = self._do_execute(params)
-
-        # Common post-execution steps
         self._post_execute(params)
-
         return result
 
     @abstractmethod
