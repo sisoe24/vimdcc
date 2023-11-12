@@ -62,7 +62,7 @@ def test_set_mark(handler: MarksHandler, data: MotionTest) -> None:
 
     params.keys = '`'
 
-    # TODO: Too hacky don't like it...
+    # FIXME: Too hacky don't like it...
     preview_marks = mock.Mock()
     preview_marks.get_text_value = lambda: data.jump_to
     handler._preview_marks = preview_marks
