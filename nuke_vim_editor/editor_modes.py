@@ -1,5 +1,5 @@
 import json
-from typing import List, Union, Optional, cast
+from typing import List, Union, Literal, Optional, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QObject
@@ -79,6 +79,10 @@ class BaseMode(QObject):
 
 class NormalMode(BaseMode):
 
+    operators = Literal['d', 'c', 'y', 'v']
+    print('➡ operators :', operators)
+    text_objects = ['i', 'a']
+
     def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
         super().__init__(parent)
 
@@ -87,7 +91,7 @@ class NormalMode(BaseMode):
         handlers = handlers or get_normal_handlers()
         self._handlers = [handler(self.editor) for handler in handlers]
 
-    def _check_edit_mode(self, mode: str):
+    def _check_edit_mode(self, operator: operators):
         """Check if the key sequence is a edit mode.
 
         This is an ugly hack to check if the key sequence is a edit mode. If a
@@ -98,9 +102,9 @@ class NormalMode(BaseMode):
 
         """
         if (
-            len(self.key_sequence) == 2 and
-            self.key_sequence[0] == mode and
-            self.key_sequence[1] != mode
+            len(self.key_sequence) == 2
+            and self.key_sequence[0] == operator
+            and self.key_sequence[1] not in [*self.text_objects, operator]
         ):
             operator_modes = {
                 'v': Modes.VISUAL,
@@ -108,7 +112,8 @@ class NormalMode(BaseMode):
                 'd': Modes.DELETE,
                 'c': Modes.CHANGE,
             }
-            EditorMode.mode = operator_modes[mode]
+
+            EditorMode.mode = operator_modes[operator]
             self.key_sequence = self.key_sequence[1:]
 
     def arrow_keys(self, cursor: QTextCursor, key_event: QKeyEvent):
@@ -145,8 +150,6 @@ class NormalMode(BaseMode):
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
 
         cursor = editor.textCursor()
-        position = cursor.position()
-
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
@@ -171,7 +174,6 @@ class NormalMode(BaseMode):
         if self.key_sequence == 'V':
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            # editor.setTextCursor(cursor)
             return super().to_mode(Modes.VISUAL_LINE)
 
         if self.arrow_keys(cursor, key_event):
