@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Tuple, Optional
 
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand, MoveCommand
-from ..handler_base import Registers, BaseHandler, register_normal_handler
+from ..handler_base import BaseHandler, register_normal_handler
+from ..text_objects import (find_matching_brackets, find_matching_parenthesis,
+                            find_matching_square_brackets)
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
 from ..commands.search import SearchCommand
@@ -16,8 +18,8 @@ from ..commands.motions import (MoveLineUp, MoveLineEnd, MoveLineDown,
                                 MoveToStartOfBlock, MoveWordForwardEnd)
 from ..commands.document import (MoveDocumentUp, MoveParagraphUp,
                                  MoveDocumentDown, MoveParagraphDown)
-from ..registers_preview import (PreviewRegister, PreviewMarkRegister,
-                                 PreviewNamedRegister, PreviewNumberedRegister)
+from ..registers_preview import (PreviewMarkRegister, PreviewNamedRegister,
+                                 PreviewNumberedRegister)
 from ..commands.swap_case import SwapCase, SwapLower, SwapUpper
 from ..handler_parameters import HandlerParams
 
@@ -27,16 +29,16 @@ class MotionHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands: Dict[str, MoveCommand] = {
-            'w': MoveWordForward(editor, 'NORMAL'),
-            'b': MoveWordBackward(editor, 'NORMAL'),
-            'e': MoveWordForwardEnd(editor, 'NORMAL'),
-            'h': MoveWordLeft(editor, 'NORMAL'),
-            'l': MoveWordRight(editor, 'NORMAL'),
-            'k': MoveLineUp(editor, 'NORMAL'),
-            'j': MoveLineDown(editor, 'NORMAL'),
-            '$': MoveLineEnd(editor, 'NORMAL'),
-            '0': MoveLineStart(editor, 'NORMAL'),
-            '^': MoveToStartOfBlock(editor, 'NORMAL'),
+            'w': MoveWordForward(editor),
+            'b': MoveWordBackward(editor),
+            'e': MoveWordForwardEnd(editor),
+            'h': MoveWordLeft(editor),
+            'l': MoveWordRight(editor),
+            'k': MoveLineUp(editor),
+            'j': MoveLineDown(editor),
+            '$': MoveLineEnd(editor),
+            '0': MoveLineStart(editor),
+            '^': MoveToStartOfBlock(editor),
         }
 
     def handle(self, params: HandlerParams):
@@ -49,10 +51,10 @@ class DocumentHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands: Dict[str, MoveCommand] = {
-            'G': MoveDocumentDown(editor, 'NORMAL'),
-            'gg': MoveDocumentUp(editor, 'NORMAL'),
-            '{': MoveParagraphUp(editor, 'NORMAL'),
-            '}': MoveParagraphDown(editor, 'NORMAL'),
+            'G': MoveDocumentDown(editor),
+            'gg': MoveDocumentUp(editor),
+            '{': MoveParagraphUp(editor),
+            '}': MoveParagraphDown(editor),
         }
 
     def handle(self, params: HandlerParams):
@@ -65,15 +67,18 @@ class InsertHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands: Dict[str, BaseCommand] = {
-            'i': Inserti(editor, 'NORMAL'),
-            'I': InsertI(editor, 'NORMAL'),
-            'a': Inserta(editor, 'NORMAL'),
-            'A': InsertA(editor, 'NORMAL'),
-            'o': Inserto(editor, 'NORMAL'),
-            'O': InsertO(editor, 'NORMAL'),
+            'i': Inserti(editor),
+            'I': InsertI(editor),
+            'a': Inserta(editor),
+            'A': InsertA(editor),
+            'o': Inserto(editor),
+            'O': InsertO(editor),
         }
 
     def handle(self, params: HandlerParams):
+        if params.mode != 'NORMAL':
+            return False
+
         command = self.commands.get(params.keys)
         if command and command.execute(params):
             super().to_insert_mode()
@@ -86,10 +91,10 @@ class SwapCaseHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.commands: Dict[str, BaseCommand] = {
-            '~': SwapCase(editor, 'NORMAL'),
-            'g~': SwapCase(editor, 'NORMAL'),
-            'gu': SwapLower(editor, 'NORMAL'),
-            'gU': SwapUpper(editor, 'NORMAL'),
+            '~': SwapCase(editor),
+            'g~': SwapCase(editor),
+            'gu': SwapLower(editor),
+            'gU': SwapUpper(editor),
         }
 
     def handle(self, params: HandlerParams):
@@ -392,7 +397,52 @@ class EditHandler(BaseHandler):
             'C': self._delete_from_cursor_insert,
             'D': self._delete_from_cursor,
             'dd': self._delete_line,
+            'di(': self._delete_inside_parenthesis,
+            'di)': self._delete_inside_parenthesis,
+            'di{': self._delete_inside_brackets,
+            'di}': self._delete_inside_brackets,
+            'di[': self._delete_inside_square,
+            'di]': self._delete_inside_square,
+            'ci(': self._change_inside_parenthesis,
+            'ci)': self._change_inside_parenthesis,
+            'ci{': self._change_inside_brackets,
+            'ci}': self._change_inside_brackets,
+            'ci[': self._change_inside_square,
+            'ci]': self._change_inside_square,
+
         }
+
+    def _execute_text_object(self, find: Optional[Tuple[int, int]], cursor: QTextCursor):
+        if find:
+            start, end = find[0], find[1]
+            cursor.setPosition(start, QTextCursor.MoveAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+        return True
+
+    def _delete_inside_square(self, cursor: QTextCursor):
+        find = find_matching_square_brackets(self.editor.toPlainText(), cursor.position())
+        return self._execute_text_object(find, cursor)
+
+    def _delete_inside_brackets(self, cursor: QTextCursor):
+        find = find_matching_brackets(self.editor.toPlainText(), cursor.position())
+        return self._execute_text_object(find, cursor)
+
+    def _delete_inside_parenthesis(self, cursor: QTextCursor):
+        find = find_matching_parenthesis(self.editor.toPlainText(), cursor.position())
+        return self._execute_text_object(find, cursor)
+
+    def _change_inside_square(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        return self._delete_inside_square(cursor)
+
+    def _change_inside_brackets(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        return self._delete_inside_brackets(cursor)
+
+    def _change_inside_parenthesis(self, cursor: QTextCursor):
+        super().to_insert_mode()
+        return self._delete_inside_parenthesis(cursor)
 
     def _delete_from_cursor(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
