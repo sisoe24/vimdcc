@@ -1,14 +1,13 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import BaseCommand, MoveCommand
+from ..command_base import MoveCommand
 from ..handler_parameters import HandlerParams
 
 
 class MoveWordForward(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
@@ -22,9 +21,8 @@ class MoveWordForward(MoveCommand):
 
 
 class MoveWordForwardEnd(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def move_to_next_end_word(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.NextWord, params.anchor)
@@ -60,9 +58,8 @@ class MoveWordForwardEnd(MoveCommand):
 
 
 class MoveWordBackward(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.PreviousWord, params.anchor)
@@ -76,9 +73,8 @@ class MoveWordBackward(MoveCommand):
 
 
 class MoveWordLeft(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Left, params.anchor)
@@ -86,9 +82,8 @@ class MoveWordLeft(MoveCommand):
 
 
 class MoveWordRight(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Right, params.anchor)
@@ -96,9 +91,8 @@ class MoveWordRight(MoveCommand):
 
 
 class MoveLineUp(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         if params.mode in ['YANK', 'DELETE', 'CHANGE']:
@@ -109,9 +103,8 @@ class MoveLineUp(MoveCommand):
 
 
 class MoveLineDown(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         if params.mode in ['YANK', 'DELETE', 'CHANGE']:
@@ -122,9 +115,8 @@ class MoveLineDown(MoveCommand):
 
 
 class MoveLineStart(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)
@@ -132,9 +124,8 @@ class MoveLineStart(MoveCommand):
 
 
 class MoveLineEnd(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.EndOfLine, params.anchor)
@@ -144,9 +135,8 @@ class MoveLineEnd(MoveCommand):
 
 
 class MoveToStartOfBlock(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.StartOfLine, params.anchor)

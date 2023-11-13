@@ -10,9 +10,8 @@ SwapMode = Literal['swapcase', 'upper', 'lower']
 
 def create_swap_case_command(mode: SwapMode):
     class SwapCaseCommand(BaseCommand):
-        def __init__(self, editor: QPlainTextEdit, mode: str):
+        def __init__(self, editor: QPlainTextEdit):
             self.editor = editor
-            self.mode = mode
 
         def execute(self, params: HandlerParams):
             cursor = params.cursor

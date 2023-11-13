@@ -10,9 +10,8 @@ from ..handler_parameters import HandlerParams
 
 def create_insert_command(move_position: QTextCursor.MoveOperation):
     class InsertCommand(BaseCommand):
-        def __init__(self, editor: QPlainTextEdit, mode: str):
+        def __init__(self, editor: QPlainTextEdit):
             self.editor = editor
-            self.mode = mode
 
         def execute(self, params: HandlerParams):
             params.cursor.movePosition(move_position)
@@ -22,9 +21,8 @@ def create_insert_command(move_position: QTextCursor.MoveOperation):
 
 
 class InsertO(BaseCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def execute(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.StartOfLine)
@@ -34,9 +32,8 @@ class InsertO(BaseCommand):
 
 
 class Inserto(BaseCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def execute(self, params: HandlerParams):
         params.cursor.movePosition(QTextCursor.EndOfLine)

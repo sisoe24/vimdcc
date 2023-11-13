@@ -1,14 +1,13 @@
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
-from ..command_base import BaseCommand, MoveCommand
+from ..command_base import MoveCommand
 from ..handler_parameters import HandlerParams
 
 
 class MoveDocumentUp(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.Start, params.anchor)
@@ -16,9 +15,8 @@ class MoveDocumentUp(MoveCommand):
 
 
 class MoveDocumentDown(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         params.cursor.movePosition(QTextCursor.End, params.anchor)
@@ -28,9 +26,8 @@ class MoveDocumentDown(MoveCommand):
 
 
 class MoveParagraphUp(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
@@ -51,9 +48,8 @@ class MoveParagraphUp(MoveCommand):
 
 
 class MoveParagraphDown(MoveCommand):
-    def __init__(self, editor: QPlainTextEdit, mode: str):
+    def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
-        self.mode = mode
 
     def _do_execute(self, params: HandlerParams) -> bool:
         cursor = params.cursor
