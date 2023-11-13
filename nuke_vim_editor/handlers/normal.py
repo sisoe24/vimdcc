@@ -7,7 +7,8 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
-from ..text_objects import (find_matching_brackets, find_matching_parenthesis,
+from ..text_objects import (MatchingBrackets, find_matching,
+                            find_matching_brackets, find_matching_parenthesis,
                             find_matching_square_brackets)
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
@@ -385,6 +386,54 @@ class VisualEditHandler(BaseHandler):
 
 
 @register_normal_handler
+class TextObjectsHandler(BaseHandler):
+
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.brackets = {
+            '(': MatchingBrackets.PARENTHESIS,
+            ')': MatchingBrackets.PARENTHESIS,
+            '{': MatchingBrackets.BRACKETS,
+            '}': MatchingBrackets.BRACKETS,
+            '[': MatchingBrackets.SQUARE_BRACKETS,
+            ']': MatchingBrackets.SQUARE_BRACKETS,
+        }
+        self.valid_operators = {'ci', 'ca', 'di', 'da'}
+
+    def _execute_text_object(self, cursor: QTextCursor, bracket_type: MatchingBrackets, operator: str):
+        find = find_matching(self.editor.toPlainText(), cursor.position(), bracket_type)
+        if find:
+            start, end = find
+
+            if operator[1] == 'i':
+                start += 1
+            elif operator[1] == 'a':
+                end += 1
+
+            cursor.setPosition(start, QTextCursor.MoveAnchor)
+            cursor.setPosition(end, QTextCursor.KeepAnchor)
+            self.registers.add(cursor.selectedText())
+            cursor.removeSelectedText()
+
+            if operator[0] == 'c':
+                super().to_insert_mode()
+
+        return True
+
+    def handle(self, params: HandlerParams) -> bool:
+        keys = params.keys
+
+        operator = keys[:2]  # di, ci, da, ca
+        bracket = keys[-1]  # (, ), {, }, [, ]
+
+        if operator in self.valid_operators and bracket in self.brackets:
+            bracket_type = self.brackets[bracket]
+            return self._execute_text_object(params.cursor, bracket_type, operator)
+
+        return False
+
+
+@register_normal_handler
 class EditHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
@@ -397,52 +446,7 @@ class EditHandler(BaseHandler):
             'C': self._delete_from_cursor_insert,
             'D': self._delete_from_cursor,
             'dd': self._delete_line,
-            'di(': self._delete_inside_parenthesis,
-            'di)': self._delete_inside_parenthesis,
-            'di{': self._delete_inside_brackets,
-            'di}': self._delete_inside_brackets,
-            'di[': self._delete_inside_square,
-            'di]': self._delete_inside_square,
-            'ci(': self._change_inside_parenthesis,
-            'ci)': self._change_inside_parenthesis,
-            'ci{': self._change_inside_brackets,
-            'ci}': self._change_inside_brackets,
-            'ci[': self._change_inside_square,
-            'ci]': self._change_inside_square,
-
         }
-
-    def _execute_text_object(self, find: Optional[Tuple[int, int]], cursor: QTextCursor):
-        if find:
-            start, end = find[0], find[1]
-            cursor.setPosition(start, QTextCursor.MoveAnchor)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
-        return True
-
-    def _delete_inside_square(self, cursor: QTextCursor):
-        find = find_matching_square_brackets(self.editor.toPlainText(), cursor.position())
-        return self._execute_text_object(find, cursor)
-
-    def _delete_inside_brackets(self, cursor: QTextCursor):
-        find = find_matching_brackets(self.editor.toPlainText(), cursor.position())
-        return self._execute_text_object(find, cursor)
-
-    def _delete_inside_parenthesis(self, cursor: QTextCursor):
-        find = find_matching_parenthesis(self.editor.toPlainText(), cursor.position())
-        return self._execute_text_object(find, cursor)
-
-    def _change_inside_square(self, cursor: QTextCursor):
-        super().to_insert_mode()
-        return self._delete_inside_square(cursor)
-
-    def _change_inside_brackets(self, cursor: QTextCursor):
-        super().to_insert_mode()
-        return self._delete_inside_brackets(cursor)
-
-    def _change_inside_parenthesis(self, cursor: QTextCursor):
-        super().to_insert_mode()
-        return self._delete_inside_parenthesis(cursor)
 
     def _delete_from_cursor(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
