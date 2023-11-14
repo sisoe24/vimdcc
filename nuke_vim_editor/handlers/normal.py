@@ -405,9 +405,8 @@ class TextObjectsHandler(BaseHandler):
         if find:
             start, end = find
 
-            if operator[1] == 'i':
-                start += 1
-            elif operator[1] == 'a':
+            if operator[1] == 'a':
+                start -= 1
                 end += 1
 
             cursor.setPosition(start, QTextCursor.MoveAnchor)
