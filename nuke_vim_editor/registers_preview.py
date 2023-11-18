@@ -1,5 +1,4 @@
 import sys
-import json
 from typing import Dict, Optional, TypedDict
 
 from PySide2.QtGui import QKeyEvent, QStandardItem
