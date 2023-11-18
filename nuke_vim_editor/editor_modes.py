@@ -80,7 +80,6 @@ class BaseMode(QObject):
 class NormalMode(BaseMode):
 
     operators = Literal['d', 'c', 'y', 'v']
-    print('➡ operators :', operators)
     text_objects = ['i', 'a']
 
     def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
