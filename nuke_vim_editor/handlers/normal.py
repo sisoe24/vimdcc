@@ -7,9 +7,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
-from ..text_objects import (MatchingBrackets, find_matching,
-                            find_matching_brackets, find_matching_parenthesis,
-                            find_matching_square_brackets)
+from ..text_objects import MatchingBrackets, find_matching
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
 from ..commands.search import SearchCommand
@@ -405,8 +403,9 @@ class TextObjectsHandler(BaseHandler):
         if find:
             start, end = find
 
-            if operator[1] == 'a':
-                start -= 1
+            if operator[1] == 'i':
+                start += 1
+            elif operator[1] == 'a':
                 end += 1
 
             cursor.setPosition(start, QTextCursor.MoveAnchor)
