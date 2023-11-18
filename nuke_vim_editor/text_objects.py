@@ -69,48 +69,47 @@ def find_matching_brackets(
 
 def find_matching_quotes(
     text: str,
-    quote_type: MatchingCharacter,
+    quote_type: str,
     start_pos: int,
     end_pos: int
 ) -> Optional[tuple[int, int]]:
 
+    # Adjust start position if it's on a quote
     if text[start_pos:][0] == quote_type:
         start_pos += 1
 
-    escaped = False
     end_index = None
 
-    for i, char in enumerate(text[start_pos:end_pos], start_pos):
-
-        if char == '\\' and text[i + 1] == quote_type:
-            escaped = True
+    # Forward search for the closing quote
+    i = start_pos
+    while i < end_pos:
+        if text[i] == '\\' and i + 1 < end_pos and text[i + 1] == quote_type:
+            i += 2  # Skip escaped quote
             continue
 
-        if char == quote_type and escaped:
-            escaped = False
-            continue
-
-        if char == quote_type:
+        if text[i] == quote_type:
             end_index = i
             break
+
+        i += 1
 
     if end_index is None:
         return None
 
     start_index = None
-    for i in range(start_pos - 1, -1, -1):
-        char = text[i]
 
-        if char == quote_type:
-            if text[i - 1] == '\\':
-                escaped = True
+    # Backward search for the opening quote
+    i = start_pos - 1
+    while i >= 0:
+        if i > 0 and text[i - 1] == '\\' and text[i] == quote_type:
+            i -= 2  # Skip escaped quote
+            continue
 
-            if escaped:
-                escaped = False
-                continue
-
+        if text[i] == quote_type:
             start_index = i
             break
+
+        i -= 1
 
     if start_index is None:
         return None
