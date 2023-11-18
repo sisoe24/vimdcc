@@ -1,60 +1,68 @@
 
+import logging
 import pathlib
+from typing import Any, Dict
 from importlib import import_module
 
-from PySide2.QtWidgets import QMainWindow, QApplication, QPlainTextEdit
+from PySide2.QtCore import Slot
+from PySide2.QtWidgets import (QLabel, QWidget, QPushButton, QVBoxLayout,
+                               QPlainTextEdit)
 
 from .status_bar import status_bar
+from .utils.cache import cache
 from .editor_modes import EDITOR_MODES
 
 for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
     import_module(f'nuke_vim_editor.handlers.{module.stem}')
 
-
-def read_sample(debug=False):
-    s = ''
-    with open('sample.txt', 'r') as f:
-
-        if debug:
-            content = f.read()
-            for i in content:
-                if i in ['\n', '\t', '\r']:
-                    s += repr(i) + '\n'
-
-                else:
-                    s += i
-            return s
-        return f.read()
+LOGGER = logging.getLogger('vim')
+_EVENT_FILTERS: Dict[str, Any] = {}
 
 
-def main():
-    app = QApplication([])
-    font = app.font()
-    font.setFamilies(['JetBrainsMono Nerd Font', 'Courier'])
-    font.setPixelSize(25)
-    app.setFont(font)
+class VimDCC(QWidget):
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(parent)
 
-    window = QMainWindow()
-    window.setGeometry(100, 100, 1000, 1000)
+        self.editor = editor
 
-    editor = QPlainTextEdit()
+        self.toggle_vim = QPushButton('Toggle Vim')
+        self.toggle_vim.clicked.connect(self._on_toggle_vim)
+        self.toggle_vim.setCheckable(True)
 
-    editor.setPlainText(read_sample())
-    editor.setCursorWidth(editor.fontMetrics().width(' '))
-    window.setCentralWidget(editor)
+        self.vim_status = QLabel('Vim: OFF')
 
-    status_bar.register(window.statusBar())
-    window.statusBar().showMessage('NORMAL')
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel('<h1>VimLite</h1>'))
+        layout.addWidget(self.vim_status)
+        layout.addWidget(self.toggle_vim)
+        self.setLayout(layout)
 
-    pool = []
-    for mode in EDITOR_MODES:
-        _m = mode(editor)
-        pool.append(_m)
-        editor.installEventFilter(_m)
+    @Slot(bool)
+    def _on_toggle_vim(self, checked: bool):
 
-    window.show()
-    app.exec_()
+        if checked:
+            LOGGER.debug('Turning Vim ON')
+            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+            self.vim_status.setText('Vim: ON')
+            action = self.editor.installEventFilter
+        else:
+            LOGGER.debug('Turning Vim OFF')
+            self.vim_status.setText('Vim: OFF')
+            action = self.editor.removeEventFilter
 
+        for mode in EDITOR_MODES:
+            LOGGER.debug(f'Installing: {mode.__name__}')
 
-if __name__ == '__main__':
-    main()
+            if _EVENT_FILTERS.get(f'{mode.__name__}_filter'):
+                event_filter = _EVENT_FILTERS[f'{mode.__name__}_filter']
+            else:
+                event_filter = mode(self.editor)
+
+            # The event filters get garbage collected if we don't keep a
+            # reference to them
+            _EVENT_FILTERS[f'{mode.__name__}_filter'] = event_filter
+
+            LOGGER.debug(f'event_filter: {event_filter}')
+            action(event_filter)
+
+        self.editor.viewport().update()
