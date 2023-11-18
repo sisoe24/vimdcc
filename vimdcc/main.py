@@ -13,7 +13,7 @@ from .utils.cache import cache
 from .editor_modes import EDITOR_MODES
 
 for module in pathlib.Path(__file__).parent.glob('handlers/*.py'):
-    import_module(f'nuke_vim_editor.handlers.{module.stem}')
+    import_module(f'vimdcc.handlers.{module.stem}')
 
 LOGGER = logging.getLogger('vim')
 _EVENT_FILTERS: Dict[str, Any] = {}
