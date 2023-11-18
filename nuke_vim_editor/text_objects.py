@@ -68,13 +68,12 @@ def find_matching_quotes(
     start_pos: int,
     end_pos: int
 ) -> Optional[tuple[int, int]]:
-    end_index = None
 
     if text[start_pos:][0] == quote_type:
         start_pos += 1
 
     escaped = False
-
+    end_index = None
     for i, char in enumerate(text[start_pos:end_pos], start_pos):
 
         if char == '\\' and text[i + 1] == quote_type:
