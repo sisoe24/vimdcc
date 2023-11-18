@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
-from vimdcc.registers import Registers
-
+from .registers import Registers
 from .handler_parameters import HandlerParams
 
 
