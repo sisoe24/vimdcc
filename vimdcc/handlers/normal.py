@@ -441,6 +441,8 @@ class TextObjectsHandler(BaseHandler):
 
     def handle(self, params: HandlerParams) -> bool:
         keys = params.keys
+        if not keys or len(keys) < 3:
+            return False
 
         operator = keys[:2]  # di, ci, da, ca
         character = keys[-1]  # (, ), {, }, [, ], ', ", `
