@@ -1,11 +1,10 @@
-import json
 from typing import List, Union, Literal, Optional, cast
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
-from .registers import Registers
+from .logger import LOGGER
 from .status_bar import status_bar
 from .editor_state import Modes, EditorMode
 from .handler_base import HandlerType, get_normal_handlers
@@ -28,28 +27,7 @@ def extract_modifiers(
     ]
 
 
-class InsertMode(QObject):
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorMode.mode != Modes.INSERT:
-            return False
-
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
-            status_bar.emit('NORMAL', '')
-            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-            EditorMode.mode = Modes.NORMAL
-            return True
-
-        return False
-
-
-class BaseMode(QObject):
+class BaseFilter(QObject):
     key_sequence = ''
 
     def __init__(self, editor: QPlainTextEdit, parent=None):
@@ -77,18 +55,42 @@ class BaseMode(QObject):
         return True
 
 
-class NormalMode(BaseMode):
+class InsertEventFilter(QObject):
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(parent)
+        self.editor = editor
+
+    def eventFilter(self, watched: QObject, event: QEvent):
+        if not isinstance(watched, QPlainTextEdit):
+            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+
+        if EditorMode.mode != Modes.INSERT:
+            return False
+
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
+            status_bar.emit('NORMAL', '')
+            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+            EditorMode.mode = Modes.NORMAL
+            return True
+
+        return False
+
+
+class NormalEventFilter(BaseFilter):
 
     operators = Literal['d', 'c', 'y', 'v']
     text_objects = ['i', 'a']
 
     def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
         super().__init__(parent)
+        LOGGER.debug('Initializing normal mode')
 
         self.editor = editor
+        LOGGER.debug(f'editor: {editor}')
 
         handlers = handlers or get_normal_handlers()
         self._handlers = [handler(self.editor) for handler in handlers]
+        LOGGER.debug(f'handlers: {self._handlers}')
 
     def _check_edit_mode(self, operator: operators):
         """Check if the key sequence is a edit mode.
@@ -134,6 +136,7 @@ class NormalMode(BaseMode):
         return False
 
     def eventFilter(self, watched: QObject, event: QEvent):
+
         if not isinstance(watched, QPlainTextEdit):
             assert False, 'This event filter should only be installed on a QPlainTextEdit'
 
@@ -212,6 +215,6 @@ class NormalMode(BaseMode):
 
 
 EDITOR_MODES = [
-    NormalMode,
-    InsertMode,
+    NormalEventFilter,
+    InsertEventFilter,
 ]
