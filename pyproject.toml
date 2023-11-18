@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "nuke-vim-editor"
+name = "vimdcc"
 version = "0.1.0"
 description = ""
 authors = ["virgilsisoe <28490646+sisoe24@users.noreply.github.com>"]
