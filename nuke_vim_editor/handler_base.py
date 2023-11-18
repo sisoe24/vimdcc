@@ -4,6 +4,7 @@ from typing import Any, List, Type, TypeVar, Callable
 
 from PySide2.QtWidgets import QPlainTextEdit
 
+from .logger import LOGGER
 from .registers import Registers
 from .status_bar import status_bar
 from .editor_modes import Modes
@@ -65,6 +66,7 @@ T = TypeVar('T', bound=BaseHandler)
 
 
 def register_normal_handler(handler: Type[T]) -> Type[T]:
+    LOGGER.debug(f'Registering handler: {handler.__name__}')
     _NORMAL_HANDLERS.append(handler)
     return handler
 

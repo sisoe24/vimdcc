@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import List, Optional
 
-from .profiling import profile
-
 
 class MatchingCharacter(str, Enum):
     PARENTHESIS = '()'
