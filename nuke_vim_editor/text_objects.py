@@ -11,12 +11,16 @@ class MatchingBrackets(str, Enum):
     BRACKETS = '{}'
 
 
-def find_matching(text: str, pos: int, m: MatchingBrackets):
+def find_matching(text: str, pos: int, m: MatchingBrackets) -> Optional[tuple[int, int]]:
 
     unbalanced = False
     closing_bracket = None
     opening_backet = None
 
+    if text[pos:][0] == m[0]:
+        pos += 1
+
+    # Forward search for the closing bracket
     for i, char in enumerate(text[pos:]):
 
         if char == m[0]:  # open bracket
@@ -28,22 +32,24 @@ def find_matching(text: str, pos: int, m: MatchingBrackets):
                 break
             unbalanced = False
 
-    if not closing_bracket or unbalanced:
+    if closing_bracket is None or unbalanced:
         return None
 
-    for i in range(closing_bracket - 1, -1, -1):
-        char = text[i]
+    # Backward search for the opening bracket
+    left = text[:pos]
+    for i in range(pos - 1, -1, -1):
+        char = left[i]
 
         if char == m[1]:  # close bracket
             unbalanced = True
 
         elif char == m[0]:  # open bracket
             if not unbalanced:
-                opening_backet = i + 1
+                opening_backet = i
                 break
             unbalanced = False
 
-    if not opening_backet or unbalanced:
+    if opening_backet is None or unbalanced:
         return None
 
     return (opening_backet, closing_bracket)
