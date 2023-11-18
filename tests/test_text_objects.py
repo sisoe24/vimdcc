@@ -42,8 +42,8 @@ class MatchTest:
         MatchTest('x(text(), cursor.position(), "()")', PB, (1, 33), 2),
         MatchTest('some text', PB, None, 0),
         MatchTest('some text', PB, None, 3),
-        # MatchTest('(1, 2, (3, 4, (5), )', P, 2, None),
-    ],
+        MatchTest('(1, 2, (3, 4, (5), )', PB, None, 2),
+    ]
 )
 def test_find_brackets(data: MatchTest):
     find = find_matching_brackets(data.text, data.char, data.start, -1)
