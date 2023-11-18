@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
-from ..text_objects import MatchingBrackets, find_matching
+from ..text_objects import MatchingCharacter, find_matching
 from ..commands.insert import (Inserta, InsertA, Inserti, InsertI, InsertO,
                                Inserto)
 from ..commands.search import SearchCommand
@@ -385,48 +385,73 @@ class VisualEditHandler(BaseHandler):
 
 @register_normal_handler
 class TextObjectsHandler(BaseHandler):
-
     def __init__(self, editor: QPlainTextEdit):
         super().__init__(editor)
         self.brackets = {
-            '(': MatchingBrackets.PARENTHESIS,
-            ')': MatchingBrackets.PARENTHESIS,
-            '{': MatchingBrackets.BRACKETS,
-            '}': MatchingBrackets.BRACKETS,
-            '[': MatchingBrackets.SQUARE_BRACKETS,
-            ']': MatchingBrackets.SQUARE_BRACKETS,
+            '(': MatchingCharacter.PARENTHESIS,
+            ')': MatchingCharacter.PARENTHESIS,
+            '{': MatchingCharacter.BRACKETS,
+            '}': MatchingCharacter.BRACKETS,
+            '[': MatchingCharacter.SQUARE_BRACKETS,
+            ']': MatchingCharacter.SQUARE_BRACKETS,
         }
+
+        self.quotes = {
+            "'": MatchingCharacter.SINGLE_QUOTES,
+            '`': MatchingCharacter.BACKTICK,
+            '"': MatchingCharacter.DOUBLE_QUOTES,
+        }
+
         self.valid_operators = {'ci', 'ca', 'di', 'da'}
 
-    def _execute_text_object(self, cursor: QTextCursor, bracket_type: MatchingBrackets, operator: str):
-        find = find_matching(self.editor.toPlainText(), cursor.position(), bracket_type)
+    def _execute_text_object(self, cursor: QTextCursor, operator: str, start: int, end: int):
+        if operator[1] == 'i':
+            start += 1
+        elif operator[1] == 'a':
+            end += 1
+
+        cursor.setPosition(start, QTextCursor.MoveAnchor)
+        cursor.setPosition(end, QTextCursor.KeepAnchor)
+        self.registers.add(cursor.selectedText())
+        cursor.removeSelectedText()
+
+        if operator[0] == 'c':
+            super().to_insert_mode()
+
+        return True
+
+    def execute_text_object_quote(
+        self, cursor: QTextCursor, quote_type: MatchingCharacter, operator: str
+    ):
+
+        line_end_position = cursor.block().position() + cursor.block().length() - 1
+        find = find_matching(self.editor.toPlainText(), quote_type,
+                             cursor.position(), line_end_position)
         if find:
-            start, end = find
+            self._execute_text_object(cursor, operator, find[0], find[1])
+        return True
 
-            if operator[1] == 'i':
-                start += 1
-            elif operator[1] == 'a':
-                end += 1
-
-            cursor.setPosition(start, QTextCursor.MoveAnchor)
-            cursor.setPosition(end, QTextCursor.KeepAnchor)
-            self.registers.add(cursor.selectedText())
-            cursor.removeSelectedText()
-
-            if operator[0] == 'c':
-                super().to_insert_mode()
-
+    def execute_text_object_bracket(
+        self, cursor: QTextCursor, bracket_type: MatchingCharacter, operator: str
+    ):
+        find = find_matching(self.editor.toPlainText(), bracket_type, cursor.position())
+        if find:
+            self._execute_text_object(cursor, operator, find[0], find[1])
         return True
 
     def handle(self, params: HandlerParams) -> bool:
         keys = params.keys
 
         operator = keys[:2]  # di, ci, da, ca
-        bracket = keys[-1]  # (, ), {, }, [, ]
+        character = keys[-1]  # (, ), {, }, [, ], ', ", `
 
-        if operator in self.valid_operators and bracket in self.brackets:
-            bracket_type = self.brackets[bracket]
-            return self._execute_text_object(params.cursor, bracket_type, operator)
+        if operator in self.valid_operators and character in self.brackets:
+            bracket_type = self.brackets[character]
+            return self.execute_text_object_bracket(params.cursor, bracket_type, operator)
+
+        if operator in self.valid_operators and character in self.quotes:
+            quote_type = self.quotes[character]
+            return self.execute_text_object_quote(params.cursor, quote_type, operator)
 
         return False
 
