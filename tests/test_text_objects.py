@@ -5,9 +5,8 @@ import pytest
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from nuke_vim_editor.text_objects import (MatchingCharacter,
-                                          find_matching_quotes,
-                                          find_matching_brackets)
+from vimdcc.text_objects import (MatchingCharacter, find_matching_quotes,
+                                 find_matching_brackets)
 
 PB = MatchingCharacter.PARENTHESIS
 SB = MatchingCharacter.SQUARE_BRACKETS

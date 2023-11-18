@@ -6,9 +6,9 @@ import pytest
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from nuke_vim_editor.editor_modes import Modes
-from nuke_vim_editor.handlers.normal import SearchHandler, SearchLineHandler
-from nuke_vim_editor.handler_parameters import HandlerParams
+from vimdcc.editor_modes import Modes
+from vimdcc.handlers.normal import SearchHandler, SearchLineHandler
+from vimdcc.handler_parameters import HandlerParams
 
 
 @pytest.fixture()

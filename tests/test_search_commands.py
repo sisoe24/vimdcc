@@ -8,11 +8,11 @@ from PySide2.QtCore import Qt, QEvent
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from nuke_vim_editor.editor_modes import Modes
-from nuke_vim_editor.commands.search import (SearchCommand, _find,
-                                             _find_next_up, _find_next_down)
-from nuke_vim_editor.handlers.normal import SearchHandler
-from nuke_vim_editor.handler_parameters import HandlerParams
+from vimdcc.editor_modes import Modes
+from vimdcc.commands.search import (SearchCommand, _find, _find_next_up,
+                                    _find_next_down)
+from vimdcc.handlers.normal import SearchHandler
+from vimdcc.handler_parameters import HandlerParams
 
 
 @pytest.mark.parametrize('string, search, positions', [

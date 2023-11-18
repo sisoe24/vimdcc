@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from nuke_vim_editor.registers import Clipboard, RegistersTypes, _Registers
+from vimdcc.registers import Clipboard, RegistersTypes, _Registers
 
 
 @dataclass
