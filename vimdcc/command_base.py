@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from nuke_vim_editor.registers import Registers
+from vimdcc.registers import Registers
 
 from .handler_parameters import HandlerParams
 
