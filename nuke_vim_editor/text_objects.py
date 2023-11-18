@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, Union, Optional, NamedTuple
+from typing import List, Optional
 
 from .profiling import profile
 
@@ -21,45 +21,50 @@ def find_matching_brackets(
     end_pos: int
 ) -> Optional[tuple[int, int]]:
 
-    unbalanced = False
-    closing_bracket = None
-    opening_backet = None
+    if end_pos == -1:
+        end_pos = len(text)
 
+    open_brackets: List[int] = []
+    closing_bracket = None
+    opening_bracket = None
+
+    # Adjust start position if it's on an open bracket
     if text[start_pos:][0] == bracket_type[0]:
         start_pos += 1
 
     # Forward search for the closing bracket
-    for i, char in enumerate(text[start_pos:]):
-        if char == bracket_type[0]:  # open bracket
-            unbalanced = True
+    for i, char in enumerate(text[start_pos:end_pos], start_pos):
+        if char == bracket_type[0]:  # Open bracket
+            open_brackets.append(i)
 
-        elif char == bracket_type[1]:  # close bracket
-            if not unbalanced:
-                closing_bracket = i + start_pos
+        elif char == bracket_type[1]:  # Close bracket
+            if not open_brackets:
+                closing_bracket = i
                 break
-            unbalanced = False
+            open_brackets.pop()
 
-    if closing_bracket is None or unbalanced:
+    if closing_bracket is None or open_brackets:
         return None
 
     # Backward search for the opening bracket
     left = text[:start_pos]
+    open_brackets = []
     for i in range(start_pos - 1, -1, -1):
         char = left[i]
 
-        if char == bracket_type[1]:  # close bracket
-            unbalanced = True
+        if char == bracket_type[1]:  # Close bracket
+            open_brackets.append(i)
 
-        elif char == bracket_type[0]:  # open bracket
-            if not unbalanced:
-                opening_backet = i
+        elif char == bracket_type[0]:  # Open bracket
+            if not open_brackets:
+                opening_bracket = i
                 break
-            unbalanced = False
+            open_brackets.pop()
 
-    if opening_backet is None or unbalanced:
+    if opening_bracket is None or open_brackets:
         return None
 
-    return (opening_backet, closing_bracket)
+    return (opening_bracket, closing_bracket)
 
 
 def find_matching_quotes(
@@ -74,6 +79,7 @@ def find_matching_quotes(
 
     escaped = False
     end_index = None
+
     for i, char in enumerate(text[start_pos:end_pos], start_pos):
 
         if char == '\\' and text[i + 1] == quote_type:
