@@ -11,7 +11,6 @@ class MissingHandler(BaseHandler):
         super().__init__(editor)
 
     def handle(self, params: HandlerParams):
-
         missing = [
             'R', '<<', '>>', 'W', 'E', 'B', '.', 'zz', 'J', '%',
             'U', 'CTRL-R',
@@ -20,7 +19,7 @@ class MissingHandler(BaseHandler):
         key_sequence = params.keys
         if key_sequence in missing:
             print(f'Not implemented yet: {key_sequence}')
-            params.status_bar.emit('NORMAL', f'Not implemented yet: {key_sequence}')
+            params.status_bar.write('NORMAL', f'Not implemented yet: {key_sequence}')
             return True
 
         return False
