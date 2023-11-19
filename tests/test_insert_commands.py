@@ -1,11 +1,11 @@
-from typing import List, cast
+from typing import List
 from dataclasses import dataclass
 
 import pytest
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from vimdcc.editor_modes import Modes
+from vimdcc.editor_mode import Modes
 from vimdcc.handlers.normal import InsertHandler
 from vimdcc.handler_parameters import HandlerParams
 

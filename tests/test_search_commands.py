@@ -8,7 +8,7 @@ from PySide2.QtCore import Qt, QEvent
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from vimdcc.editor_modes import Modes
+from vimdcc.editor_mode import Modes
 from vimdcc.commands.search import (SearchCommand, _find, _find_next_up,
                                     _find_next_down)
 from vimdcc.handlers.normal import SearchHandler

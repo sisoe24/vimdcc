@@ -6,7 +6,7 @@ from PySide2.QtGui import QTextCursor
 from pytestqt.qtbot import QtBot
 from PySide2.QtWidgets import QPlainTextEdit
 
-from vimdcc.editor_modes import Modes
+from vimdcc.editor_mode import Modes
 from vimdcc.handlers.normal import VisualEditHandler
 from vimdcc.handler_parameters import HandlerParams
 
