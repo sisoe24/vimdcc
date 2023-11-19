@@ -134,6 +134,15 @@ class _Registers:
         self._push_to_clipboard(value)
         self._named_register = None
 
+    def clear(self) -> None:
+        self.registers = {
+            'named': {},
+            'clipboard': [],
+            'last_search': '',
+            'marks': {},
+        }
+        self.registers_file.save(self.registers)
+
     @overload
     def get_register(self, name: Literal['marks']) -> Mark: ...
 
