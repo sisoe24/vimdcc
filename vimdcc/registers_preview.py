@@ -130,12 +130,11 @@ class PreviewView(QDialog):
         index = self.list_view.currentIndex()
         data = self.list_view.get_item_data(index)
 
-        self.search_bar.clear()
-
         if not data:
             self.reject()
             return False
 
+        self.search_bar.clear()
         self.text_value = data['value']
         self.accept()
         return True
@@ -185,7 +184,10 @@ class PreviewController:
             self.list_view.setCurrentIndex(first_index)
             self._on_item_clicked(first_index)
 
-        if row_count == 1 and self.view.auto_insert.isChecked():
+        if (
+            (row_count == 1 or not row_count) and
+            self.view.auto_insert.isChecked()
+        ):
             enter_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier)
             QCoreApplication.sendEvent(self.view, enter_event)
 
@@ -227,7 +229,11 @@ class PreviewNamedRegister(PreviewRegister):
 
         """
         value = super().get_text_value()
-        return value or self.view.search_bar.text()
+        print('➡ value :', value)
+
+        x = value or self.view.search_bar.text()
+        print('➡ x :', x)
+        return x
 
     def prepare_items(self) -> RegisterData:
         return {
