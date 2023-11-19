@@ -445,9 +445,13 @@ class TextObjectsHandler(BaseHandler):
 
     def _delete_word(self, cursor: QTextCursor, operator: str):
         # TODO: i and a are the same: It does not handle the around spaces
-        # BUG: If cursor is on the first letter of the word, it deletes the
-        # previous space
-        cursor.movePosition(QTextCursor.PreviousWord, QTextCursor.MoveAnchor)
+        if operator[1] == 'a':
+            print('TODO: delete around word')
+            operator = 'di'
+
+        if self.editor.toPlainText()[cursor.position() - 1] != ' ':
+            cursor.movePosition(QTextCursor.PreviousWord, QTextCursor.MoveAnchor)
+
         start_pos = cursor.position() - 1
 
         cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
