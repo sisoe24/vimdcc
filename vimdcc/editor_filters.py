@@ -6,7 +6,7 @@ from PySide2.QtWidgets import QPlainTextEdit
 
 from .logger import LOGGER
 from .status_bar import status_bar
-from .editor_state import Modes, EditorMode
+from .editor_mode import Modes, EditorMode
 from .handler_base import HandlerType, get_normal_handlers
 from .handler_parameters import HandlerParams
 
