@@ -91,7 +91,7 @@ class InsertEventFilter(BaseFilter):
 
 
 class NormalEventFilter(BaseFilter):
-    operators = Literal['d', 'c', 'y', 'v']
+    operators = ['d', 'c', 'y', 'v']
     text_objects = ['i', 'a']
 
     def __init__(
@@ -112,7 +112,7 @@ class NormalEventFilter(BaseFilter):
         self._handlers = [handler(self.editor) for handler in handlers]
         LOGGER.debug(f"handlers: {self._handlers}")
 
-    def _check_edit_mode(self, operator: operators):
+    def _set_edit_mode(self,):
         """Check if the key sequence is a edit mode.
 
         This is an ugly hack to check if the key sequence is a edit mode. If a
@@ -122,20 +122,23 @@ class NormalEventFilter(BaseFilter):
         to be executed.
 
         """
+        operator = self.key_sequence[0]
         if (
-            len(self.key_sequence) == 2
-            and self.key_sequence[0] == operator
-            and self.key_sequence[1] not in [*self.text_objects, operator]
+            len(self.key_sequence) != 2 or
+            operator not in self.operators or
+            self.key_sequence[1] in [*self.text_objects, operator]
         ):
-            operator_modes = {
-                'v': Modes.VISUAL,
-                'y': Modes.YANK,
-                'd': Modes.DELETE,
-                'c': Modes.CHANGE,
-            }
+            return
 
-            EditorMode.mode = operator_modes[operator]
-            self.key_sequence = self.key_sequence[1:]
+        operator_modes = {
+            'v': Modes.VISUAL,
+            'y': Modes.YANK,
+            'd': Modes.DELETE,
+            'c': Modes.CHANGE,
+        }
+
+        EditorMode.mode = operator_modes[operator]
+        self.key_sequence = self.key_sequence[1:]
 
     def arrow_keys(self, cursor: QTextCursor, key_event: QKeyEvent):
         key = key_event.key()
@@ -160,10 +163,7 @@ class NormalEventFilter(BaseFilter):
         self.key_sequence += key_event.text().strip()
         status_bar.write('NORMAL', self.key_sequence)
 
-        self._check_edit_mode('d')
-        self._check_edit_mode('c')
-        self._check_edit_mode('v')
-        self._check_edit_mode('y')
+        self._set_edit_mode()
 
         if key_event.key() == Qt.Key_Escape:
             super().to_normal()
