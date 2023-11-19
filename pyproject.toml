@@ -36,7 +36,6 @@ pytest-randomly = "^3.15.0"
 pytest-repeat = "^0.9.1"
 pytest-qt = "^4.2.0"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
