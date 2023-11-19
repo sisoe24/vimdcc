@@ -1,7 +1,7 @@
 import sys
 
-from PySide2.QtWidgets import (QWidget, QMainWindow, QVBoxLayout, QApplication,
-                               QPlainTextEdit)
+from PySide2.QtWidgets import (QLabel, QWidget, QMainWindow, QVBoxLayout,
+                               QApplication, QPlainTextEdit)
 
 from ..main import VimDCC
 from ..utils.theme import set_theme
@@ -30,7 +30,9 @@ class LocalVimLite(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(self.vim_dcc)
+        layout.addWidget(QLabel('<h1>Local VimDcc</h1>'))
         layout.addWidget(self.editor)
+        layout.addWidget(self.vim_dcc.status_bar)
         self.setLayout(layout)
 
 
