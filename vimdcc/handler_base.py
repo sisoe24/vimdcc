@@ -43,6 +43,7 @@ class BaseHandler(ABC):
         self.editor.viewport().update()
 
     def should_handle(self, params: HandlerParams) -> bool:
+        """Indicate whether the key sequence should be handled."""
         return True
 
     @abstractmethod
