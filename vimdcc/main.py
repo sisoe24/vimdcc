@@ -2,10 +2,11 @@ import logging
 from typing import Any, Dict
 
 from PySide2.QtCore import Slot
-from PySide2.QtWidgets import (QLabel, QWidget, QToolBar, QCheckBox, QLineEdit,
-                               QMainWindow, QPushButton, QVBoxLayout,
-                               QPlainTextEdit)
+from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
+                               QFormLayout, QMainWindow, QPushButton,
+                               QVBoxLayout, QPlainTextEdit)
 
+from .about import about
 from .handlers import normal, missing
 from .registers import Registers
 from .status_bar import status_bar
@@ -14,6 +15,42 @@ from .editor_modes import EDITOR_MODES
 
 LOGGER = logging.getLogger('vim')
 _EVENT_FILTERS: Dict[str, Any] = {}
+
+
+class HelpWidget(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('VimDcc Help')
+
+        form_layout = QFormLayout()
+        for name, value in about().items():
+            form_layout.addRow(f'{name.title()}:', QLabel(value))
+
+        self.issues = self._button_factory('Issues')
+        self.readme = self._button_factory('Readme')
+        self.changelog = self._button_factory('Changelog')
+
+        form_layout.addRow(self.readme)
+        form_layout.addRow(self.changelog)
+        form_layout.addRow(self.issues)
+        self.setLayout(form_layout)
+
+    def _button_factory(self, text: str) -> QPushButton:
+        button = QPushButton(text)
+        button.clicked.connect(lambda: self._on_open_link(text))
+        return button
+
+    @Slot(str)
+    def _on_open_link(self, link: str):
+        print('TODO: open link', link)
+        gitrepo = 'https://github.com/sisoe24/vimdcc'
+        links = {
+            'issues': '',
+            'changelog': '',
+            'readme': ''
+        }
+        import webbrowser
+        webbrowser.open(links[link.lower()])
 
 
 class VimDCC(QMainWindow):
@@ -47,6 +84,7 @@ class VimDCC(QMainWindow):
 
         toolbar = QToolBar()
         toolbar.addWidget(self.preferences.view())
+        toolbar.addAction('Help', HelpWidget(self).show)
         self.addToolBar(toolbar)
 
         central_widget = QWidget()
