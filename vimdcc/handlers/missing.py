@@ -12,8 +12,7 @@ class MissingHandler(BaseHandler):
 
     def handle(self, params: HandlerParams):
         missing = [
-            'R', '<<', '>>', 'W', 'E', 'B', '.', 'zz', 'J', '%',
-            'U', 'CTRL-R',
+            'W', 'E', 'B', '.', 'zz', 'J', '%', 'U', 'R', '<<', '>>',
         ]
 
         key_sequence = params.keys
