@@ -2,19 +2,21 @@ import logging
 from typing import Any, Dict
 
 from PySide2.QtCore import Slot
-from PySide2.QtWidgets import (QLabel, QWidget, QCheckBox, QLineEdit,
-                               QPushButton, QVBoxLayout, QPlainTextEdit)
+from PySide2.QtWidgets import (QLabel, QWidget, QToolBar, QCheckBox, QLineEdit,
+                               QMainWindow, QPushButton, QVBoxLayout,
+                               QPlainTextEdit)
 
 from .handlers import normal, missing
 from .registers import Registers
 from .status_bar import status_bar
+from .preferences import VimPreferences
 from .editor_modes import EDITOR_MODES
 
 LOGGER = logging.getLogger('vim')
 _EVENT_FILTERS: Dict[str, Any] = {}
 
 
-class VimDCC(QWidget):
+class VimDCC(QMainWindow):
     def __init__(self, editor: QPlainTextEdit, parent=None):
         super().__init__(parent)
 
@@ -23,25 +25,33 @@ class VimDCC(QWidget):
         status_bar.register(self.status_bar)
 
         self.toggle_vim = QPushButton('Toggle Vim Mode')
-        self.toggle_vim.clicked.connect(self._on_toggle_vim)
         self.toggle_vim.setCheckable(True)
+        self.toggle_vim.clicked.connect(self._on_toggle_vim)
 
         self.clear_register = QPushButton('Clear Registers')
         self.clear_register.clicked.connect(self._on_clear_register)
-
-        self.launch_on_startup = QCheckBox('Launch on Startup')
 
         self.vim_status = QLabel('Vim: OFF')
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel('<h1>VimDcc</h1>'))
         layout.addWidget(self.vim_status)
-        layout.addWidget(self.launch_on_startup)
         layout.addWidget(self.toggle_vim)
         layout.addWidget(self.clear_register)
         layout.addWidget(self.status_bar)
         layout.addStretch()
-        self.setLayout(layout)
+
+        self.preferences = VimPreferences()
+        if self.preferences.model().launch_on_startup():
+            self._on_toggle_vim(True)
+
+        toolbar = QToolBar()
+        toolbar.addWidget(self.preferences.view())
+        self.addToolBar(toolbar)
+
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
     @Slot()
     def _on_clear_register(self):
