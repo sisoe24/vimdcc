@@ -21,10 +21,7 @@ MODIFIERS = {
 def extract_modifiers(
     modifiers: Union[Qt.KeyboardModifiers, Qt.KeyboardModifier]
 ) -> List[str]:
-    return [
-        name for name, modifier in MODIFIERS.items()
-        if modifiers & modifier
-    ]
+    return [name for name, modifier in MODIFIERS.items() if modifiers & modifier]
 
 
 class BaseFilter(QObject):
@@ -35,21 +32,21 @@ class BaseFilter(QObject):
         self.editor = editor
 
     def to_normal(self):
-        status_bar.emit('NORMAL', '')
+        status_bar.write('NORMAL', '')
         self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
         EditorMode.mode = Modes.NORMAL
         self.key_sequence = ''
         return True
 
     def to_insert(self):
-        status_bar.emit('INSERT', '')
+        status_bar.write('INSERT', '')
         self.editor.setCursorWidth(1)
         EditorMode.mode = Modes.INSERT
         self.key_sequence = ''
         return True
 
     def to_mode(self, mode: Modes, keys: str = ''):
-        status_bar.emit(mode.value, keys)
+        status_bar.write(mode.value, keys)
         EditorMode.mode = mode
         self.key_sequence = ''
         return True
@@ -62,13 +59,15 @@ class InsertEventFilter(QObject):
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+            assert (
+                False
+            ), 'This event filter should only be installed on a QPlainTextEdit'
 
         if EditorMode.mode != Modes.INSERT:
             return False
 
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
-            status_bar.emit('NORMAL', '')
+            status_bar.write('NORMAL', '')
             self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
             EditorMode.mode = Modes.NORMAL
             return True
@@ -77,20 +76,24 @@ class InsertEventFilter(QObject):
 
 
 class NormalEventFilter(BaseFilter):
-
     operators = Literal['d', 'c', 'y', 'v']
     text_objects = ['i', 'a']
 
-    def __init__(self, editor: QPlainTextEdit, handlers: Optional[List[HandlerType]] = None, parent=None):
+    def __init__(
+        self,
+        editor: QPlainTextEdit,
+        handlers: Optional[List[HandlerType]] = None,
+        parent=None,
+    ):
         super().__init__(parent)
         LOGGER.debug('Initializing normal mode')
 
         self.editor = editor
-        LOGGER.debug(f'editor: {editor}')
+        LOGGER.debug(f"editor: {editor}")
 
         handlers = handlers or get_normal_handlers()
         self._handlers = [handler(self.editor) for handler in handlers]
-        LOGGER.debug(f'handlers: {self._handlers}')
+        LOGGER.debug(f"handlers: {self._handlers}")
 
     def _check_edit_mode(self, operator: operators):
         """Check if the key sequence is a edit mode.
@@ -136,13 +139,19 @@ class NormalEventFilter(BaseFilter):
         return False
 
     def eventFilter(self, watched: QObject, event: QEvent):
-
         if not isinstance(watched, QPlainTextEdit):
-            assert False, 'This event filter should only be installed on a QPlainTextEdit'
+            assert (
+                False
+            ), 'This event filter should only be installed on a QPlainTextEdit'
 
-        if EditorMode.mode not in [Modes.NORMAL, Modes.VISUAL,
-                                   Modes.VISUAL_LINE, Modes.YANK,
-                                   Modes.DELETE, Modes.CHANGE]:
+        if EditorMode.mode not in [
+            Modes.NORMAL,
+            Modes.VISUAL,
+            Modes.VISUAL_LINE,
+            Modes.YANK,
+            Modes.DELETE,
+            Modes.CHANGE,
+        ]:
             return False
 
         if event.type() == QEvent.KeyPress:
@@ -150,13 +159,12 @@ class NormalEventFilter(BaseFilter):
         return False
 
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
-
         cursor = editor.textCursor()
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
         self.key_sequence += key_event.text().strip()
-        status_bar.emit('NORMAL', self.key_sequence)
+        status_bar.write('NORMAL', self.key_sequence)
 
         self._check_edit_mode('d')
         self._check_edit_mode('c')
@@ -184,7 +192,6 @@ class NormalEventFilter(BaseFilter):
 
         execute = False
         for handler in self._handlers:
-
             params = HandlerParams(
                 cursor=cursor,
                 keys=self.key_sequence,
@@ -199,7 +206,7 @@ class NormalEventFilter(BaseFilter):
             if handler.handle(params):
                 editor.setTextCursor(cursor)
                 self.key_sequence = ''
-                status_bar.emit('NORMAL', '')
+                status_bar.write('NORMAL', '')
                 execute = True
                 break
 
