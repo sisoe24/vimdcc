@@ -2,14 +2,12 @@ import logging
 from typing import Any, Dict
 
 from PySide2.QtCore import Slot
-from PySide2.QtWidgets import (QLabel, QWidget, QCheckBox, QPushButton,
-                               QVBoxLayout, QPlainTextEdit)
+from PySide2.QtWidgets import (QLabel, QWidget, QCheckBox, QLineEdit,
+                               QPushButton, QVBoxLayout, QPlainTextEdit)
 
-# TODO: Figure out a cleaner way to do this
-# Dont' remove these imports, they are needed for the cache decorator
 from .handlers import normal, missing
-from .status_bar import _StatusBar, status_bar
-from .utils.cache import cache
+from .registers import Registers
+from .status_bar import status_bar
 from .editor_modes import EDITOR_MODES
 
 LOGGER = logging.getLogger('vim')
@@ -21,8 +19,10 @@ class VimDCC(QWidget):
         super().__init__(parent)
 
         self.editor = editor
+        self.status_bar = QLineEdit()
+        status_bar.register(self.status_bar)
 
-        self.toggle_vim = QPushButton('Toggle Vim')
+        self.toggle_vim = QPushButton('Toggle Vim Mode')
         self.toggle_vim.clicked.connect(self._on_toggle_vim)
         self.toggle_vim.setCheckable(True)
 
@@ -36,16 +36,16 @@ class VimDCC(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(QLabel('<h1>VimDcc</h1>'))
         layout.addWidget(self.vim_status)
+        layout.addWidget(self.launch_on_startup)
         layout.addWidget(self.toggle_vim)
         layout.addWidget(self.clear_register)
-        layout.addWidget(self.launch_on_startup)
-        layout.addWidget(_StatusBar())
+        layout.addWidget(self.status_bar)
         layout.addStretch()
         self.setLayout(layout)
 
     @Slot()
     def _on_clear_register(self):
-        LOGGER.debug('Clearing register')
+        Registers.clear()
 
     @Slot(bool)
     def _on_toggle_vim(self, checked: bool):
@@ -68,10 +68,7 @@ class VimDCC(QWidget):
                 event_filter = _EVENT_FILTERS[f'{mode.__name__}_filter']
             else:
                 event_filter = mode(self.editor)
-
-            # The event filters get garbage collected if we don't keep a
-            # reference to them
-            _EVENT_FILTERS[f'{mode.__name__}_filter'] = event_filter
+                _EVENT_FILTERS[f'{mode.__name__}_filter'] = event_filter
 
             LOGGER.debug(f'event_filter: {event_filter}')
             action(event_filter)
