@@ -2,8 +2,6 @@ from PySide2.QtGui import QColor, QPalette
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QApplication
 
-# Move to a stylesheet.qss?
-
 
 def light_theme(app: QApplication):
     palette = QPalette()
