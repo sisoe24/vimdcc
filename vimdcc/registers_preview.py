@@ -252,19 +252,19 @@ class PreviewMarkRegister(PreviewRegister):
 
 class PreviewNumberedRegister(PreviewRegister):
     def __init__(self):
-        super().__init__('numbered')
+        super().__init__('clipboard')
         self.view.search_bar.setMaxLength(-1)
 
     def prepare_items(self) -> RegisterData:
         return {
             v.strip(): {'preview_text': v.strip(), 'value': v}
-            for v in Registers.get_register('numbered')
+            for v in Registers.get_register('clipboard')
         }
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PreviewRegister('numbered')
+    window = PreviewRegister('clipboard')
     window.view.show()
 
     app.exec_()
