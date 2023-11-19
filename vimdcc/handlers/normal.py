@@ -543,3 +543,24 @@ class EditHandler(BaseHandler):
 
         commands = self.commands.get(keys)
         return commands(params.cursor) if commands else False
+
+
+@register_normal_handler
+class UndoRedoHandler(BaseHandler):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+        self.commands = {
+            'u': self.undo,
+        }
+
+    def undo(self, params: HandlerParams):
+        self.editor.undo()
+        return True
+
+    def redo(self, params: HandlerParams):
+        self.editor.redo()
+        return True
+
+    def handle(self, params: HandlerParams):
+        commands = self.commands.get(params.keys)
+        return commands(params) if commands else False
