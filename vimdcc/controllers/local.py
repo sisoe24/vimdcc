@@ -24,10 +24,12 @@ class LocalVimLite(QWidget):
 
         self.editor = QPlainTextEdit()
         self.editor.setPlainText(read_sample())
-        self.vim_lite = VimDCC(self.editor)
+
+        self.vim_dcc = VimDCC(self.editor)
+        self.vim_dcc._on_toggle_vim(True)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.vim_lite)
+        layout.addWidget(self.vim_dcc)
         layout.addWidget(self.editor)
         self.setLayout(layout)
 
@@ -44,6 +46,7 @@ def main():
 
     window = LocalVimLite()
     window.setGeometry(100, 100, 1000, 1000)
+    window.editor.setFocus()
 
     window.show()
     app.exec_()
