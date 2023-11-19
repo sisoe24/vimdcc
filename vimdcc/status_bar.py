@@ -1,30 +1,25 @@
 from typing import Optional
 
-from PySide2.QtWidgets import QStatusBar
+from PySide2.QtWidgets import QLineEdit
 
 
 class StatusBar:
-    status_bar: Optional[QStatusBar] = None
+    status_bar: Optional[QLineEdit] = None
 
     @classmethod
-    def register(cls, status_bar: QStatusBar):
+    def register(cls, status_bar: QLineEdit):
         cls.status_bar = status_bar
+        cls.status_bar.setReadOnly(True)
 
     @classmethod
-    def emit(cls, mode: str, keys: str):
+    def write(cls, mode: str, keys: str):
         if not cls.status_bar:
             return
-        cls.status_bar.showMessage(f'{mode} {keys}')
+        cls.status_bar.setText(f"{mode} {keys}")
 
     @classmethod
-    def get_text(cls):
-        return cls.status_bar.currentMessage() if cls.status_bar else ''
-
-
-class _StatusBar(QStatusBar):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        StatusBar.register(self)
+    def get_text(cls) -> str:
+        return cls.status_bar.text() if cls.status_bar else ''
 
 
 status_bar = StatusBar()
