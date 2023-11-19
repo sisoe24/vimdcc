@@ -1,14 +1,11 @@
-import os
-import sys
-import pathlib
-import contextlib
-from typing import Optional
 
-from PySide2.QtWidgets import (QLabel, QWidget, QLineEdit, QSplitter,
-                               QVBoxLayout, QApplication, QPlainTextEdit)
+import contextlib
+
+from PySide2.QtWidgets import QSplitter, QApplication, QPlainTextEdit
 
 from ..main import VimDCC
 from ..utils import cache
+from ..settings import Settings
 
 
 @cache
@@ -20,13 +17,13 @@ def get_script_editor() -> QPlainTextEdit:
 
 
 @cache
-def get_console() -> QSplitter:
+def get_splitter() -> QSplitter:
     return get_script_editor().findChild(QSplitter)
 
 
 @cache
 def get_console_editor() -> QPlainTextEdit:
-    input_editor = get_console().findChild(QPlainTextEdit)
+    input_editor = get_splitter().findChild(QPlainTextEdit)
     if not input_editor:
         raise RuntimeError('Could not find input editor')
     return input_editor
@@ -36,16 +33,16 @@ class NukeVimDCC(VimDCC):
     def __init__(self, parent=None):
         super().__init__(get_console_editor(), parent)
 
-        self.console = get_console()
+        self.splitter = get_splitter()
+        self.load_status_bar()
 
-    # def load_status_bar(self):
-    #     if not 'shoudl_load':
-    #         return
-
-    #     self.console.addWidget(self.status_bar)
-    #     self.console.setStretchFactor(0, 1)  # First textEdit takes up maximum space
-    #     self.console.setStretchFactor(1, 1)  # Second textEdit takes up maximum space
-    #     self.console.setStretchFactor(2, 0)  # lineEdit takes up minimum space
+    def load_status_bar(self):
+        if not Settings.get('launch_on_startup', False):
+            return
+        self.splitter.addWidget(self.status_bar)
+        self.splitter.setStretchFactor(0, 1)  # First textEdit takes up maximum space
+        self.splitter.setStretchFactor(1, 1)  # Second textEdit takes up maximum space
+        self.splitter.setStretchFactor(2, 0)  # lineEdit takes up minimum space
 
 
 def install_nuke_vim():
