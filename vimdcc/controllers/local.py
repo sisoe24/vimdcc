@@ -18,7 +18,7 @@ def read_sample(debug=False):
         return f.read()
 
 
-class LocalVimLite(QWidget):
+class LocalVimDcc(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -26,7 +26,6 @@ class LocalVimLite(QWidget):
         self.editor.setPlainText(read_sample())
 
         self.vim_dcc = VimDCC(self.editor)
-        self.vim_dcc._on_toggle_vim(True)
 
         layout = QVBoxLayout()
         layout.addWidget(self.vim_dcc)
@@ -46,7 +45,7 @@ def main():
 
     set_theme(app)
 
-    window = LocalVimLite()
+    window = LocalVimDcc()
     window.setGeometry(100, 100, 1000, 1000)
     window.editor.setFocus()
 
