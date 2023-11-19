@@ -32,14 +32,12 @@ class BaseFilter(QObject):
         self.editor = editor
 
     def to_normal(self):
-        status_bar.write('NORMAL', '')
         self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
         EditorMode.mode = Modes.NORMAL
         self.key_sequence = ''
         return True
 
     def to_insert(self):
-        status_bar.write('INSERT', '')
         self.editor.setCursorWidth(1)
         EditorMode.mode = Modes.INSERT
         self.key_sequence = ''
@@ -206,7 +204,6 @@ class NormalEventFilter(BaseFilter):
             if handler.handle(params):
                 editor.setTextCursor(cursor)
                 self.key_sequence = ''
-                status_bar.write('NORMAL', '')
                 execute = True
                 break
 
