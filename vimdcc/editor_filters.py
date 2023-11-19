@@ -1,4 +1,6 @@
-from typing import List, Union, Literal, Optional, cast
+from abc import ABC, abstractmethod
+from typing import (List, Union, Literal, Optional, Protocol, cast,
+                    runtime_checkable)
 
 from PySide2.QtGui import QKeyEvent, QTextCursor
 from PySide2.QtCore import Qt, QEvent, QObject
@@ -27,33 +29,14 @@ def extract_modifiers(
 class BaseFilter(QObject):
     key_sequence = ''
 
-    def __init__(self, editor: QPlainTextEdit, parent=None):
+    def __init__(self, editor: QPlainTextEdit, allowed_modes: List[Modes], parent=None):
         super().__init__(parent)
+        self.allowed_modes = allowed_modes
         self.editor = editor
-
-    def to_normal(self):
-        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-        EditorMode.mode = Modes.NORMAL
-        self.key_sequence = ''
-        return True
-
-    def to_insert(self):
-        self.editor.setCursorWidth(1)
-        EditorMode.mode = Modes.INSERT
-        self.key_sequence = ''
-        return True
-
-    def to_mode(self, mode: Modes, keys: str = ''):
-        status_bar.write(mode.value, keys)
-        EditorMode.mode = mode
-        self.key_sequence = ''
-        return True
-
-
-class InsertEventFilter(QObject):
-    def __init__(self, editor: QPlainTextEdit, parent=None):
-        super().__init__(parent)
-        self.editor = editor
+        self.cursor_width = {
+            'block': self.editor.fontMetrics().width(' '),
+            'line': 1
+        }
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
@@ -61,13 +44,47 @@ class InsertEventFilter(QObject):
                 False
             ), 'This event filter should only be installed on a QPlainTextEdit'
 
-        if EditorMode.mode != Modes.INSERT:
+        if EditorMode.mode not in self.allowed_modes:
             return False
 
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Escape:
-            status_bar.write('NORMAL', '')
-            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-            EditorMode.mode = Modes.NORMAL
+        if event.type() == QEvent.KeyPress:
+            return self.parse_keys(watched, event)
+
+        return False
+
+    def change_mode(self, mode: Modes, cursor_width: int, keys: str = ''):
+        self.editor.setCursorWidth(cursor_width)
+        EditorMode.mode = mode
+        self.key_sequence = ''
+        status_bar.write(mode.value, keys)
+        return True
+
+    def to_normal(self):
+        return self.change_mode(Modes.NORMAL, self.cursor_width['block'])
+
+    def to_insert(self):
+        return self.change_mode(Modes.INSERT, self.cursor_width['line'])
+
+    # @abstractmethod
+    def parse_keys(self, editor: QPlainTextEdit, event: QEvent) -> bool:
+        raise NotImplementedError
+
+
+class InsertEventFilter(BaseFilter):
+    def __init__(self, editor: QPlainTextEdit, parent=None):
+        super().__init__(editor, [Modes.INSERT], parent)
+        self.editor = editor
+
+    def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
+
+        key_event = cast(QKeyEvent, event)
+
+        if event.key() == Qt.Key_Escape:
+            super().to_normal()
+            return True
+
+        if key_event.text() == '®':
+            self.editor.redo()
             return True
 
         return False
@@ -78,12 +95,14 @@ class NormalEventFilter(BaseFilter):
     text_objects = ['i', 'a']
 
     def __init__(
-        self,
-        editor: QPlainTextEdit,
+        self, editor: QPlainTextEdit,
         handlers: Optional[List[HandlerType]] = None,
-        parent=None,
+        parent=None
     ):
-        super().__init__(parent)
+        super().__init__(editor, [
+            Modes.NORMAL, Modes.VISUAL, Modes.VISUAL_LINE, Modes.DELETE,
+            Modes.CHANGE, Modes.YANK
+        ], parent)
         LOGGER.debug('Initializing normal mode')
 
         self.editor = editor
@@ -121,39 +140,16 @@ class NormalEventFilter(BaseFilter):
     def arrow_keys(self, cursor: QTextCursor, key_event: QKeyEvent):
         key = key_event.key()
 
-        if key == Qt.Key_Left:
-            cursor.movePosition(QTextCursor.Left)
-            return True
-        if key == Qt.Key_Right:
-            cursor.movePosition(QTextCursor.Right)
-            return True
-        if key == Qt.Key_Up:
-            cursor.movePosition(QTextCursor.Up)
-            return True
-        if key == Qt.Key_Down:
-            cursor.movePosition(QTextCursor.Down)
+        arrows = {
+            Qt.Key_Left: QTextCursor.Left,
+            Qt.Key_Right: QTextCursor.Right,
+            Qt.Key_Up: QTextCursor.Up,
+            Qt.Key_Down: QTextCursor.Down,
+        }
+        if arrows.get(key):
+            cursor.movePosition(arrows[key])
             return True
 
-        return False
-
-    def eventFilter(self, watched: QObject, event: QEvent):
-        if not isinstance(watched, QPlainTextEdit):
-            assert (
-                False
-            ), 'This event filter should only be installed on a QPlainTextEdit'
-
-        if EditorMode.mode not in [
-            Modes.NORMAL,
-            Modes.VISUAL,
-            Modes.VISUAL_LINE,
-            Modes.YANK,
-            Modes.DELETE,
-            Modes.CHANGE,
-        ]:
-            return False
-
-        if event.type() == QEvent.KeyPress:
-            return self.parse_keys(watched, event)
         return False
 
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent):
@@ -170,7 +166,7 @@ class NormalEventFilter(BaseFilter):
         self._check_edit_mode('y')
 
         if key_event.key() == Qt.Key_Escape:
-            super().to_mode(Modes.NORMAL, '')
+            super().to_normal()
             cursor.clearSelection()
             self.editor.setTextCursor(cursor)
             return True
@@ -180,9 +176,10 @@ class NormalEventFilter(BaseFilter):
             return True
 
         if self.key_sequence == 'V':
+            # BUG: V is not working properly
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-            return super().to_mode(Modes.VISUAL_LINE)
+            return super().change_mode(Modes.VISUAL_LINE, self.cursor_width['block'])
 
         if self.arrow_keys(cursor, key_event):
             self.editor.setTextCursor(cursor)
@@ -207,13 +204,14 @@ class NormalEventFilter(BaseFilter):
                 execute = True
                 break
 
-        if execute and EditorMode.mode in [Modes.DELETE, Modes.YANK]:
-            super().to_normal()
-            return True
+        # If the command was executed, change the mode
+        if execute:
 
-        if execute and EditorMode.mode == Modes.CHANGE:
-            super().to_insert()
-            return True
+            if EditorMode.mode in [Modes.DELETE, Modes.YANK]:
+                super().to_normal()
+
+            elif EditorMode.mode == Modes.CHANGE:
+                super().to_insert()
 
         return True
 
