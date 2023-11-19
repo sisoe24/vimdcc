@@ -6,7 +6,6 @@ class Modes(str, Enum):
     INSERT = 'INSERT'
     VISUAL = 'VISUAL'
     VISUAL_LINE = 'VISUAL_LINE'
-    COMMAND = 'COMMAND'
     YANK = 'YANK'
     DELETE = 'DELETE'
     CHANGE = 'CHANGE'
