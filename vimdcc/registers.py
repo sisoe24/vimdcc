@@ -16,12 +16,12 @@ class Mark(TypedDict):
 
 class RegistersTypes(TypedDict):
     named: Dict[str, str]
-    numbered: List[str]
+    clipboard: List[str]
     last_search: str
     marks: Dict[str, Mark]
 
 
-RegisterName = Literal['named', 'last_search', 'marks', 'numbered']
+RegisterName = Literal['named', 'last_search', 'marks', 'clipboard']
 
 
 class Clipboard:
@@ -52,7 +52,7 @@ class RegisterFileProtocol(Protocol):
 class RegisterFile:
     registers: RegistersTypes = {
         'named': {},
-        'numbered': [],
+        'clipboard': [],
         'last_search': '',
         'marks': {},
     }
@@ -75,7 +75,7 @@ class RegisterFile:
 class _Registers:
     registers: RegistersTypes = {
         'named': {},
-        'numbered': [],
+        'clipboard': [],
         'last_search': '',
         'marks': {},
     }
@@ -84,12 +84,12 @@ class _Registers:
         self.registers_file = register_file
         self.registers = register_file.load()
 
-        self._clipboard = Clipboard(self.registers['numbered'])
+        self._clipboard = Clipboard(self.registers['clipboard'])
         self._named_register: Optional[str] = None
 
     def _push_to_clipboard(self, value: str):
         self._clipboard.add(value)
-        self.registers['numbered'] = self._clipboard.history
+        self.registers['clipboard'] = self._clipboard.history
         self.registers_file.save(self.registers)
 
     def add_mark(self, key: str, text: str, pos: int) -> None:
@@ -108,7 +108,7 @@ class _Registers:
 
     def get_numbered_register_value(self, index: int) -> Optional[str]:
         try:
-            return self.registers['numbered'][index]
+            return self.registers['clipboard'][index]
         except IndexError:
             return None
 
@@ -116,7 +116,7 @@ class _Registers:
         key = self._named_register
 
         if not key:
-            return self.registers['numbered'][0]
+            return self.registers['clipboard'][0]
 
         if key == '/':
             return self.registers['last_search']
@@ -141,7 +141,7 @@ class _Registers:
     def get_register(self, name: Literal['last_search']) -> str: ...
 
     @overload
-    def get_register(self, name: Literal['numbered']) -> List[str]: ...
+    def get_register(self, name: Literal['clipboard']) -> List[str]: ...
 
     @overload
     def get_register(self, name: Literal['named']) -> Dict[str, str]: ...
