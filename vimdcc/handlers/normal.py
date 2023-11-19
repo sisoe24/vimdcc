@@ -402,6 +402,10 @@ class TextObjectsHandler(BaseHandler):
             '"': MatchingCharacter.DOUBLE_QUOTES,
         }
 
+        self.word = {
+            'w': self._delete_word,
+        }
+
         self.valid_operators = {'ci', 'ca', 'di', 'da'}
 
     def _execute_text_object(self, cursor: QTextCursor, operator: str, start: int, end: int):
@@ -439,6 +443,15 @@ class TextObjectsHandler(BaseHandler):
             self._execute_text_object(cursor, operator, find[0], find[1])
         return True
 
+    def _delete_word(self, cursor: QTextCursor, operator: str):
+        # TODO: i and a are the same: It does not handle the around spaces
+        cursor.movePosition(QTextCursor.PreviousWord, QTextCursor.MoveAnchor)
+        start_pos = cursor.position() - 1
+
+        cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+        end_pos = cursor.position()
+        return self._execute_text_object(cursor, operator, start_pos, end_pos)
+
     def handle(self, params: HandlerParams) -> bool:
         keys = params.keys
         if not keys or len(keys) < 3:
@@ -447,13 +460,19 @@ class TextObjectsHandler(BaseHandler):
         operator = keys[:2]  # di, ci, da, ca
         character = keys[-1]  # (, ), {, }, [, ], ', ", `
 
-        if operator in self.valid_operators and character in self.brackets:
+        if operator not in self.valid_operators:
+            return False
+
+        if character in self.brackets:
             bracket_type = self.brackets[character]
             return self.execute_text_object_bracket(params.cursor, bracket_type, operator)
 
-        if operator in self.valid_operators and character in self.quotes:
+        if character in self.quotes:
             quote_type = self.quotes[character]
             return self.execute_text_object_quote(params.cursor, quote_type, operator)
+
+        if character in self.word:
+            return self._delete_word(params.cursor, operator)
 
         return False
 
