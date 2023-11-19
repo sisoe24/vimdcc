@@ -4,12 +4,21 @@ from .registers import Registers
 from .handler_parameters import HandlerParams
 
 
-class BaseCommand:
+class BaseCommand(ABC):
+    """Interface for all commands."""
+
+    @abstractmethod
     def execute(self, params: HandlerParams) -> bool:
-        raise NotImplementedError
+        """Execute the command."""
 
 
 class MoveCommand(ABC):
+    """Interface for all move commands.
+
+    A move command is similar to a BaseCommand, but it performs a pre and post
+    actions based on the mode.
+
+    """
     initial_position = None
 
     def execute(self, params: HandlerParams) -> bool:
