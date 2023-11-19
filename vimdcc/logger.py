@@ -1,4 +1,7 @@
 import logging
+from typing import Dict
+
+# TODO: Add log rotation
 
 
 def file_handler():
@@ -10,12 +13,12 @@ def file_handler():
 
 def stream_handler():
     sh = logging.StreamHandler()
-    sh.setLevel(logging.DEBUG)
+    sh.setLevel(logging.INFO)
     sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     return sh
 
 
-_LOGGERS = {}
+_LOGGERS: Dict[str, logging.Logger] = {}
 
 
 def get_logger() -> logging.Logger:
