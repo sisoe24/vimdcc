@@ -21,4 +21,10 @@ class StatusBar:
         return cls.status_bar.currentMessage() if cls.status_bar else ''
 
 
+class _StatusBar(QStatusBar):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        StatusBar.register(self)
+
+
 status_bar = StatusBar()
