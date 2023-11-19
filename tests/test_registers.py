@@ -42,7 +42,7 @@ class RegisterFileMock:
     def load(self) -> RegistersTypes:
         return {
             'named': {},
-            'numbered': [],
+            'clipboard': [],
             'last_search': '',
             'marks': {},
         }
@@ -53,7 +53,7 @@ def test_registers_add():
     register.add('a')
     register.add('b')
 
-    assert register.registers['numbered'] == ['b', 'a']
+    assert register.registers['clipboard'] == ['b', 'a']
 
 
 def test_registers_add_named():
@@ -62,7 +62,7 @@ def test_registers_add_named():
     register.set_named_register('a')
     register.add('a')
 
-    assert register.registers['numbered'] == ['a']
+    assert register.registers['clipboard'] == ['a']
     assert register.registers['named'] == {'a': 'a'}
     assert register._named_register is None
 
@@ -107,6 +107,6 @@ def test_register_add_space():
     register.set_named_register('a')
     register.add('\u2029')
 
-    assert register.registers['numbered'] == []
+    assert register.registers['clipboard'] == []
     assert register.get_numbered_register_value(0) is None
     assert register.get_named_register_value() is None

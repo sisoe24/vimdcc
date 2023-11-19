@@ -172,7 +172,7 @@ def test_motion_yank(handler: MotionHandler, data: MotionTest):
 
     assert cursor.position() == data.expected_pos
 
-    register = handler.registers.get_register('numbered')
+    register = handler.registers.get_register('clipboard')
     assert register[0] == data.expected_text
 
 

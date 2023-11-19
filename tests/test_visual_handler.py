@@ -52,6 +52,6 @@ def test_visual_handler(handler: VisualEditHandler, data: MotionTest):
     handler.handle(params)
     editor.setTextCursor(params.cursor)
 
-    register = handler.registers.get_register('numbered')
+    register = handler.registers.get_register('clipboard')
     assert register[0] == data.copied_text
     assert editor.toPlainText() == data.editor_text

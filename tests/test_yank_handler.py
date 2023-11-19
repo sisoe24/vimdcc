@@ -52,7 +52,7 @@ def test_yank_handler(handler: YankHandler, data: MotionTest):
         handler.handle(params)
         editor.setTextCursor(params.cursor)
 
-    register = handler.registers.get_register('numbered')
+    register = handler.registers.get_register('clipboard')
     assert register[0] == data.expected_text
 
 
