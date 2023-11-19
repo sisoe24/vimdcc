@@ -1,14 +1,13 @@
 from typing import Any, TypeVar, Callable
 
-GenericFunc = Callable[..., Any]
+R = TypeVar('R')
+GenericFunc = Callable[..., R]
 
-T = TypeVar('T')
-
-_CACHE: dict[GenericFunc, Any] = {}
+_CACHE: dict[GenericFunc[Any], Any] = {}
 
 
-def cache(func: GenericFunc) -> GenericFunc:
-    def wrapper(*args: Any, **kwargs: Any):
+def cache(func: GenericFunc[R]) -> GenericFunc[R]:
+    def wrapper(*args: Any, **kwargs: Any) -> R:
         if func not in _CACHE:
             _CACHE[func] = func(*args, **kwargs)
         return _CACHE[func]
