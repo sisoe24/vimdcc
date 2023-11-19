@@ -11,7 +11,7 @@ from .handlers import normal, missing
 from .registers import Registers
 from .status_bar import status_bar
 from .preferences import VimPreferences
-from .editor_modes import EDITOR_MODES
+from .editor_filters import EDITOR_FILTERS
 
 LOGGER = logging.getLogger('vim')
 _EVENT_FILTERS: Dict[str, Any] = {}
@@ -109,7 +109,7 @@ class VimDCC(QMainWindow):
             action = self.editor.removeEventFilter
             self.editor.setCursorWidth(2)
 
-        for mode in EDITOR_MODES:
+        for mode in EDITOR_FILTERS:
             LOGGER.debug(f'Installing: {mode.__name__}')
 
             if _EVENT_FILTERS.get(f'{mode.__name__}_filter'):

@@ -218,7 +218,7 @@ class NormalEventFilter(BaseFilter):
         return True
 
 
-EDITOR_MODES = [
+EDITOR_FILTERS = [
     NormalEventFilter,
     InsertEventFilter,
 ]
