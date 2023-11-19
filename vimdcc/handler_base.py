@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from typing import Any, List, Type, TypeVar, Callable
 
@@ -17,7 +16,6 @@ _NORMAL_HANDLERS: List[HandlerType] = []
 
 
 class BaseHandler(ABC):
-
     def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
         self.registers = Registers
@@ -34,13 +32,13 @@ class BaseHandler(ABC):
         self.registers.add(text)
 
     def to_normal_mode(self):
-        status_bar.emit('NORMAL', '')
+        status_bar.write('NORMAL', '')
         EditorMode.mode = Modes.NORMAL
         self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
         self.editor.viewport().update()
 
     def to_insert_mode(self):
-        status_bar.emit('INSERT', '')
+        status_bar.write('INSERT', '')
         EditorMode.mode = Modes.INSERT
         self.editor.setCursorWidth(2)
         self.editor.viewport().update()
@@ -66,7 +64,7 @@ T = TypeVar('T', bound=BaseHandler)
 
 
 def register_normal_handler(handler: Type[T]) -> Type[T]:
-    LOGGER.debug(f'Registering handler: {handler.__name__}')
+    LOGGER.debug(f"Registering handler: {handler.__name__}")
     _NORMAL_HANDLERS.append(handler)
     return handler
 
