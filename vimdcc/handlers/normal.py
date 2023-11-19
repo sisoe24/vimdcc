@@ -553,6 +553,7 @@ class UndoRedoHandler(BaseHandler):
         super().__init__(editor)
         self.commands = {
             'u': self.undo,
+            '®': self.redo
         }
 
     def undo(self, params: HandlerParams):
@@ -560,6 +561,8 @@ class UndoRedoHandler(BaseHandler):
         return True
 
     def redo(self, params: HandlerParams):
+        # TODO: Currently redo is under the ® key, but it should be under the
+        # <C-r> key.
         self.editor.redo()
         return True
 
