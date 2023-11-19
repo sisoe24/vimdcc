@@ -318,22 +318,22 @@ class YankHandler(BaseHandler):
 
     def handle(self, params: HandlerParams):
         if params.keys == '"':
-            return self.preview_register()
+            return self.preview_register(params)
 
         if params.keys == "'":
-            return self.preview_clipboard()
+            return self.preview_clipboard(params)
 
         commands = self.commands.get(params.keys)
         return commands(params) if commands else False
 
-    def preview_clipboard(self):
+    def preview_clipboard(self, params: HandlerParams):
         previewer = self._numbered_register
         value = previewer.get_text_value()
         if value:
-            self._paste(value)
+            self._paste(params, value)
         return True
 
-    def preview_register(self):
+    def preview_register(self, params: HandlerParams):
         previewer = self._named_register
         value = previewer.get_text_value()
         if value:
@@ -445,6 +445,8 @@ class TextObjectsHandler(BaseHandler):
 
     def _delete_word(self, cursor: QTextCursor, operator: str):
         # TODO: i and a are the same: It does not handle the around spaces
+        # BUG: If cursor is on the first letter of the word, it deletes the
+        # previous space
         cursor.movePosition(QTextCursor.PreviousWord, QTextCursor.MoveAnchor)
         start_pos = cursor.position() - 1
 
