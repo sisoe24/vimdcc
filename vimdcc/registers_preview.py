@@ -10,6 +10,7 @@ from PySide2.QtWidgets import (QLabel, QDialog, QCheckBox, QLineEdit,
                                QApplication, QPlainTextEdit, QDialogButtonBox,
                                QStyledItemDelegate)
 
+from .settings import Settings
 from .registers import Registers
 
 # TODO: Implement delete, copy and clear buttons
@@ -105,15 +106,11 @@ class PreviewView(QDialog):
         self.search_bar.setFocus()
         self.search_bar.setClearButtonEnabled(True)
 
-        self.auto_insert = QCheckBox('Auto insert')
-        self.auto_insert.setChecked(True)
-
         layout = QVBoxLayout()
         layout.addWidget(self.previewer_name)
         layout.addWidget(self.search_bar)
         layout.addWidget(splitter)
         layout.addWidget(buttons)
-        layout.addWidget(self.auto_insert)
         self.setLayout(layout)
 
         self.installEventFilter(self)
@@ -186,7 +183,7 @@ class PreviewController:
 
         if (
             (row_count == 1 or not row_count) and
-            self.view.auto_insert.isChecked()
+            Settings.get('previewer_auto_insert', True)
         ):
             enter_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier)
             QCoreApplication.sendEvent(self.view, enter_event)
