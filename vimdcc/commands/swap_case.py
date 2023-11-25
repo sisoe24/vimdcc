@@ -1,11 +1,15 @@
-from typing import Literal
+from enum import Enum
 
 from PySide2.QtWidgets import QPlainTextEdit
 
 from ..command_base import BaseCommand
 from ..handler_parameters import HandlerParams
 
-SwapMode = Literal['swapcase', 'upper', 'lower']
+
+class SwapMode(str, Enum):
+    SWAPCASE = 'swapcase'
+    LOWER = 'lower'
+    UPPER = 'upper'
 
 
 def create_swap_case_command(mode: SwapMode):
@@ -23,6 +27,6 @@ def create_swap_case_command(mode: SwapMode):
     return SwapCaseCommand
 
 
-SwapCase = create_swap_case_command('swapcase')
-SwapLower = create_swap_case_command('lower')
-SwapUpper = create_swap_case_command('upper')
+SwapCase = create_swap_case_command(SwapMode.SWAPCASE)
+SwapLower = create_swap_case_command(SwapMode.LOWER)
+SwapUpper = create_swap_case_command(SwapMode.UPPER)
