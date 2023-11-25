@@ -52,8 +52,9 @@ class Clipboard:
         self.history.insert(0, item)
         self.history = self.history[:self.size]
 
-        # if Settings.copy_to_system_clipboard:
-        #     QClipboard().setText(item)
+        if Settings.copy_to_system_clipboard:
+            item = item.replace('<LINE_COPY>', '\n')
+            QClipboard().setText(item)
 
     def get(self, index: int):
         return self.history[index] if 0 <= index < len(self.history) else None
