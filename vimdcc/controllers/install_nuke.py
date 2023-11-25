@@ -37,7 +37,7 @@ class NukeVimDCC(VimDCC):
         self.load_status_bar()
 
     def load_status_bar(self):
-        if not Settings.get('launch_on_startup', False):
+        if not Settings.launch_on_startup:
             return
         self.splitter.addWidget(self.status_bar)
         self.splitter.setStretchFactor(0, 1)  # First textEdit takes up maximum space
