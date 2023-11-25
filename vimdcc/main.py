@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict
 
-from PySide2.QtCore import Slot
+from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
                                QFormLayout, QMainWindow, QPushButton,
                                QVBoxLayout, QPlainTextEdit)
@@ -69,22 +69,30 @@ class VimDCC(QMainWindow):
         self.clear_register.clicked.connect(self._on_clear_register)
 
         self.vim_status = QLabel('Vim: OFF')
-
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel('<h1>VimDcc</h1>'))
-        layout.addWidget(self.vim_status)
-        layout.addWidget(self.toggle_vim)
-        layout.addWidget(self.clear_register)
-        layout.addWidget(self.status_bar)
-        layout.addStretch()
+        self.vim_status.setAlignment(Qt.AlignCenter)
 
         self.preferences = VimPreferences()
         if self.preferences.model().launch_on_startup():
             self._on_toggle_vim(True)
 
+        main_label = QLabel('<h1>VimDcc</h1>')
+        main_label.setAlignment(Qt.AlignCenter)
+
+        preference_label = QLabel('<h2>Preferences</h2>')
+        preference_label.setAlignment(Qt.AlignCenter)
+
+        layout = QVBoxLayout()
+        layout.addWidget(main_label)
+        layout.addWidget(self.vim_status)
+        layout.addWidget(self.toggle_vim)
+        layout.addWidget(preference_label)
+        layout.addWidget(self.preferences.view())
+        layout.addWidget(self.status_bar)
+        layout.addStretch()
+
         toolbar = QToolBar()
-        toolbar.addWidget(self.preferences.view())
         toolbar.addAction('Help', HelpWidget(self).show)
+        toolbar.addAction('Clear Register', self._on_clear_register)
         self.addToolBar(toolbar)
 
         central_widget = QWidget()
