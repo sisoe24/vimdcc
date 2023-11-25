@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Tuple, Optional
 
 
 class MatchingCharacter(str, Enum):
@@ -17,7 +17,7 @@ def find_matching_brackets(
     bracket_type: MatchingCharacter,
     start_pos: int,
     end_pos: int
-) -> Optional[tuple[int, int]]:
+) -> Optional[Tuple[int, int]]:
 
     if end_pos == -1:
         end_pos = len(text)
@@ -70,7 +70,7 @@ def find_matching_quotes(
     quote_type: str,
     start_pos: int,
     end_pos: int
-) -> Optional[tuple[int, int]]:
+) -> Optional[Tuple[int, int]]:
 
     # Adjust start position if it's on a quote
     if text[start_pos:][0] == quote_type:
@@ -120,7 +120,7 @@ def find_matching(
     character: MatchingCharacter,
     start_pos: int,
     end_pos: int = -1
-) -> Optional[tuple[int, int]]:
+) -> Optional[Tuple[int, int]]:
     """Find the matching character for the given character at the given position.
 
     Args:
@@ -130,7 +130,7 @@ def find_matching(
         end_pos (int, optional): The position to stop searching at. Defaults to -1.
 
     Returns:
-        Optional[tuple[int, int]]: The start and end positions of the matching character.
+        Optional[Tuple[int, int]]: The start and end positions of the matching character.
     """
     if character in [MatchingCharacter.PARENTHESIS, MatchingCharacter.SQUARE_BRACKETS,
                      MatchingCharacter.BRACKETS]:

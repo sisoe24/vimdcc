@@ -21,7 +21,7 @@ from vimdcc.handler_parameters import HandlerParams
     ('The out of this output is output', 'output', [16, 26]),
     ('The energy of the electron is 1.2e-19', 'e', [2, 4, 6, 16, 18, 20, 33])
 ])
-def test_find_string(string: str, search: str, positions: list[int]):
+def test_find_string(string: str, search: str, positions: List[int]):
     assert _find(search, string) == positions
 
 
@@ -36,7 +36,7 @@ def test_find_string(string: str, search: str, positions: list[int]):
     ([0, 5, 10], 0, 10),
     ([2, 5, 10], 11, 10),
 ])
-def test_find_next_up(positions: list[int], start_position: int, next_position: int):
+def test_find_next_up(positions: List[int], start_position: int, next_position: int):
     assert _find_next_up(positions, start_position) == next_position
 
 
@@ -50,7 +50,7 @@ def test_find_next_up(positions: list[int], start_position: int, next_position: 
     ([2, 5, 10], 0, 2),
     ([2, 5, 10], 11, 2),
 ])
-def test_find_next_down(positions: list[int], start_position: int, next_position: int):
+def test_find_next_down(positions: List[int], start_position: int, next_position: int):
     assert _find_next_down(positions, start_position) == next_position
 
 
