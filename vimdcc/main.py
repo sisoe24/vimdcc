@@ -8,6 +8,7 @@ from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
 
 from .about import about
 from .handlers import normal, missing
+from .settings import Settings
 from .registers import Registers
 from .status_bar import status_bar
 from .preferences import VimPreferences
@@ -72,14 +73,13 @@ class VimDCC(QMainWindow):
         self.vim_status.setAlignment(Qt.AlignCenter)
 
         self.preferences = VimPreferences()
-        if self.preferences.model().launch_on_startup():
+        if Settings.launch_on_startup:
             self._on_toggle_vim(True)
 
         main_label = QLabel('<h1>VimDcc</h1>')
         main_label.setAlignment(Qt.AlignCenter)
 
         preference_label = QLabel('<h2>Preferences</h2>')
-        preference_label.setAlignment(Qt.AlignCenter)
 
         layout = QVBoxLayout()
         layout.addWidget(main_label)
