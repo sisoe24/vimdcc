@@ -13,8 +13,10 @@ from PySide2.QtWidgets import (QLabel, QDialog, QCheckBox, QLineEdit,
 from .settings import Settings
 from .registers import Registers
 
-# TODO: Implement delete, copy and clear buttons
 # TODO: Implement elided text delegate
+# TODO: Add delete, copy and clear buttons
+# TODO: Add tests for PreviewView
+# TODO: Add alt+j and alt+k to navigate the list view
 
 
 class ItemData(TypedDict):
@@ -138,8 +140,6 @@ class PreviewView(QDialog):
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if event.type() == QEvent.KeyPress:
-            # TODO: Handle also alt+j and alt+k
-
             if event.key() in [Qt.Key_Enter, Qt.Key_Return]:
                 return self._press_enter_event()
 
@@ -226,10 +226,7 @@ class PreviewNamedRegister(PreviewRegister):
 
         """
         value = super().get_text_value()
-        print('➡ value :', value)
-
         x = value or self.view.search_bar.text()
-        print('➡ x :', x)
         return x
 
     def prepare_items(self) -> RegisterData:
