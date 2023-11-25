@@ -4,9 +4,7 @@ import pathlib
 from typing import (Any, Dict, List, Literal, Optional, Protocol, TypedDict,
                     overload)
 
-
-def increment(index: int) -> str:
-    return chr(ord('a') + index - 9) if index >= 9 else str(index + 1)
+from .settings import Settings
 
 
 class Mark(TypedDict):
@@ -25,9 +23,10 @@ RegisterName = Literal['named', 'last_search', 'marks', 'clipboard']
 
 
 class Clipboard:
-    def __init__(self, previous_history: List[str], size: int = 10):
+    def __init__(self, previous_history: List[str]) -> None:
+
         self.history: List[str] = previous_history or []
-        self.size = size
+        self.size = Settings.get('clipboard_size', 100)
 
     def add(self, item: str):
         # don't add the same item twice
