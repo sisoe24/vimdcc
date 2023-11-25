@@ -284,7 +284,10 @@ class YankHandler(BaseHandler):
         self._named_register = PreviewNamedRegister()
         self._numbered_register = PreviewNumberedRegister()
 
-    def _paste(self, params: HandlerParams, text: str):
+    def _paste(self, params: HandlerParams, text: Optional[str] = None):
+        if not text:
+            return True
+
         cursor = params.cursor
         if self.LINE_COPY in text:
             text = text.replace(self.LINE_COPY, '')
@@ -532,7 +535,7 @@ class EditHandler(BaseHandler):
     def _delete_line(self, cursor: QTextCursor):
         cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        super().add_to_clipboard(cursor.selectedText())
+        super().add_to_clipboard(cursor.selectedText() + '\n')
         cursor.removeSelectedText()
         return True
 
