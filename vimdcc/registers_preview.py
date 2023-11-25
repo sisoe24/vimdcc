@@ -1,5 +1,6 @@
 import sys
-from typing import Dict, Optional, TypedDict
+from typing import Dict, Optional
+from dataclasses import dataclass
 
 from PySide2.QtGui import QKeyEvent, QStandardItem
 from PySide2.QtCore import (Qt, Slot, QRect, QEvent, QObject, QModelIndex,
@@ -19,25 +20,26 @@ from .registers import Registers
 # TODO: Add alt+j and alt+k to navigate the list view
 
 
-class ItemData(TypedDict):
-    preview_text: str
+@dataclass
+class PreviewData:
+    text: str
     value: str
 
 
-RegisterData = Dict[str, ItemData]
+RegisterItem = Dict[str, PreviewData]
 
 
 class PreviewListModel(QStringListModel):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.register_data: RegisterData = {}
+        self.register_data: RegisterItem = {}
 
     def flags(self, index: QModelIndex):
         flag = Qt.ItemIsSelectable | ~Qt.ItemIsEditable
         return Qt.ItemFlags(flag)
 
-    def populate(self, items: RegisterData):
+    def populate(self, items: RegisterItem):
         self.setStringList(list(items.keys()))
         self.register_data = items
 
@@ -72,7 +74,7 @@ class PreviewListView(QListView):
         self.setSelectionMode(QListView.SingleSelection)
         self.setSpacing(5)
 
-    def get_item_data(self, index: QModelIndex) -> Optional[ItemData]:
+    def get_item_data(self, index: QModelIndex) -> Optional[PreviewData]:
         key = index.data(Qt.DisplayRole)
         return self._model.register_data.get(key)
 
@@ -134,7 +136,7 @@ class PreviewView(QDialog):
             return False
 
         self.search_bar.clear()
-        self.text_value = data['value']
+        self.text_value = data.value
         self.accept()
         return True
 
@@ -183,7 +185,7 @@ class PreviewController:
 
         if (
             (row_count == 1 or not row_count) and
-            Settings.get('previewer_auto_insert')
+            Settings.previewer_auto_insert
         ):
             enter_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier)
             QCoreApplication.sendEvent(self.view, enter_event)
@@ -193,9 +195,9 @@ class PreviewController:
         data = self.list_view.get_item_data(index)
         if not data:
             return
-        self.view.text_preview.setPlainText(data.get('preview_text', ''))
+        self.view.text_preview.setPlainText(data.text)
 
-    def init(self, name: str, items: RegisterData):
+    def init(self, name: str, items: RegisterItem):
         self.view.previewer_name.setText(f'<h2>{name}</h2>')
         self.list_model.populate(items)
 
@@ -211,7 +213,7 @@ class PreviewRegister:
         self.controller.init(self.name, self.prepare_items())
         return self.view.text_value if self.view.exec_() else None
 
-    def prepare_items(self) -> RegisterData:
+    def prepare_items(self) -> RegisterItem:
         raise NotImplementedError
 
 
@@ -225,13 +227,11 @@ class PreviewNamedRegister(PreviewRegister):
         A named register allows assigning a value or returning the key for assignment.
 
         """
-        value = super().get_text_value()
-        x = value or self.view.search_bar.text()
-        return x
+        return super().get_text_value() or self.view.search_bar.text()
 
-    def prepare_items(self) -> RegisterData:
+    def prepare_items(self) -> RegisterItem:
         return {
-            k: {'preview_text': v, 'value': k}
+            k: PreviewData(v, k)
             for k, v in Registers.get_register('named').items()
             if v
         }
@@ -241,10 +241,10 @@ class PreviewMarkRegister(PreviewRegister):
     def __init__(self):
         super().__init__('marks')
 
-    def prepare_items(self) -> RegisterData:
+    def prepare_items(self) -> RegisterItem:
+        # TODO: Check linting complains about this
         return {
-            k: {'preview_text': f'pos:{v["position"]} line:{v["line"]}',
-                'value': v['position']}
+            k: PreviewData(f'pos:{v["position"]} line:{v["line"]}', str(v['position']))
             for k, v in Registers.get_register('marks').items()
             if v
         }
@@ -255,9 +255,9 @@ class PreviewNumberedRegister(PreviewRegister):
         super().__init__('clipboard')
         self.view.search_bar.setMaxLength(-1)
 
-    def prepare_items(self) -> RegisterData:
+    def prepare_items(self) -> RegisterItem:
         return {
-            v.strip(): {'preview_text': v.strip(), 'value': v}
+            v.strip(): PreviewData(v.strip(), v)
             for v in Registers.get_register('clipboard')
         }
 
