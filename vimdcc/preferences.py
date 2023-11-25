@@ -1,40 +1,32 @@
 
+from typing import Any
+
 from PySide2.QtCore import Qt, Slot
-from PySide2.QtWidgets import (QWidget, QSpinBox, QCheckBox, QFormLayout,
+from PySide2.QtWidgets import (QFrame, QSpinBox, QCheckBox, QFormLayout,
                                QMessageBox)
 
-from .settings import Settings, SettingsProtocol
+from .settings import Settings, VimDccSettings
 
 
 class VimPreferencesModel:
+    def __init__(self, settings: VimDccSettings):
+        self.settings = settings
 
-    def __init__(self, settings: SettingsProtocol):
-        self._settings = settings
+    def set(self, key: str, value: Any):
+        if not hasattr(self.settings, key):
+            raise ValueError(f'Invalid key: {key}')
 
-    def set_launch_on_startup(self, value: bool):
-        self._settings.set('launch_on_startup', value)
-
-    def launch_on_startup(self) -> bool:
-        return self._settings.get('launch_on_startup', False)
-
-    def set_clipboard_size(self, value: int):
-        self._settings.set('clipboard_size', value)
-
-    def clipboard_size(self) -> int:
-        return self._settings.get('clipboard_size', 100)
-
-    def set_previewer_auto_insert(self, value: bool):
-        self._settings.set('previewer_auto_insert', value)
-
-    def previewer_auto_insert(self) -> bool:
-        return self._settings.get('previewer_auto_insert', True)
+        setattr(self.settings, key, value)
+        self.settings.save_settings()
 
 
-class VimPreferencesView(QWidget):
+class VimPreferencesView(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setFrameStyle(QFrame.StyledPanel)
+        self.setStyleSheet('QFrame {background-color: #3B3B3B;}')
 
-        self.launch_on_startup = QCheckBox('Launch on Startup')
+        self.launch_on_startup = QCheckBox()
         self.copy_to_system_clipboard = QCheckBox()
 
         self.clipboard_size = QSpinBox()
@@ -52,8 +44,8 @@ class VimPreferencesView(QWidget):
 
         form_layout.addRow('Launch on Startup', self.launch_on_startup)
         form_layout.addRow('Install to all editors', self.install_to_all_editors)
-        form_layout.addRow('Clipboard Size', self.clipboard_size)
         form_layout.addRow('Previewer auto insert', self.previewer_auto_insert)
+        form_layout.addRow('Clipboard Size', self.clipboard_size)
         form_layout.addRow('Copy to system clipboard', self.copy_to_system_clipboard)
 
         self.setLayout(form_layout)
@@ -67,28 +59,38 @@ class VimPreferencesController:
         self._view.launch_on_startup.stateChanged.connect(self._on_launch_on_startup)
         self._view.clipboard_size.valueChanged.connect(self._on_clipboard_size)
         self._view.previewer_auto_insert.stateChanged.connect(self._on_previewer_auto_insert)
+        self._view.copy_to_system_clipboard.stateChanged.connect(self._on_copy_to_system_clipboard)
+
+    @Slot(int)
+    def _on_copy_to_system_clipboard(self, state: int):
+        self._model.set('copy_to_system_clipboard', state == 2)
 
     @Slot(int)
     def _on_previewer_auto_insert(self, state: int):
-        self._model.set_previewer_auto_insert(state == 2)
+        self._model.set('previewer_auto_insert', state == 2)
 
     @Slot(int)
     def _on_clipboard_size(self, value: int):
-        self._model.set_clipboard_size(value)
+        self._model.set('clipboard_size', value)
 
     @Slot(int)
     def _on_launch_on_startup(self, state: int):
         QMessageBox.information(
             self._view, 'VimDcc', 'You must restart VimDcc for this change to take effect.'
         )
-        self._model.set_launch_on_startup(state == 2)
+        self._model.set('launch_on_startup', state == 2)
 
     def init(self):
-        self._view.previewer_auto_insert.setChecked(self._model.previewer_auto_insert())
-        self._view.clipboard_size.setValue(self._model.clipboard_size())
+
+        settings = self._model.settings
+
+        self._view.copy_to_system_clipboard.setChecked(settings.copy_to_system_clipboard)
+        self._view.previewer_auto_insert.setChecked(settings.previewer_auto_insert)
+        self._view.clipboard_size.setValue(settings.clipboard_size)
+
         widget = self._view.launch_on_startup
         widget.blockSignals(True)
-        widget.setChecked(self._model.launch_on_startup())
+        widget.setChecked(settings.launch_on_startup)
         widget.blockSignals(False)
 
 
