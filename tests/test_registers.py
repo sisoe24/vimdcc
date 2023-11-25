@@ -4,7 +4,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from vimdcc.registers import Clipboard, RegistersTypes, _Registers
+from vimdcc.registers import (Clipboard, RegistersData, RegisterFileInterface,
+                              _Registers)
 
 
 @dataclass
@@ -15,9 +16,9 @@ class ClipboardTest:
 
 def test_clipboard():
 
-    clipboard = Clipboard(['a'], 3)
+    clipboard = Clipboard(['a'])
+    clipboard.size = 3
     assert clipboard.history == ['a']
-    assert clipboard.size == 3
     assert clipboard.get(0) == 'a'
 
     clipboard.add('b')
@@ -35,25 +36,24 @@ def test_clipboard():
     assert clipboard.history == ['d', 'c', 'b']
 
 
-class RegisterFileMock:
-    def save(self, registers: RegistersTypes):
+class RegisterFileMock(RegisterFileInterface):
+    def save(self, registers: RegistersData):
         pass
 
-    def load(self) -> RegistersTypes:
-        return {
-            'named': {},
-            'clipboard': [],
-            'last_search': '',
-            'marks': {},
-        }
+    def load(self) -> RegistersData:
+        return RegistersData(
+            named={},
+            clipboard=[],
+            last_search='',
+            marks={},
+        )
 
 
 def test_registers_add():
     register = _Registers(RegisterFileMock())
     register.add('a')
     register.add('b')
-
-    assert register.registers['clipboard'] == ['b', 'a']
+    assert register.registers.clipboard == ['b', 'a']
 
 
 def test_registers_add_named():
@@ -62,8 +62,8 @@ def test_registers_add_named():
     register.set_named_register('a')
     register.add('a')
 
-    assert register.registers['clipboard'] == ['a']
-    assert register.registers['named'] == {'a': 'a'}
+    assert register.registers.clipboard == ['a']
+    assert register.registers.named == {'a': 'a'}
     assert register._named_register is None
 
 
@@ -97,7 +97,7 @@ def test_register_add_mark():
     register = _Registers(RegisterFileMock())
     register.add_mark('a', 'b', 1)
 
-    assert register.registers['marks'] == {'a': {'position': 1, 'line': 'b'}}
+    assert register.registers.marks == {'a': {'position': 1, 'line': 'b'}}
     assert register.get_mark('a') == {'position': 1, 'line': 'b'}
 
 
@@ -107,6 +107,6 @@ def test_register_add_space():
     register.set_named_register('a')
     register.add('\u2029')
 
-    assert register.registers['clipboard'] == []
+    assert register.registers.clipboard == []
     assert register.get_numbered_register_value(0) is None
     assert register.get_named_register_value() is None

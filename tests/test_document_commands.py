@@ -188,5 +188,5 @@ def test_move_document_yank(handler: DocumentHandler, data: MotionTest) -> None:
         handler.handle(params)
         editor.setTextCursor(params.cursor)
 
-    register = handler.registers.get_register('clipboard')
+    register = handler.registers.get_clipboard()
     assert register[0] == data.expected_text
