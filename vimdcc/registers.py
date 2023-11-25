@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from dataclasses import asdict, dataclass
 
+from PySide2.QtGui import QClipboard
+
 from .settings import Settings
 
 
@@ -25,31 +27,33 @@ class Clipboard:
     """Clipboard history.
 
     This class is used to store the clipboard history. It is used to store the
-    text copied from the editor. Optionally, a size can be specified to limit
-    amount of items stored in the history. If no size is specified, the default
-    setting is used.
+    text copied from the editor. The size of the clipboard is defined in the
+    settings but it can be overriden at runtime.
 
     >>> previous_history = ['hello', 'world']
     >>> clipboard = Clipboard(previous_history)
+    >>> clipboard.size = 3
     >>> clipboard.add('foo')
     >>> clipboard.add('bar')
     >>> clipboard
-    >>> ['bar', 'foo', 'hello', 'world']
+    >>> ['bar', 'foo', 'hello']
 
     """
 
-    def __init__(self, previous_history: Optional[List[str]] = None, size: int = -1) -> None:
-
+    def __init__(self, previous_history: Optional[List[str]] = None) -> None:
         self.history: List[str] = previous_history or []
-        self.size = size or Settings.clipboard_size
+        self.size = Settings.clipboard_size
 
     def add(self, item: str):
-        # don't add the same item twice
+        # don't add the same item twice in a row
         if self.history and item == self.history[0]:
             return
 
         self.history.insert(0, item)
         self.history = self.history[:self.size]
+
+        # if Settings.copy_to_system_clipboard:
+        #     QClipboard().setText(item)
 
     def get(self, index: int):
         return self.history[index] if 0 <= index < len(self.history) else None
@@ -112,7 +116,7 @@ class _Registers:
         return self.registers.marks.get(key)
 
     def add_last_search(self, value: str) -> None:
-        self.registerslast_search = value
+        self.registers.last_search = value
         self._push_to_clipboard(value)
 
     def set_named_register(self, key: str) -> None:
