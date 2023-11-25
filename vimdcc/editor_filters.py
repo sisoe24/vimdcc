@@ -1,9 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import (List, Union, Literal, Optional, Protocol, cast,
-                    runtime_checkable)
+from typing import List, Optional, cast
 
-from PySide2.QtGui import QKeyEvent, QTextCursor
-from PySide2.QtCore import Qt, QEvent, QObject
+from PySide2.QtGui import Qt, QKeyEvent, QTextCursor
+from PySide2.QtCore import QEvent, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
 from .logger import LOGGER
@@ -12,18 +10,18 @@ from .editor_mode import Modes, EditorMode
 from .handler_base import HandlerType, get_normal_handlers
 from .handler_parameters import HandlerParams
 
-MODIFIERS = {
-    'shift': Qt.ShiftModifier,
-    'ctrl': Qt.ControlModifier,
-    'alt': Qt.AltModifier,
-    'meta': Qt.MetaModifier,
-}
+# TODO: Test this module
 
 
-def extract_modifiers(
-    modifiers: Union[Qt.KeyboardModifiers, Qt.KeyboardModifier]
-) -> List[str]:
-    return [name for name, modifier in MODIFIERS.items() if modifiers & modifier]
+def extract_modifiers(modifiers: Qt.KeyboardModifiers) -> List[str]:
+    base_modifiers = {
+        'shift': Qt.ShiftModifier,
+        'ctrl': Qt.ControlModifier,
+        'alt': Qt.AltModifier,
+        'meta': Qt.MetaModifier,
+    }
+
+    return [name for name, modifier in base_modifiers.items() if modifiers & modifier]
 
 
 class BaseFilter(QObject):
@@ -65,7 +63,6 @@ class BaseFilter(QObject):
     def to_insert(self):
         return self.change_mode(Modes.INSERT, self.cursor_width['line'])
 
-    # @abstractmethod
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent) -> bool:
         raise NotImplementedError
 
@@ -163,7 +160,8 @@ class NormalEventFilter(BaseFilter):
         self.key_sequence += key_event.text().strip()
         status_bar.write('NORMAL', self.key_sequence)
 
-        self._set_edit_mode()
+        if self.key_sequence:
+            self._set_edit_mode()
 
         if key_event.key() == Qt.Key_Escape:
             super().to_normal()
