@@ -1,32 +1,47 @@
 import os
 import json
 import pathlib
-from typing import (Any, Dict, List, Literal, Optional, Protocol, TypedDict,
-                    overload)
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass
 
 from .settings import Settings
 
 
-class Mark(TypedDict):
+class Mark(Dict[str, Any]):
     position: int
     line: str
 
 
-class RegistersTypes(TypedDict):
+@dataclass
+class RegistersData:
     named: Dict[str, str]
     clipboard: List[str]
     last_search: str
     marks: Dict[str, Mark]
 
 
-RegisterName = Literal['named', 'last_search', 'marks', 'clipboard']
-
-
 class Clipboard:
-    def __init__(self, previous_history: List[str], size: int = -1) -> None:
+    """Clipboard history.
+
+    This class is used to store the clipboard history. It is used to store the
+    text copied from the editor. Optionally, a size can be specified to limit
+    amount of items stored in the history. If no size is specified, the default
+    setting is used.
+
+    >>> previous_history = ['hello', 'world']
+    >>> clipboard = Clipboard(previous_history)
+    >>> clipboard.add('foo')
+    >>> clipboard.add('bar')
+    >>> clipboard
+    >>> ['bar', 'foo', 'hello', 'world']
+
+    """
+
+    def __init__(self, previous_history: Optional[List[str]] = None, size: int = -1) -> None:
 
         self.history: List[str] = previous_history or []
-        self.size = size or Settings.get('clipboard_size')
+        self.size = size or Settings.clipboard_size
 
     def add(self, item: str):
         # don't add the same item twice
@@ -34,7 +49,7 @@ class Clipboard:
             return
 
         self.history.insert(0, item)
-        self.history = self.history[: self.size]
+        self.history = self.history[:self.size]
 
     def get(self, index: int):
         return self.history[index] if 0 <= index < len(self.history) else None
@@ -43,63 +58,61 @@ class Clipboard:
         return str(self.history)
 
 
-class RegisterFileProtocol(Protocol):
-    def load(self) -> RegistersTypes: ...
-    def save(self, registers: RegistersTypes) -> None: ...
+class RegisterFileInterface(ABC):
+    @abstractmethod
+    def load(self) -> RegistersData: ...
+
+    @abstractmethod
+    def save(self, registers: RegistersData) -> None: ...
 
 
-class RegisterFile:
-    registers: RegistersTypes = {
-        'named': {},
-        'clipboard': [],
-        'last_search': '',
-        'marks': {},
-    }
+class RegisterFile(RegisterFileInterface):
 
     def __init__(self, register_file: pathlib.Path) -> None:
         self._register_file = register_file
 
-    def load(self):
+    def load(self) -> RegistersData:
         if not self._register_file.exists():
-            self.save(self.registers)
+            registers = RegistersData(
+                named={},
+                clipboard=[],
+                last_search='',
+                marks={},
+            )
+            self.save(registers)
+            return registers
 
         with self._register_file.open() as f:
-            return json.load(f)
+            return RegistersData(**json.load(f))
 
-    def save(self, registers: RegistersTypes):
+    def save(self, registers: RegistersData):
         with self._register_file.open('w') as f:
-            json.dump(registers, f, indent=4)
+            json.dump(asdict(registers), f, indent=4)
 
 
 class _Registers:
-    registers: RegistersTypes = {
-        'named': {},
-        'clipboard': [],
-        'last_search': '',
-        'marks': {},
-    }
 
-    def __init__(self, register_file: RegisterFileProtocol):
+    def __init__(self, register_file: RegisterFileInterface):
         self.registers_file = register_file
         self.registers = register_file.load()
 
-        self._clipboard = Clipboard(self.registers['clipboard'])
+        self._clipboard = Clipboard(self.registers.clipboard)
         self._named_register: Optional[str] = None
 
     def _push_to_clipboard(self, value: str):
         self._clipboard.add(value)
-        self.registers['clipboard'] = self._clipboard.history
+        self.registers.clipboard = self._clipboard.history
         self.registers_file.save(self.registers)
 
     def add_mark(self, key: str, text: str, pos: int) -> None:
-        self.registers['marks'][key] = {'position': pos, 'line': text}
+        self.registers.marks[key] = Mark(position=pos, line=text)
         self.registers_file.save(self.registers)
 
     def get_mark(self, key: str) -> Optional[Mark]:
-        return self.registers['marks'].get(key)
+        return self.registers.marks.get(key)
 
     def add_last_search(self, value: str) -> None:
-        self.registers['last_search'] = value
+        self.registerslast_search = value
         self._push_to_clipboard(value)
 
     def set_named_register(self, key: str) -> None:
@@ -107,7 +120,7 @@ class _Registers:
 
     def get_numbered_register_value(self, index: int) -> Optional[str]:
         try:
-            return self.registers['clipboard'][index]
+            return self.registers.clipboard[index]
         except IndexError:
             return None
 
@@ -115,12 +128,12 @@ class _Registers:
         key = self._named_register
 
         if not key:
-            return self.registers['clipboard'][0]
+            return self.registers.clipboard[0]
 
         if key == '/':
-            return self.registers['last_search']
+            return self.registers.last_search
 
-        return self.registers['named'].get(key)
+        return self.registers.named.get(key)
 
     def add(self, value: str) -> None:
         if value.isspace():
@@ -128,37 +141,28 @@ class _Registers:
             return
 
         if self._named_register:
-            self.registers['named'][self._named_register] = value
+            self.registers.named[self._named_register] = value
 
         self._push_to_clipboard(value)
         self._named_register = None
 
     def clear(self) -> None:
-        self.registers = {
-            'named': {},
-            'clipboard': [],
-            'last_search': '',
-            'marks': {},
-        }
+
+        self.registers.marks = {}
+        self.registers.named = {}
+        self.registers.clipboard = []
+        self.registers.last_search = ''
+
         self.registers_file.save(self.registers)
 
-    @overload
-    def get_register(self, name: Literal['marks']) -> Mark: ...
+    def get_clipboard(self) -> List[str]:
+        return self.registers.clipboard
 
-    @overload
-    def get_register(self, name: Literal['last_search']) -> str: ...
+    def get_named_register(self) -> Dict[str, str]:
+        return self.registers.named
 
-    @overload
-    def get_register(self, name: Literal['clipboard']) -> List[str]: ...
-
-    @overload
-    def get_register(self, name: Literal['named']) -> Dict[str, str]: ...
-
-    @overload
-    def get_register(self, name: str) -> Any: ...
-
-    def get_register(self, name: str) -> Any:
-        return self.registers[name]
+    def get_marks(self) -> Dict[str, Mark]:
+        return self.registers.marks
 
 
 def get_register():

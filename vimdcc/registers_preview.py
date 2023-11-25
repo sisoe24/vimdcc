@@ -232,7 +232,7 @@ class PreviewNamedRegister(PreviewRegister):
     def prepare_items(self) -> RegisterItem:
         return {
             k: PreviewData(v, k)
-            for k, v in Registers.get_register('named').items()
+            for k, v in Registers.get_named_register().items()
             if v
         }
 
@@ -242,10 +242,9 @@ class PreviewMarkRegister(PreviewRegister):
         super().__init__('marks')
 
     def prepare_items(self) -> RegisterItem:
-        # TODO: Check linting complains about this
         return {
             k: PreviewData(f'pos:{v["position"]} line:{v["line"]}', str(v['position']))
-            for k, v in Registers.get_register('marks').items()
+            for k, v in Registers.get_marks().items()
             if v
         }
 
@@ -258,7 +257,7 @@ class PreviewNumberedRegister(PreviewRegister):
     def prepare_items(self) -> RegisterItem:
         return {
             v.strip(): PreviewData(v.strip(), v)
-            for v in Registers.get_register('clipboard')
+            for v in Registers.get_clipboard()
         }
 
 
