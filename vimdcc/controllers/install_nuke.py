@@ -45,7 +45,7 @@ class NukeVimDCC(VimDCC):
         self.splitter.setStretchFactor(2, 0)  # lineEdit takes up minimum space
 
 
-def install_nuke_vim():
+def install_nuke():
     with contextlib.suppress(ImportError):
         import nukescripts
         nukescripts.panels.registerWidgetAsPanel(
