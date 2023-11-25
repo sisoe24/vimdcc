@@ -83,6 +83,7 @@ class PreviewView(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setMinimumSize(600, 400)
 
         self.previewer_name = QLabel()
         self.previewer_name.setAlignment(Qt.AlignCenter)
@@ -93,7 +94,7 @@ class PreviewView(QDialog):
 
         self.list_view = PreviewListView()
 
-        splitter = QSplitter()
+        splitter = QSplitter(Qt.Vertical)
         splitter.addWidget(self.list_view)
         splitter.addWidget(self.text_preview)
 
