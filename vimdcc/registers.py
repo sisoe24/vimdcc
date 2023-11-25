@@ -23,10 +23,10 @@ RegisterName = Literal['named', 'last_search', 'marks', 'clipboard']
 
 
 class Clipboard:
-    def __init__(self, previous_history: List[str]) -> None:
+    def __init__(self, previous_history: List[str], size: int = -1) -> None:
 
         self.history: List[str] = previous_history or []
-        self.size = Settings.get('clipboard_size', 100)
+        self.size = size or Settings.get('clipboard_size')
 
     def add(self, item: str):
         # don't add the same item twice
