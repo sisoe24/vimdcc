@@ -1,9 +1,9 @@
-from typing import Any, TypeVar, Callable
+from typing import Any, Dict, TypeVar, Callable
 
 R = TypeVar('R')
 GenericFunc = Callable[..., R]
 
-_CACHE: dict[GenericFunc[Any], Any] = {}
+_CACHE: Dict[GenericFunc[Any], Any] = {}
 
 
 def cache(func: GenericFunc[R]) -> GenericFunc[R]:
