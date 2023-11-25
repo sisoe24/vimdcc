@@ -5,8 +5,8 @@ from PySide2.QtGui import QKeyEvent, QStandardItem
 from PySide2.QtCore import (Qt, Slot, QRect, QEvent, QObject, QModelIndex,
                             QCoreApplication, QStringListModel,
                             QSortFilterProxyModel)
-from PySide2.QtWidgets import (QLabel, QDialog, QCheckBox, QLineEdit,
-                               QListView, QSplitter, QSizePolicy, QVBoxLayout,
+from PySide2.QtWidgets import (QLabel, QDialog, QLineEdit, QListView,
+                               QSplitter, QSizePolicy, QVBoxLayout,
                                QApplication, QPlainTextEdit, QDialogButtonBox,
                                QStyledItemDelegate)
 
@@ -183,7 +183,7 @@ class PreviewController:
 
         if (
             (row_count == 1 or not row_count) and
-            Settings.get('previewer_auto_insert', True)
+            Settings.get('previewer_auto_insert')
         ):
             enter_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier)
             QCoreApplication.sendEvent(self.view, enter_event)
