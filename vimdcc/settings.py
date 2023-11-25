@@ -1,42 +1,34 @@
 import json
 import pathlib
-from typing import Any, Dict, Literal, Protocol
+from dataclasses import field, fields, dataclass
 
 SETTINGS_FILE = pathlib.Path(__file__).parent.parent / 'vimdcc.json'
 if not SETTINGS_FILE.exists():
     SETTINGS_FILE.write_text('{}')
 
-Keys = Literal['launch_on_startup', 'clipboard_size',
-               'install_to_all_editors', 'previewer_auto_insert']
 
-SettingsDict = Dict[Keys, Any]
+@dataclass
+class VimDccSettings:
+    launch_on_startup: bool = field(init=False, default=False)
+    clipboard_size: int = field(init=False, default=100)
+    install_to_all_editors: bool = field(init=False, default=False)
+    previewer_auto_insert: bool = field(init=False, default=True)
+    copy_to_system_clipboard: bool = field(init=False, default=True)
 
+    def __post_init__(self):
+        self._load_settings()
 
-def _load_settings() -> SettingsDict:
-    with SETTINGS_FILE.open() as f:
-        return json.load(f)
+    def _load_settings(self):
+        with SETTINGS_FILE.open() as f:
+            data = json.load(f)
+            for key, value in data.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
 
-
-def _save_settings(settings: SettingsDict):
-    with SETTINGS_FILE.open('w') as f:
-        json.dump(settings, f)
-
-
-class SettingsProtocol(Protocol):
-    def get(self, key: Keys, default: Any = None) -> Any: ...
-    def set(self, key: Keys, value: Any) -> None: ...
-
-
-class _VimDccSettings():
-    def __init__(self):
-        self._settings = _load_settings()
-
-    def get(self, key: Keys, default: Any = None):
-        return self._settings.get(key, default)
-
-    def set(self, key: Keys, value: Any):
-        self._settings[key] = value
-        _save_settings(self._settings)
+    def save_settings(self):
+        data = {field.name: getattr(self, field.name) for field in fields(self)}
+        with SETTINGS_FILE.open('w') as f:
+            json.dump(data, f, indent=4)
 
 
-Settings = _VimDccSettings()
+Settings = VimDccSettings()
