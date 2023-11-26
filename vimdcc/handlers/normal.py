@@ -211,6 +211,7 @@ class SearchLineHandler(BaseHandler):
             ',': self.search_backward_again,
         }
         # TODO: This is a mess. Refactor this.
+        # TODO: Add tests for c, d, y, v
 
     def _set_cursor(
         self,
@@ -224,7 +225,7 @@ class SearchLineHandler(BaseHandler):
 
         # anchor the cursor if we are in any of the modes
         select = QTextCursor.MoveAnchor
-        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK]:
+        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
             cursor.setPosition(start, QTextCursor.MoveAnchor)
             select = QTextCursor.KeepAnchor
 
@@ -240,6 +241,10 @@ class SearchLineHandler(BaseHandler):
             self.registers.add(cursor.selectedText())
             cursor.clearSelection()
             cursor.setPosition(start, QTextCursor.MoveAnchor)
+
+        elif EditorMode.mode == Modes.VISUAL:
+            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+
         return True
 
     def search_forward(
@@ -270,9 +275,9 @@ class SearchLineHandler(BaseHandler):
 
     def search_forward_before(self, params: HandlerParams, key: str):
         """t + key."""
-        if not self.search_forward(params, key, QTextCursor.NoMove):
+        if not self.search_forward(params, key, QTextCursor.NextCharacter):
             return False
-        params.cursor.movePosition(QTextCursor.PreviousCharacter)
+        params.cursor.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor)
         return True
 
     def search_backward_before(self, params: HandlerParams, key: str):
