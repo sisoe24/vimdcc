@@ -1,7 +1,8 @@
 
 import contextlib
+from typing import Tuple
 
-from PySide2.QtWidgets import QSplitter, QApplication, QPlainTextEdit
+from PySide2.QtWidgets import QWidget, QSplitter, QApplication, QPlainTextEdit
 
 from ..main import VimDCC
 from ..utils import cache
@@ -9,7 +10,7 @@ from ..settings import Settings
 
 
 @cache
-def get_script_editor() -> QPlainTextEdit:
+def get_script_editor() -> QWidget:
     for widget in QApplication.allWidgets():
         if 'scripteditor.1' in widget.objectName():
             return widget
@@ -22,7 +23,7 @@ def get_splitter() -> QSplitter:
 
 
 @cache
-def get_console_editor() -> QPlainTextEdit:
+def get_input_editor() -> QPlainTextEdit:
     input_editor = get_splitter().findChild(QPlainTextEdit)
     if not input_editor:
         raise RuntimeError('Could not find input editor')
@@ -30,15 +31,19 @@ def get_console_editor() -> QPlainTextEdit:
 
 
 class NukeVimDCC(VimDCC):
-    def __init__(self, parent=None):
-        super().__init__(get_console_editor(), parent)
+    def __init__(self):
+        super().__init__()
 
         self.splitter = get_splitter()
         self.load_status_bar()
 
+    def get_editor(self) -> QPlainTextEdit:
+        return get_input_editor()
+
     def load_status_bar(self):
         if not Settings.launch_on_startup:
             return
+
         self.splitter.addWidget(self.status_bar)
         self.splitter.setStretchFactor(0, 1)  # First textEdit takes up maximum space
         self.splitter.setStretchFactor(1, 1)  # Second textEdit takes up maximum space
