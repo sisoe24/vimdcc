@@ -146,19 +146,6 @@ class SearchHandler(BaseHandler):
         }
         self.search = SearchCommand(editor)
 
-    def handle(self, params: HandlerParams) -> bool:
-        key = params.event.key()
-        key_sequence = params.keys
-
-        if key_sequence.startswith('?') and key == 16777220:
-            return self.search_word_up(params, key_sequence[1:])
-
-        if key_sequence.startswith('/') and key == 16777220:
-            return self.search_word_down(params, key_sequence[1:])
-
-        command = self.commands.get(params.keys)
-        return command(params) if command else False
-
     def get_word_under_cursor(self, cursor: QTextCursor) -> str:
         initial_position = cursor.position()
         cursor.select(QTextCursor.WordUnderCursor)
@@ -199,6 +186,19 @@ class SearchHandler(BaseHandler):
         if pos is not None:
             params.cursor.setPosition(pos)
         return True
+
+    def handle(self, params: HandlerParams) -> bool:
+        key = params.event.key()
+        key_sequence = params.keys
+
+        if key_sequence.startswith('?') and key == 16777220:
+            return self.search_word_up(params, key_sequence[1:])
+
+        if key_sequence.startswith('/') and key == 16777220:
+            return self.search_word_down(params, key_sequence[1:])
+
+        command = self.commands.get(params.keys)
+        return command(params) if command else False
 
 
 @register_normal_handler
