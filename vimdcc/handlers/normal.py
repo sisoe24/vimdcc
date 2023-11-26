@@ -388,10 +388,10 @@ class YankHandler(BaseHandler):
         return True
 
     def handle(self, params: HandlerParams):
-        if params.keys == '"':
+        if params.keys == "'":
             return self.preview_register(params)
 
-        if params.keys == "'":
+        if params.keys == '\\':
             return self.preview_clipboard(params)
 
         commands = self.commands.get(params.keys)
