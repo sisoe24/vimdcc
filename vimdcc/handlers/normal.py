@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 from PySide2.QtGui import QTextCursor
+from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
 from vimdcc.editor_mode import Modes, EditorMode
@@ -209,44 +210,87 @@ class SearchLineHandler(BaseHandler):
             ';': self.search_forward_again,
             ',': self.search_backward_again,
         }
+        # TODO: This is a mess. Refactor this.
 
-    def _set_cursor(self, cursor: QTextCursor, pos: Optional[int]):
+    def _set_cursor(
+        self,
+        start: int,
+        cursor: QTextCursor,
+        pos: Optional[int],
+        move_char: QTextCursor.MoveOperation = QTextCursor.NoMove
+    ):
         if pos is None:
             return False
-        cursor.setPosition(pos)
+
+        # anchor the cursor if we are in any of the modes
+        select = QTextCursor.MoveAnchor
+        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK]:
+            cursor.setPosition(start, QTextCursor.MoveAnchor)
+            select = QTextCursor.KeepAnchor
+
+        # set the cursor to destination
+        cursor.setPosition(pos, select)
+
+        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE]:
+            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+
+        elif EditorMode.mode == Modes.YANK:
+            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+            self.registers.add(cursor.selectedText())
+            cursor.clearSelection()
+            cursor.setPosition(start, QTextCursor.MoveAnchor)
         return True
 
-    def search_forward(self, params: HandlerParams, key: str):
+    def search_forward(
+        self,
+        params: HandlerParams,
+        key: str,
+        move_char: QTextCursor.MoveOperation = QTextCursor.NextCharacter
+    ):
+        """f + key."""
         self.search.find(key)
         cursor = params.cursor
-        pos = self.search.find_next_down(cursor.position())
-        return self._set_cursor(cursor, pos)
+        start = cursor.position()
+        pos = self.search.find_next_down(start)
+        return self._set_cursor(start, cursor, pos, move_char)
 
-    def search_backward(self, params: HandlerParams, key: str):
+    def search_backward(
+        self,
+        params: HandlerParams,
+        key: str,
+        move_char: QTextCursor.MoveOperation = QTextCursor.NoMove
+    ):
+        """F + key."""
         self.search.find(key)
         cursor = params.cursor
+        start = cursor.position()
         pos = self.search.find_next_up(cursor.position())
-        return self._set_cursor(cursor, pos)
+        return self._set_cursor(start, cursor, pos, move_char)
 
     def search_forward_before(self, params: HandlerParams, key: str):
-        if not self.search_forward(params, key):
+        """t + key."""
+        if not self.search_forward(params, key, QTextCursor.NoMove):
             return False
         params.cursor.movePosition(QTextCursor.PreviousCharacter)
         return True
 
     def search_backward_before(self, params: HandlerParams, key: str):
-        if not self.search_backward(params, key):
+        """T + key."""
+        if not self.search_backward(params, key, QTextCursor.NextCharacter):
             return False
         params.cursor.movePosition(QTextCursor.NextCharacter)
         return True
 
     def search_forward_again(self, params: HandlerParams):
-        pos = self.search.find_next_down(params.cursor.position())
-        return self._set_cursor(params.cursor, pos)
+        start = params.cursor.position()
+        pos = self.search.find_next_down(start)
+        return self._set_cursor(start, params.cursor, pos)
 
     def search_backward_again(self, params: HandlerParams):
-        pos = self.search.find_next_up(params.cursor.position())
-        return self._set_cursor(params.cursor, pos)
+        start = params.cursor.position()
+        pos = self.search.find_next_up(start)
+        return self._set_cursor(start, params.cursor, pos)
 
     def handle(self, params: HandlerParams):
         keys = params.keys
@@ -255,12 +299,12 @@ class SearchLineHandler(BaseHandler):
             self.search_forward(params, keys[1])
             return True
 
-        if keys.startswith('t') and len(keys) == 2:
-            self.search_forward_before(params, keys[1])
-            return True
-
         if keys.startswith('F') and len(keys) == 2:
             self.search_backward(params, keys[1])
+            return True
+
+        if keys.startswith('t') and len(keys) == 2:
+            self.search_forward_before(params, keys[1])
             return True
 
         if keys.startswith('T') and len(keys) == 2:
@@ -273,6 +317,7 @@ class SearchLineHandler(BaseHandler):
 
 @register_normal_handler
 class YankHandler(BaseHandler):
+    # token to identify that the copied text contains a new line
     LINE_COPY = '<LINE_COPY>'
 
     def __init__(self, editor: QPlainTextEdit):
@@ -478,6 +523,7 @@ class TextObjectsHandler(BaseHandler):
         return self._execute_text_object(cursor, operator, start_pos, end_pos)
 
     def handle(self, params: HandlerParams) -> bool:
+
         keys = params.keys
         if not keys or len(keys) < 3:
             return False
@@ -505,6 +551,16 @@ class TextObjectsHandler(BaseHandler):
 
         if character in self.word:
             return self.delete_word(params.cursor, operator)
+
+        return False
+
+
+@register_normal_handler
+class TextSearchObjectsHandler(BaseHandler):
+    def __init__(self, editor: QPlainTextEdit):
+        super().__init__(editor)
+
+    def handle(self, params: HandlerParams) -> bool:
 
         return False
 
