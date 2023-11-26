@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
@@ -43,6 +43,7 @@ class HelpWidget(QDialog):
 
     @Slot(str)
     def _on_open_link(self, link: str):
+        # TODO: open link
         print('TODO: open link', link)
         gitrepo = 'https://github.com/sisoe24/vimdcc'
         links = {
@@ -55,10 +56,9 @@ class HelpWidget(QDialog):
 
 
 class VimDCC(QMainWindow):
-    def __init__(self, editor: QPlainTextEdit, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.editor = editor
         self.status_bar = QLineEdit()
         status_bar.register(self.status_bar)
 
@@ -66,14 +66,12 @@ class VimDCC(QMainWindow):
         self.toggle_vim.setCheckable(True)
         self.toggle_vim.clicked.connect(self._on_toggle_vim)
 
-        self.clear_register = QPushButton('Clear Registers')
-        self.clear_register.clicked.connect(self._on_clear_register)
-
-        self.vim_status = QLabel('Vim: OFF')
+        self.vim_status = QLabel('<h3>Vim: OFF</h3>')
         self.vim_status.setAlignment(Qt.AlignCenter)
 
         self.preferences = VimPreferences()
         if Settings.launch_on_startup:
+            self.toggle_vim.setChecked(True)
             self._on_toggle_vim(True)
 
         main_label = QLabel('<h1>VimDcc</h1>')
@@ -92,30 +90,43 @@ class VimDCC(QMainWindow):
 
         toolbar = QToolBar()
         toolbar.addAction('Help', HelpWidget(self).show)
-        toolbar.addAction('Clear Register', self._on_clear_register)
         self.addToolBar(toolbar)
 
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    @Slot()
-    def _on_clear_register(self):
-        Registers.clear()
+    def get_editor(self) -> QPlainTextEdit:
+        """Get the editor to install the event filters on.
+
+        This method acts as an abstractmethod and must be implemented in a subclass.
+
+        """
+        raise NotImplementedError('get_editor must be implemented in subclass')
 
     @Slot(bool)
     def _on_toggle_vim(self, checked: bool):
 
+        input_editor = self.get_editor()
+
         if checked:
+            input_editor.setStyleSheet('''
+                QPlainTextEdit {
+                    border: 2px dotted #F19A04;
+                }
+            ''')
             LOGGER.debug('Turning Vim ON')
-            self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
-            self.vim_status.setText('Vim: ON')
-            action = self.editor.installEventFilter
+            input_editor.setCursorWidth(input_editor.fontMetrics().width(' '))
+            self.vim_status.setText('<h3>Vim: ON</h3>')
+            self.vim_status.setStyleSheet('QLabel { color: #F19A04; }')
+            action = input_editor.installEventFilter
         else:
             LOGGER.debug('Turning Vim OFF')
-            self.vim_status.setText('Vim: OFF')
-            action = self.editor.removeEventFilter
-            self.editor.setCursorWidth(2)
+            input_editor.setStyleSheet('')
+            self.vim_status.setText('<h3>Vim: OFF</h3>')
+
+            action = input_editor.removeEventFilter
+            input_editor.setCursorWidth(2)
 
         for mode in EDITOR_FILTERS:
             LOGGER.debug(f'Installing: {mode.__name__}')
@@ -123,10 +134,10 @@ class VimDCC(QMainWindow):
             if _EVENT_FILTERS.get(f'{mode.__name__}_filter'):
                 event_filter = _EVENT_FILTERS[f'{mode.__name__}_filter']
             else:
-                event_filter = mode(self.editor)
+                event_filter = mode(input_editor)
                 _EVENT_FILTERS[f'{mode.__name__}_filter'] = event_filter
 
             LOGGER.debug(f'event_filter: {event_filter}')
             action(event_filter)
 
-        self.editor.viewport().update()
+        input_editor.viewport().update()
