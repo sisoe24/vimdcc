@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Callable, Optional
 
 from PySide2.QtGui import QTextCursor
 from PySide2.QtCore import Qt
@@ -146,46 +146,64 @@ class SearchHandler(BaseHandler):
         }
         self.search = SearchCommand(editor)
 
-    def get_word_under_cursor(self, cursor: QTextCursor) -> str:
+    def _get_word_under_cursor(self, cursor: QTextCursor) -> str:
         initial_position = cursor.position()
         cursor.select(QTextCursor.WordUnderCursor)
         text = cursor.selectedText()
         cursor.setPosition(initial_position)
         return text
 
-    def _search_down(self, params: HandlerParams, key: str):
+    def _move_cursor(self, params: HandlerParams, move_func: Callable[[int], Optional[int]]):
+        cursor = params.cursor
+        start = cursor.position()
+        pos = move_func(cursor.position())
+        if pos is not None:
+
+            # TODO: Many similarity with the _set_cursor method from SearchLineHandler
+            select = QTextCursor.MoveAnchor
+            if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
+                cursor.setPosition(start, QTextCursor.MoveAnchor)
+                select = QTextCursor.KeepAnchor
+
+            cursor.setPosition(pos, select)
+
+            if EditorMode.mode in [Modes.CHANGE, Modes.DELETE]:
+                cursor.removeSelectedText()
+
+            elif EditorMode.mode == Modes.YANK:
+                self.registers.add(cursor.selectedText())
+                cursor.clearSelection()
+                cursor.setPosition(start, QTextCursor.MoveAnchor)
+
+        return True
+
+    def go_up(self, params: HandlerParams):
+        return self._move_cursor(params, self.search.find_next_up)
+
+    def go_down(self, params: HandlerParams):
+        return self._move_cursor(params, self.search.find_next_down)
+
+    def search_down(self, params: HandlerParams, key: str):
         self.registers.add_last_search(key)
         self.search.find(key)
         return self.go_down(params)
 
-    def _search_up(self, params: HandlerParams, key: str):
+    def search_up(self, params: HandlerParams, key: str):
         self.registers.add_last_search(key)
         self.search.find(key)
         return self.go_up(params)
 
     def search_down_under_cursor(self, params: HandlerParams):
-        return self._search_down(params, self.get_word_under_cursor(params.cursor))
+        return self.search_down(params, self._get_word_under_cursor(params.cursor))
 
     def search_up_under_cursor(self, params: HandlerParams):
-        return self._search_up(params, self.get_word_under_cursor(params.cursor))
+        return self.search_up(params, self._get_word_under_cursor(params.cursor))
 
     def search_word_up(self, params: HandlerParams, key: str):
-        return self._search_up(params, key)
+        return self.search_up(params, key)
 
     def search_word_down(self, params: HandlerParams, key: str):
-        return self._search_down(params, key)
-
-    def go_up(self, params: HandlerParams):
-        pos = self.search.find_next_up(params.cursor.position())
-        if pos is not None:
-            params.cursor.setPosition(pos)
-        return True
-
-    def go_down(self, params: HandlerParams):
-        pos = self.search.find_next_down(params.cursor.position())
-        if pos is not None:
-            params.cursor.setPosition(pos)
-        return True
+        return self.search_down(params, key)
 
     def handle(self, params: HandlerParams) -> bool:
         key = params.event.key()
