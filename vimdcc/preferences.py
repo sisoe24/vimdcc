@@ -37,13 +37,10 @@ class VimPreferencesView(QFrame):
         self.previewer_auto_insert = QCheckBox()
         self.previewer_auto_insert.setChecked(True)
 
-        self.install_to_all_editors = QCheckBox()
-
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
         form_layout.addRow('Launch on Startup', self.launch_on_startup)
-        form_layout.addRow('Install to all editors', self.install_to_all_editors)
         form_layout.addRow('Previewer auto insert', self.previewer_auto_insert)
         form_layout.addRow('Clipboard Size', self.clipboard_size)
         form_layout.addRow('Copy to system clipboard', self.copy_to_system_clipboard)
