@@ -19,9 +19,9 @@
 
 ## Description
 
-VimDCC is a PySide2 plugin that emulates a lightweight Vim editor. It does not aim to be a complete Vim implementation, but only to offer a subset of the most useful features.
+VimDCC is a lightweight Vim editor plugin designed for PySide2 that offers a subset of the most useful features. Although it's not a complete Vim implementation, it can be used as a drop-in replacement for the default text editor console in Nuke and any other PySide2 application. In the future, I plan to add support for other applications like Maya and Houdini.
 
-The plugin works by installing itself as an event filter on a QPlainTextEditor. This allows it to intercept all keyboard events and process them before they are sent back. The plugin can be enabled or disabled at any time and only becomes active when the QPlainTextEditor widget is in focus.
+The plugin operates by installing itself as an event filter on a QPlainTextEditor. This enables it to intercept all keyboard events and process them before they're sent back. The plugin can be enabled or disabled at any time and it only activates when the QPlainTextEditor widget is in focus.
 
 ## Features
 
