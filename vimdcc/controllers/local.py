@@ -39,8 +39,8 @@ def main():
     app = QApplication(sys.argv)
 
     font = app.font()
-    # font.setFamilies(['Monaco', 'Courier'])
-    # font.setPixelSize(25)
+    font.setFamilies(['Monaco', 'Courier'])
+    font.setPixelSize(25)
     app.setFont(font)
 
     set_theme(app)
