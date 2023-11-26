@@ -4,9 +4,6 @@
   - [Description](#description)
   - [Features](#features)
   - [Differences from Vim](#differences-from-vim)
-    - [Modes](#modes)
-    - [Registers](#registers)
-      - [Clipboard Register](#clipboard-register)
   - [Keybindings](#keybindings)
   - [Installation](#installation)
     - [Nuke](#nuke)
@@ -35,11 +32,11 @@ If you know Vim, you'll feel at home with the plugin. It has most of Vim's basic
 
 ## Differences from Vim
 
-### Modes
+**Modes**
 
-The plugin supports the following modes: Normal, Insert, Visual, Visual Line.
+The plugin only supports the following modes: Normal, Insert, Visual, Visual Line.
 
-### Registers
+**Registers**
 
 This plugin has two registers (`named` and `clipboard`) that are similar to Vim's implementation. All registers are persistent.
 
@@ -54,18 +51,18 @@ This plugin has two registers (`named` and `clipboard`) that are similar to Vim'
 
   > Use `"` to see the list of named registers. Navigate it with arrow keys and select a register with `Enter`. The previewer automatically selects a register when it finds a match, but you can turn off this option in the setting panel by setting `Previewer auto insert` to `False`.
 
-#### Clipboard Register
+* `clipboard`
 
-The clipboard register in VimDCC stores a list of the last copied text snippets, acting as a snippet manager. It's a circular buffer with a fixed size, where you can decide how many snippets to keep. When it's full, the oldest snippet is removed. Like the `named` preview panel, you can press `'` to access the clipboard register, displayed in an interactive window, where you can navigate the list with arrow keys and select a snippet by pressing Enter.
+  The clipboard register in VimDCC stores a list of the last copied text snippets, acting as a snippet manager. It's a circular buffer with a fixed size, where you can decide how many snippets to keep. When it's full, the oldest snippet is removed. Like the `named` preview panel, you can press `'` to access the clipboard register, displayed in an interactive window, where you can navigate the list with arrow keys and select a snippet by pressing Enter.
 
 ## Keybindings
 
 Some of the keybinding are different from the Vim implementation. This is still a work in progress and I will probably change some of the keybindings in the future.
 
 - `Alt+r` - Redo
-- `'` - Show clipboard panel
-- `"` - Show named panel
-- `\``- Show marks panel
+- `\` - Show clipboard panel (backslash)
+- `'` - Show named panel (single quote)
+- `` ` ``- Show marks panel (backtick)
 
 ## Installation
 
@@ -83,6 +80,7 @@ vimdcc.install_nuke()
 
 This is a list of the most important issues that I am aware of and not a complete list of all the bugs or of all the missing features.
 
+- If you press a key that doesn't correspond to any command, it won't execute anything and will wait for the next key. This can result in a pile-up of invalid keys that will never be resolved. To clear the stack and start fresh, just press the `Esc` key.
 - At the moment, the plugin only supports one editor per session. In Nuke, this means that only the first QPlainTextEditor widget will be enabled. You can identify the enabled widget by the orange border around it.
 - The `e` motion does not respect the punctuation characters.
 - The `a` text object not does work properly with the `w` motion.
