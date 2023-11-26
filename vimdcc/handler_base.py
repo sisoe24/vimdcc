@@ -42,6 +42,9 @@ class BaseHandler(ABC):
         self.editor.setCursorWidth(2)
         self.editor.viewport().update()
 
+    def to_visual_mode(self):
+        EditorMode.mode = Modes.VISUAL
+
     def should_handle(self, params: HandlerParams) -> bool:
         """Indicate whether the key sequence should be handled."""
         return True
