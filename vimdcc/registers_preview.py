@@ -136,6 +136,9 @@ class PreviewView(QDialog):
             self.reject()
             return False
 
+        # TODO: Refactor this. The search bar value plays a role when no item
+        # is found. Keep it simple.
+
         self.search_bar.clear()
         self.text_value = data.value
         self.accept()
@@ -199,6 +202,7 @@ class PreviewController:
         self.view.text_preview.setPlainText(data.text)
 
     def init(self, name: str, items: RegisterItem):
+        self.view.search_bar.clear()
         self.view.previewer_name.setText(f'<h2>{name}</h2>')
         self.list_model.populate(items)
 
