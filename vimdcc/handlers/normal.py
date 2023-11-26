@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import Dict, Callable, Optional
 
 from PySide2.QtGui import QTextCursor
-from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QPlainTextEdit
 
-from vimdcc.editor_mode import Modes, EditorMode
-
+from ..editor_mode import Modes, EditorMode
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
 from ..text_objects import MatchingCharacter, find_matching
