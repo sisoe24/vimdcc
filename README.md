@@ -10,7 +10,7 @@
   - [Keybindings](#keybindings)
   - [Installation](#installation)
     - [Nuke](#nuke)
-  - [Known Issues](#known-issues)
+  - [Known Issues and Limitations](#known-issues-and-limitations)
   - [TODO](#todo)
   - [Contributing](#contributing)
 
@@ -19,9 +19,9 @@
 
 ## Description
 
-VimDCC is a PySide2 plugin that emulates a lightweight Vim editor specifically designed for DCC applications. While it does not aim to be a complete Vim implementation, it offers a subset of the most useful features.
+VimDCC is a PySide2 plugin that emulates a lightweight Vim editor. It does not aim to be a complete Vim implementation, but only to offer a subset of the most useful features.
 
-The plugin works by installing itself as an event filter on a QPlainTextEditor. This allows it to intercept all keyboard events and process them before they are sent back. The plugin can be enabled or disabled at any time and only becomes active when the script editor is in focus.
+The plugin works by installing itself as an event filter on a QPlainTextEditor. This allows it to intercept all keyboard events and process them before they are sent back. The plugin can be enabled or disabled at any time and only becomes active when the QPlainTextEditor widget is in focus.
 
 ## Features
 
@@ -79,11 +79,13 @@ vimdcc.install_nuke()
 ```
 > If you are a NukeTools user, you can use the command `Nuke: Install VimDCC` from the vscode command palette.
 
-## Known Issues
+## Known Issues and Limitations
 
-This is a list of the most important issues that I am aware of.
+This is a list of the most important issues that I am aware of and not a complete list of all the bugs or of all the missing features.
 
+- At the moment, the plugin only supports one editor per session. In Nuke, this means that only the first QPlainTextEditor widget will be enabled. You can identify the enabled widget by the orange border around it.
 - The `e` motion does not respect the punctuation characters.
+- The `a` text object not does work properly with the `w` motion.
 - The `VISUAL LINE` mode fails to select the last line if the cursor is at the end of the line.
 - `o` and `O` commands do not indent the new line.
 
