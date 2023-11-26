@@ -71,7 +71,7 @@ Some of the keybinding are different from the Vim implementation. This is still 
 
 ### Nuke
 
-To install the plugin in Nuke, copy the `vimdcc` folder to the `~/.nuke` folder. Then add the following lines to the `init.py` file:
+To install the plugin in Nuke, copy the `vimdcc` folder to the `~/.nuke` folder. Then add the following lines to the `menu.py` file:
 
 ```python
 from vimdcc import vimdcc
@@ -84,7 +84,6 @@ vimdcc.install_nuke()
 This is a list of the most important issues that I am aware of.
 
 - The `e` motion does not respect the punctuation characters.
-- The `a` text object is not working properly.
 - The `VISUAL LINE` mode fails to select the last line if the cursor is at the end of the line.
 - `o` and `O` commands do not indent the new line.
 
