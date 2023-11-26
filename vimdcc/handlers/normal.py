@@ -406,12 +406,15 @@ class TextObjectsHandler(BaseHandler):
         }
 
         self.word = {
-            'w': self._delete_word,
+            'w': self.delete_word,
         }
 
-        self.valid_operators = {'ci', 'ca', 'di', 'da'}
+        self.valid_operators = {'ci', 'ca', 'di', 'da', 'vi', 'va', 'yi', 'ya'}
+        self.text_obj_mode = ''
 
     def _execute_text_object(self, cursor: QTextCursor, operator: str, start: int, end: int):
+        # TODO: Refactor this method
+
         if operator[1] == 'i':
             start += 1
         elif operator[1] == 'a':
@@ -419,7 +422,19 @@ class TextObjectsHandler(BaseHandler):
 
         cursor.setPosition(start, QTextCursor.MoveAnchor)
         cursor.setPosition(end, QTextCursor.KeepAnchor)
+
+        # when in visual or yank mode, we dont need to delete the text
+        # so we stop before
+
+        if self.text_obj_mode == 'VISUAL':
+            return True
+
         self.registers.add(cursor.selectedText())
+
+        if self.text_obj_mode == 'YANK':
+            cursor.clearSelection()
+            return True
+
         cursor.removeSelectedText()
 
         if operator[0] == 'c':
@@ -427,7 +442,7 @@ class TextObjectsHandler(BaseHandler):
 
         return True
 
-    def execute_text_object_quote(
+    def find_text_object_quote(
         self, cursor: QTextCursor, quote_type: MatchingCharacter, operator: str
     ):
 
@@ -438,7 +453,7 @@ class TextObjectsHandler(BaseHandler):
             self._execute_text_object(cursor, operator, find[0], find[1])
         return True
 
-    def execute_text_object_bracket(
+    def find_text_object_bracket(
         self, cursor: QTextCursor, bracket_type: MatchingCharacter, operator: str
     ):
         find = find_matching(self.editor.toPlainText(), bracket_type, cursor.position())
@@ -446,10 +461,9 @@ class TextObjectsHandler(BaseHandler):
             self._execute_text_object(cursor, operator, find[0], find[1])
         return True
 
-    def _delete_word(self, cursor: QTextCursor, operator: str):
+    def delete_word(self, cursor: QTextCursor, operator: str):
         # TODO: i and a are the same: It does not handle the around spaces
         if operator[1] == 'a':
-            print('TODO: delete around word')
             operator = 'di'
 
         if self.editor.toPlainText()[cursor.position() - 1] != ' ':
@@ -466,22 +480,27 @@ class TextObjectsHandler(BaseHandler):
         if not keys or len(keys) < 3:
             return False
 
-        operator = keys[:2]  # di, ci, da, ca
+        operator = keys[:2]  # di, ci, da, ca, yi, ya, vi, va
         character = keys[-1]  # (, ), {, }, [, ], ', ", `
 
         if operator not in self.valid_operators:
             return False
 
+        if operator[0] == 'v':
+            self.text_obj_mode = 'VISUAL'
+        elif operator[0] == 'y':
+            self.text_obj_mode = 'YANK'
+
         if character in self.brackets:
             bracket_type = self.brackets[character]
-            return self.execute_text_object_bracket(params.cursor, bracket_type, operator)
+            return self.find_text_object_bracket(params.cursor, bracket_type, operator)
 
         if character in self.quotes:
             quote_type = self.quotes[character]
-            return self.execute_text_object_quote(params.cursor, quote_type, operator)
+            return self.find_text_object_quote(params.cursor, quote_type, operator)
 
         if character in self.word:
-            return self._delete_word(params.cursor, operator)
+            return self.delete_word(params.cursor, operator)
 
         return False
 
