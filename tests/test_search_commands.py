@@ -184,7 +184,7 @@ def test_search_hanlder_word_under_cursor(
     editor.setPlainText(string)
     cursor = editor.textCursor()
     cursor.setPosition(pos)
-    assert handler.get_word_under_cursor(cursor) == word
+    assert handler._get_word_under_cursor(cursor) == word
 
 
 def test_search_hanlder_search(handler: SearchHandler):
