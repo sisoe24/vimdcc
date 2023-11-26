@@ -5,6 +5,8 @@ from typing import Dict, Optional
 from PySide2.QtGui import QTextCursor
 from PySide2.QtWidgets import QPlainTextEdit
 
+from vimdcc.editor_mode import Modes, EditorMode
+
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
 from ..text_objects import MatchingCharacter, find_matching
@@ -488,6 +490,8 @@ class TextObjectsHandler(BaseHandler):
 
         if operator[0] == 'v':
             self.text_obj_mode = 'VISUAL'
+            # HACK: change the mode to visual so that the VisualEditHandler can handle it
+            super().to_visual_mode()
         elif operator[0] == 'y':
             self.text_obj_mode = 'YANK'
 
