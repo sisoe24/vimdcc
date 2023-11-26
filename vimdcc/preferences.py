@@ -3,9 +3,10 @@ from typing import Any
 
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QFrame, QSpinBox, QCheckBox, QFormLayout,
-                               QMessageBox)
+                               QMessageBox, QPushButton)
 
 from .settings import Settings, VimDccSettings
+from .registers import Registers
 
 
 class VimPreferencesModel:
@@ -18,6 +19,9 @@ class VimPreferencesModel:
 
         setattr(self.settings, key, value)
         self.settings.save_settings()
+
+    def clear_registers(self):
+        Registers.clear()
 
 
 class VimPreferencesView(QFrame):
@@ -37,6 +41,9 @@ class VimPreferencesView(QFrame):
         self.previewer_auto_insert = QCheckBox()
         self.previewer_auto_insert.setChecked(True)
 
+        self.clear_editor_cache = QPushButton('Clear Editor Cache')
+        self.clear_registers = QPushButton('Clear Registers')
+
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
@@ -44,6 +51,7 @@ class VimPreferencesView(QFrame):
         form_layout.addRow('Previewer auto insert', self.previewer_auto_insert)
         form_layout.addRow('Clipboard Size', self.clipboard_size)
         form_layout.addRow('Copy to system clipboard', self.copy_to_system_clipboard)
+        form_layout.addRow(self.clear_registers)
 
         self.setLayout(form_layout)
 
@@ -57,6 +65,11 @@ class VimPreferencesController:
         self._view.clipboard_size.valueChanged.connect(self._on_clipboard_size)
         self._view.previewer_auto_insert.stateChanged.connect(self._on_previewer_auto_insert)
         self._view.copy_to_system_clipboard.stateChanged.connect(self._on_copy_to_system_clipboard)
+        self._view.clear_registers.clicked.connect(self._on_clear_registers)
+
+    @Slot()
+    def _on_clear_registers(self):
+        self._model.clear_registers()
 
     @Slot(int)
     def _on_copy_to_system_clipboard(self, state: int):
