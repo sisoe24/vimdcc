@@ -9,7 +9,6 @@ from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
 from .about import about
 from .handlers import normal, missing
 from .settings import Settings
-from .registers import Registers
 from .status_bar import status_bar
 from .preferences import VimPreferences
 from .editor_filters import EDITOR_FILTERS
