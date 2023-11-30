@@ -80,11 +80,12 @@ vimdcc.install_nuke()
 
 This is a list of the most important issues that I am aware of and not a complete list of all the bugs or of all the missing features.
 
+- The `Enter` key only executes the code in the `Insert` mode.
 - If you press a key that doesn't correspond to any command, it won't execute anything and will wait for the next key. This can result in a pile-up of invalid keys that will never be resolved. To clear the stack and start fresh, just press the `Esc` key.
 - At the moment, the plugin only supports one editor per session. In Nuke, this means that only the first QPlainTextEditor widget will be enabled. You can identify the enabled widget by the orange border around it.
 - The `e` motion does not respect the punctuation characters.
 - The `a` text object not does work properly with the `w` motion.
-- The `VISUAL LINE` mode fails to select the last line if the cursor is at the end of the line.
+- The `VISUAL LINE` mode does not work properly in some cases.
 - `o` and `O` commands do not indent the new line.
 
 ## TODO
