@@ -633,10 +633,13 @@ class EditHandler(BaseHandler):
         return True
 
     def _delete_line(self, cursor: QTextCursor):
-        cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
-        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        super().add_to_clipboard(cursor.selectedText() + '\n')
-        cursor.removeSelectedText()
+        if cursor.block().text().strip() == '':
+            cursor.deleteChar()
+        else:
+            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+            cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            super().add_to_clipboard(cursor.selectedText() + '\n')
+            cursor.removeSelectedText()
         return True
 
     def _delete_line_insert(self, cursor: QTextCursor):
