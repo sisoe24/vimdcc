@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Callable
 
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
@@ -7,7 +7,7 @@ from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
                                QVBoxLayout, QPlainTextEdit)
 
 from .about import about
-from .handlers import normal, missing
+from .handlers import normal, missing  # DONT REMOVE THIS LINE
 from .settings import Settings
 from .status_bar import status_bar
 from .preferences import VimPreferences
@@ -95,6 +95,9 @@ class VimDCC(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+    def register_events(self) -> Any:
+        raise NotImplementedError('register_events must be implemented in subclass')
+
     def get_editor(self) -> QPlainTextEdit:
         """Get the editor to install the event filters on.
 
@@ -117,14 +120,12 @@ class VimDCC(QMainWindow):
             LOGGER.debug('Turning Vim ON')
             input_editor.setCursorWidth(input_editor.fontMetrics().width(' '))
             self.vim_status.setText('<h3>Vim: ON</h3>')
-            self.vim_status.setStyleSheet('QLabel { color: #F19A04; }')
-            action = input_editor.installEventFilter
+            filter_event = input_editor.installEventFilter
         else:
             LOGGER.debug('Turning Vim OFF')
             input_editor.setStyleSheet('')
             self.vim_status.setText('<h3>Vim: OFF</h3>')
-
-            action = input_editor.removeEventFilter
+            filter_event = input_editor.removeEventFilter
             input_editor.setCursorWidth(2)
 
         for mode in EDITOR_FILTERS:
@@ -137,6 +138,6 @@ class VimDCC(QMainWindow):
                 _EVENT_FILTERS[f'{mode.__name__}_filter'] = event_filter
 
             LOGGER.debug(f'event_filter: {event_filter}')
-            action(event_filter)
+            filter_event(event_filter)
 
         input_editor.viewport().update()

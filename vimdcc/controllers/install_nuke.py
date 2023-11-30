@@ -1,12 +1,14 @@
 
 import contextlib
-from typing import Tuple
 
-from PySide2.QtWidgets import QWidget, QSplitter, QApplication, QPlainTextEdit
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import (QWidget, QSplitter, QPushButton, QApplication,
+                               QPlainTextEdit)
 
 from ..main import VimDCC
 from ..utils import cache
 from ..settings import Settings
+from ..editor_mode import Modes
 
 
 @cache
@@ -30,12 +32,34 @@ def get_input_editor() -> QPlainTextEdit:
     return input_editor
 
 
+@cache
+def get_run_button() -> QWidget:
+    # naively assume that the button always exists
+    return next(
+        (
+            button
+            for button in get_script_editor().findChildren(QPushButton)
+            if button.toolTip().lower().startswith('run the current script')
+        ),
+        None,
+    )
+
+
 class NukeVimDCC(VimDCC):
     def __init__(self):
         super().__init__()
 
         self.splitter = get_splitter()
         self.load_status_bar()
+
+    def register_events(self):
+        return {
+            'execute_code': {
+                'modes': [Modes.NORMAL],
+                'key': Qt.Key_Return,
+                'callback': lambda: get_run_button().click(),
+            }
+        }
 
     def get_editor(self) -> QPlainTextEdit:
         return get_input_editor()

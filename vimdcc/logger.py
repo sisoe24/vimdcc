@@ -1,6 +1,8 @@
 import logging
 from typing import Dict
 
+from .utils import cache
+
 # TODO: Add log rotation
 
 
@@ -18,18 +20,14 @@ def stream_handler():
     return sh
 
 
-_LOGGERS: Dict[str, logging.Logger] = {}
-
-
+@cache
 def get_logger() -> logging.Logger:
-    if not _LOGGERS.get('vim'):
-        logger = logging.getLogger('vim')
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(stream_handler())
-        logger.addHandler(file_handler())
-        _LOGGERS['vim'] = logger
-
-    return _LOGGERS['vim']
+    logger = logging.getLogger('vim')
+    logger.propagate = False
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(stream_handler())
+    logger.addHandler(file_handler())
+    return logger
 
 
 LOGGER = get_logger()
