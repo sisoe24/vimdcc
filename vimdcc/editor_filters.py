@@ -174,9 +174,9 @@ class NormalEventFilter(BaseFilter):
             return True
 
         if self.key_sequence == 'V':
-            # BUG: V is not working properly
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+            self.editor.setTextCursor(cursor)
             return super().change_mode(Modes.VISUAL_LINE, self.cursor_width['block'])
 
         if self.arrow_keys(cursor, key_event):
