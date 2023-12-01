@@ -7,6 +7,7 @@
   - [Keybindings](#keybindings)
   - [Installation](#installation)
     - [Nuke](#nuke)
+  - [Settings](#settings)
   - [Known Issues and Limitations](#known-issues-and-limitations)
   - [TODO](#todo)
   - [Contributing](#contributing)
@@ -75,6 +76,15 @@ from vimdcc import vimdcc
 vimdcc.install_nuke()
 ```
 > If you are a NukeTools user, you can use the command `Nuke: Install VimDCC` from the vscode command palette.
+
+## Settings
+
+The settings are stored in the `~/.vimdcc` file.
+
+- `Launch on startup` - If `True`, the plugin will be enabled on startup. This settings also influences the Status Bar visibility. If `False`, the Status Bar will be attached to the bottom of the plugin window. If `True`, the Status Bar will be attached to the bottom of the Script Editor window.
+- `Previewer auto insert` - If `True`, the previewer will automatically insert the selected register when it finds a match. If `False`, you have to press `Enter` to insert the selected register.
+- `Clipboard size` - The number of snippets to keep in the clipboard register.
+- `Copy to clipboard` - If `True`, the plugin will copy the selected register to the system clipboard.
 
 ## Known Issues and Limitations
 
