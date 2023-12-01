@@ -39,6 +39,7 @@ class MoveCommand(ABC):
     def select_entire_line(self, params: HandlerParams) -> None:
         if params.mode == 'VISUAL_LINE':
             params.cursor.movePosition(params.cursor.StartOfLine, params.cursor.KeepAnchor)
+            params.cursor.movePosition(params.cursor.EndOfLine, params.cursor.KeepAnchor)
 
     def remove_selected_text(self, params: HandlerParams) -> None:
         if params.mode in ['DELETE', 'CHANGE']:
