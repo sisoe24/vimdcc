@@ -1,9 +1,10 @@
 import sys
 
-from PySide2.QtWidgets import (QLabel, QWidget, QMainWindow, QVBoxLayout,
-                               QApplication, QPlainTextEdit)
+from PySide2.QtWidgets import (QLabel, QWidget, QVBoxLayout, QApplication,
+                               QPlainTextEdit)
 
 from ..main import VimDCC
+from ..events import EventManager
 from ..utils.theme import set_theme
 
 
@@ -25,8 +26,9 @@ class LocalVimDcc(VimDCC):
         # if the launch_on_startup is True
         self.editor = QPlainTextEdit()
         self.editor.setPlainText(read_sample())
-
         super().__init__()
+
+        EventManager.register('execute_code', lambda: print('executing code'))
 
     def get_editor(self) -> QPlainTextEdit:
         return self.editor

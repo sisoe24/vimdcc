@@ -1,14 +1,13 @@
 
 import contextlib
 
-from PySide2.QtCore import Qt
 from PySide2.QtWidgets import (QWidget, QSplitter, QPushButton, QApplication,
                                QPlainTextEdit)
 
 from ..main import VimDCC
 from ..utils import cache
+from ..events import EventManager
 from ..settings import Settings
-from ..editor_mode import Modes
 
 
 @cache
@@ -52,14 +51,7 @@ class NukeVimDCC(VimDCC):
         self.splitter = get_splitter()
         self.load_status_bar()
 
-    def register_events(self):
-        return {
-            'execute_code': {
-                'modes': [Modes.NORMAL],
-                'key': Qt.Key_Return,
-                'callback': lambda: get_run_button().click(),
-            }
-        }
+        EventManager.register('execute_code', lambda: get_run_button().click())
 
     def get_editor(self) -> QPlainTextEdit:
         return get_input_editor()

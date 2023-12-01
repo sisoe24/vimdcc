@@ -4,6 +4,7 @@ from PySide2.QtGui import Qt, QKeyEvent, QTextCursor
 from PySide2.QtCore import QEvent, QObject
 from PySide2.QtWidgets import QPlainTextEdit
 
+from .events import EventManager
 from .logger import LOGGER
 from .status_bar import status_bar
 from .editor_mode import Modes, EditorMode
@@ -162,6 +163,11 @@ class NormalEventFilter(BaseFilter):
 
         if self.key_sequence:
             self._set_edit_mode()
+
+        # this is just temporary until I figure out how to better handle this
+        if key_event.key() == Qt.Key_R and key_event.modifiers() == Qt.ControlModifier:
+            EventManager.emit('execute_code')
+            return True
 
         if key_event.key() == Qt.Key_Escape:
             super().to_normal()
