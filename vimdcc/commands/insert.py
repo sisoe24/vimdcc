@@ -41,7 +41,7 @@ class Inserto(BaseCommand):
         return True
 
 
-Inserti = create_insert_command(QTextCursor.Left)
+Inserti = create_insert_command(QTextCursor.NoMove)
 InsertI = create_insert_command(QTextCursor.StartOfLine)
 Inserta = create_insert_command(QTextCursor.Right)
 InsertA = create_insert_command(QTextCursor.EndOfLine)
