@@ -112,18 +112,12 @@ class VimDCC(QMainWindow):
         input_editor = self.get_editor()
 
         if checked:
-            input_editor.setStyleSheet('''
-                QPlainTextEdit {
-                    border: 2px dotted #F19A04;
-                }
-            ''')
             LOGGER.debug('Turning Vim ON')
             input_editor.setCursorWidth(input_editor.fontMetrics().width(' '))
             self.vim_status.setText('<h3>Vim: ON</h3>')
             filter_event = input_editor.installEventFilter
         else:
             LOGGER.debug('Turning Vim OFF')
-            input_editor.setStyleSheet('')
             self.vim_status.setText('<h3>Vim: OFF</h3>')
             filter_event = input_editor.removeEventFilter
             input_editor.setCursorWidth(2)
