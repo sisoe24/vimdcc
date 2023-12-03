@@ -1,5 +1,7 @@
 # VimDCC
 
+Vim like text editor plugin for PySide2 applications like Nuke, Maya, Houdini.
+
 - [VimDCC](#vimdcc)
   - [Description](#description)
   - [Features](#features)
@@ -17,9 +19,11 @@
 
 ## Description
 
-VimDCC is a lightweight Vim editor plugin designed for PySide2 that offers a subset of the most useful features. Although it's not a complete Vim implementation, it can be used as a drop-in replacement for the default text editor console in Nuke and any other PySide2 application. In the future, I plan to add support for other applications like Maya and Houdini.
+VimDCC: A Vim-like Event Filter Plugin for PySide2 Applications
 
-The plugin operates by installing itself as an event filter on a QPlainTextEditor. This enables it to intercept all keyboard events and process them before they're sent back. The plugin can be enabled or disabled at any time and it only activates when the QPlainTextEditor widget is in focus.
+VimDCC is a plugin that provides Vim-like functionality to QPlainTextEditor in PySide2 applications such as Nuke, Maya, and Houdini. While it is not a full-fledged Vim implementation, VimDCC offers several useful features, making the QPlainTextEditor a more powerful and efficient editing environment.
+
+VimDCC acts as an event filter installed on a QPlainTextEditor, intercepting keyboard events and allowing users to interact with the text editor using familiar Vim keybindings and commands. This approach ensures that VimDCC can be easily integrated as a drop-in enhancement for the default text editing components in any PySide2 application.
 
 ## Features
 
@@ -60,6 +64,8 @@ This plugin has two registers (`named` and `clipboard`) that are similar to Vim'
 
 ### Nuke
 
+Supported versions: 13 and above
+
 To install the plugin in Nuke, copy the `vimdcc` folder to the `~/.nuke` folder. Then add the following lines to the `menu.py` file:
 
 ```python
@@ -67,6 +73,8 @@ from vimdcc import vimdcc
 vimdcc.install_nuke()
 ```
 > If you are a NukeTools user, you can use the command `Nuke: Install VimDCC` from the vscode command palette.
+
+Once the plugin is installed, you can find the Nuke Windows -> Custom -> VimDCC menu. From there you can enable/disable the plugin and access the settings panel.
 
 ## Settings
 
@@ -81,9 +89,6 @@ The settings are stored in the `.../vimdcc/vimdcc.json` file.
 
 This is a list of the most important issues that I am aware of and not a complete list of all the bugs or of all the missing features.
 
-Nuke only:
-  - To execute the code in the console while in Normal mode, you have to press `Ctrl+r` instead of `Enter`.
-
 General:
 - Deleting a character with `x`, `X`, `s` does not add the deleted character to the register.
 - If you press a key that doesn't correspond to any command, it won't execute anything and will wait for the next key. This can result in a pile-up of invalid keys that will never be resolved. To clear the stack and start fresh, just press the `Esc` key.
@@ -96,9 +101,8 @@ General:
 
 ## Keybindings
 
-Some of the keybinding are different from the Vim implementation. This is still a work in progress and I will probably change some of the keybindings in the future.
+A list of all the keybindings that are currently implemented
 
-- `Ctrl+r` - Run code in console (Normal mode)
 - `Alt+r` - Redo
 - `\` - Show clipboard panel (backslash)
 - `'` - Show named panel (single quote)
