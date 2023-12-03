@@ -3,7 +3,7 @@
 .gitattributes             export-ignore
 .python-version            export-ignore
 .pre-commit-config.yaml    export-ignore
-.poetry.lock               export-ignore
+poetry.lock               export-ignore
 CONTRIBUTING.md            export-ignore
 
 # Directories
