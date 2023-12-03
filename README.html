@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<h2>Description</h2>
+<p>VimDCC: A Vim-like Event Filter Plugin for PySide2 Applications</p>
+<p>
+  VimDCC is a plugin that provides Vim-like functionality to QPlainTextEditor in
+  PySide2 applications such as Nuke, Maya, and Houdini. While it is not a
+  full-fledged Vim implementation, VimDCC offers several useful features, making
+  the QPlainTextEditor a more powerful and efficient editing environment.
+</p>
+
+<h2>Installation</h2>
+<p>
+  Download the latest release from the
+  <a href="https://github.com/sisoe24/vimdcc/releases#latest">releases</a> page.
+  Extract the zip file and copy the <code>vimdcc</code> folder to the
+  <b>~/.nuke</b> folder. Then add the following lines to the
+  <b>menu.py</b> file:
+</p>
+<code>
+  <div>
+    <span>from vimdcc import vimdcc<br>vimdcc.install_nuke()</span>
+  </div>
+</code>
+<p>
+  Once the plugin is installed, you can find the Nuke Windows -&gt; Custom -&gt;
+  VimDCC menu. From there you can enable/disable the plugin and access the
+  settings panel.
+</p>
+
+For more information, check out the
+<a href="https://github.com/sisoe24/vimdcc">VimDCC GitHub page</a>.
