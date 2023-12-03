@@ -103,6 +103,7 @@ General:
 
 A list of all the keybindings that are currently implemented
 
+- `Ctrl+r` - Execute code
 - `Alt+r` - Redo
 - `\` - Show clipboard panel (backslash)
 - `'` - Show named panel (single quote)
