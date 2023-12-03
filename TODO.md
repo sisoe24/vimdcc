@@ -14,6 +14,7 @@
 - [ ] Last cursor position
 - [ ] Fallthrough default keybindings (e.g. `Ctrl-C`, `Ctrl-A`, etc.)
 - [ ] Case insensitive search
+- [ ] Add system clipboard to registers
 - [x] Status Bar
 - [x] Register preview
 
