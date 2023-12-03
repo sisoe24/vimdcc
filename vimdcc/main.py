@@ -42,13 +42,11 @@ class HelpWidget(QDialog):
 
     @Slot(str)
     def _on_open_link(self, link: str):
-        # TODO: open link
-        print('TODO: open link', link)
         gitrepo = 'https://github.com/sisoe24/vimdcc'
         links = {
-            'issues': '',
-            'changelog': '',
-            'readme': ''
+            'issues': f'{gitrepo}/issues',
+            'changelog': f'{gitrepo}/blob/master/CHANGELOG.md',
+            'readme': f'{gitrepo}/blob/master/README.md'
         }
         import webbrowser
         webbrowser.open(links[link.lower()])
