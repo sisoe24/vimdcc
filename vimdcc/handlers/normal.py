@@ -481,7 +481,6 @@ class TextObjectsHandler(BaseHandler):
         self.text_obj_mode = ''
 
     def _execute_text_object(self, cursor: QTextCursor, operator: str, start: int, end: int):
-        # TODO: Refactor this method
 
         if operator[1] == 'i':
             start += 1
