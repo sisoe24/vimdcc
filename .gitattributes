@@ -1,0 +1,22 @@
+# Files
+.gitignore                 export-ignore
+.gitattributes             export-ignore
+
+.python-version            export-ignore
+.pre-commit-config.yaml    export-ignore
+
+poetry.toml                export-ignore
+poetry.lock                     export-ignore
+
+htmlcov                  export-ignore
+
+# Directories
+.nuketools                    export-ignore
+.githooks                  export-ignore
+.vscode                    export-ignore
+other                     export-ignore
+tests                      export-ignore
+
+# Source files
+*                   text=auto
+*.py                text diff=python
