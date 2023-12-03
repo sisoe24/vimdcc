@@ -23,5 +23,16 @@
             "hide": true,
             "problemMatcher": []
         },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "git",
+            "args": [
+                "archive",
+                "--output=dist/vimdcc.zip",
+                "--format=zip",
+                "main"
+            ],
+        }
     ]
 }
