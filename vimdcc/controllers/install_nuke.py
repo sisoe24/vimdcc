@@ -63,10 +63,17 @@ class NukeVimDCC(VimDCC):
         if not Settings.launch_on_startup:
             return
 
+        # if vimdcc is automatically launched, the status bar is already loaded
+        # but if the plugin is not visible in the ui, loading the plugin will
+        # load a new status bar. We need to remove the old one and replace it
+        if self.splitter.findChild(QWidget, 'vimdcc_status_bar'):
+            self.splitter.replaceWidget(2, self.status_bar)
+            return
+
         self.splitter.addWidget(self.status_bar)
         self.splitter.setStretchFactor(0, 1)  # First textEdit takes up maximum space
         self.splitter.setStretchFactor(1, 1)  # Second textEdit takes up maximum space
-        self.splitter.setStretchFactor(2, 0)  # lineEdit takes up minimum space
+        self.splitter.setStretchFactor(2, 0)  # status bar takes up minimum space
 
 
 def install_nuke():
