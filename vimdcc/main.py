@@ -59,6 +59,8 @@ class VimDCC(QMainWindow):
         super().__init__(parent)
 
         self.status_bar = QLineEdit()
+        self.status_bar.setObjectName('vimdcc_status_bar')
+
         status_bar.register(self.status_bar)
 
         self.toggle_vim = QPushButton('Toggle Vim Mode')
