@@ -62,6 +62,8 @@ This plugin has two registers (`named` and `clipboard`) that are similar to Vim'
 
 ## Installation
 
+Download the latest release from the [releases](https://github.com/sisoe24/vimdcc/releases#latest) page. Extract the zip file and copy the `vimdcc` folder to the `~/.nuke` folder.
+
 ### Nuke
 
 Supported versions: 13 and above
