@@ -165,7 +165,7 @@ class NormalEventFilter(BaseFilter):
             self._set_edit_mode()
 
         # this is just temporary until I figure out how to better handle this
-        if key_event.key() == Qt.Key_R and key_event.modifiers() == Qt.ControlModifier:
+        if key_event.key() == Qt.Key_Return:
             EventManager.emit('execute_code')
             return True
 
