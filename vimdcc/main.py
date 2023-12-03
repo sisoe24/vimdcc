@@ -7,8 +7,7 @@ from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
                                QVBoxLayout, QPlainTextEdit)
 
 from .about import about
-from .handlers import (  # DONT REMOVE THIS LINE (needed for loading) FIXME
-    normal, missing)
+from .handlers import normal, missing  # DONT REMOVE THIS LINE  (FIXME)
 from .settings import Settings
 from .status_bar import status_bar
 from .preferences import VimPreferences
