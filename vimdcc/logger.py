@@ -1,13 +1,20 @@
 import logging
-from typing import Dict
+import pathlib
+from logging.handlers import TimedRotatingFileHandler
 
 from .utils import cache
 
-# TODO: Add log rotation
-
 
 def file_handler():
-    fh = logging.FileHandler('logs.log', 'w')
+    log_dir = pathlib.Path(__file__).parent.parent / 'logs'
+    log_dir.mkdir(exist_ok=True)
+
+    fh = TimedRotatingFileHandler(
+        filename=log_dir / 'vim.log',
+        when='midnight',
+        backupCount=7
+    )
+
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     return fh
