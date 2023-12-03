@@ -14,9 +14,9 @@ from PySide2.QtWidgets import (QLabel, QDialog, QLineEdit, QListView,
 from .settings import Settings
 from .registers import Registers
 
+# TODO: Test this module
 # TODO: Implement elided text delegate
 # TODO: Add delete, copy and clear buttons
-# TODO: Add tests for PreviewView
 # TODO: Add alt+j and alt+k to navigate the list view
 
 

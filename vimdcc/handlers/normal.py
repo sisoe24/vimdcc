@@ -157,7 +157,7 @@ class SearchHandler(BaseHandler):
         pos = move_func(cursor.position())
         if pos is not None:
 
-            # TODO: Many similarity with the _set_cursor method from SearchLineHandler
+            # TODO: Refactor: Many similarity with the _set_cursor method from SearchLineHandler
             select = QTextCursor.MoveAnchor
             if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
                 cursor.setPosition(start, QTextCursor.MoveAnchor)

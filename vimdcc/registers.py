@@ -142,7 +142,6 @@ class _Registers:
 
     def add(self, value: str) -> None:
         if value.isspace():
-            # TODO: add a warning
             return
 
         if self._named_register:
