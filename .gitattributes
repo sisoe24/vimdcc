@@ -1,20 +1,16 @@
 # Files
 .gitignore                 export-ignore
 .gitattributes             export-ignore
-
 .python-version            export-ignore
 .pre-commit-config.yaml    export-ignore
-
-poetry.toml                export-ignore
-poetry.lock                     export-ignore
-
-htmlcov                  export-ignore
+.poetry.lock               export-ignore
+CONTRIBUTING.md            export-ignore
 
 # Directories
-.nuketools                    export-ignore
-.githooks                  export-ignore
+.nuketools                 export-ignore
 .vscode                    export-ignore
-other                     export-ignore
+htmlcov                    export-ignore
+other                      export-ignore
 tests                      export-ignore
 
 # Source files
