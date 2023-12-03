@@ -13,7 +13,7 @@ Vim like text editor plugin for PySide2 applications like Nuke, Maya, Houdini.
   - [Keybindings](#keybindings)
   - [TODO](#todo)
   - [Contributing](#contributing)
-
+  - [Screenshots](#screenshots)
 
 > IMPORTANT: The plugin is still in development and although most of the features are working, there are many bugs and missing features. Feel free to report any issues, feature requests or contribute to the project.
 
@@ -117,3 +117,8 @@ If you are interesed to see a list of what I will like to implemented in the fut
 ## Contributing
 
 If you are interested in contributing to the project, please read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+
+## Screenshots
+
+![VimDCC](images/vimdcc.gif)
