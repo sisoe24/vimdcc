@@ -5,6 +5,8 @@
 .pre-commit-config.yaml    export-ignore
 poetry.lock                export-ignore
 CONTRIBUTING.md            export-ignore
+TODO.md                    export-ignore
+README.html                export-ignore
 
 # Directories
 .nuketools                 export-ignore
