@@ -7,7 +7,7 @@
   - [Installation](#installation)
     - [Nuke](#nuke)
   - [Settings](#settings)
-  - [Known Issues and Limitations](#known-issues-and-limitations)
+  - [Known Issues](#known-issues)
   - [Keybindings](#keybindings)
   - [TODO](#todo)
   - [Contributing](#contributing)
@@ -77,7 +77,7 @@ The settings are stored in the `.../vimdcc/vimdcc.json` file.
 - `Clipboard size` - The number of snippets to keep in the clipboard register.
 - `Copy to clipboard` - If `True`, the plugin will copy the selected register to the system clipboard.
 
-## Known Issues and Limitations
+## Known Issues
 
 This is a list of the most important issues that I am aware of and not a complete list of all the bugs or of all the missing features.
 
@@ -91,6 +91,7 @@ General:
 - The `e` motion does not respect the punctuation characters.
 - The `a` text object not does work properly with the `w` motion.
 - The `VISUAL LINE` mode does not work properly in some cases.
+- The `VISUAL` mode does not work properly when combined with search motions.
 - `o` and `O` commands do not respect previous indentation.
 
 ## Keybindings
@@ -106,7 +107,7 @@ Some of the keybinding are different from the Vim implementation. This is still 
 
 ## TODO
 
-If you are interesed to see a list of what **might** be implemented in the future, check the [TODO.md](TODO.md) file. Feel free to add any feature requests or suggestions.
+If you are interesed to see a list of what I will like to implemented in the future, or even better, if you want to contribute to the project, check the [TODO.md](TODO.md) file. Feel free to add any feature requests or suggestions.
 
 ## Contributing
 
