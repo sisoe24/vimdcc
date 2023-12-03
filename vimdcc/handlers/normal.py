@@ -545,6 +545,8 @@ class TextObjectsHandler(BaseHandler):
 
     def handle(self, params: HandlerParams) -> bool:
 
+        self.text_obj_mode = ''
+
         keys = params.keys
         if not keys or len(keys) < 3:
             return False
