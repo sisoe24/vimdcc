@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Tuple, Callable
+from typing import Any, Dict
 
 from PySide2.QtCore import Qt, Slot
 from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
@@ -7,7 +7,8 @@ from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
                                QVBoxLayout, QPlainTextEdit)
 
 from .about import about
-from .handlers import normal, missing  # DONT REMOVE THIS LINE
+from .handlers import (  # DONT REMOVE THIS LINE (needed for loading) FIXME
+    normal, missing)
 from .settings import Settings
 from .status_bar import status_bar
 from .preferences import VimPreferences
