@@ -70,7 +70,7 @@ vimdcc.install_nuke()
 
 ## Settings
 
-The settings are stored in the `~/.vimdcc` file.
+The settings are stored in the `.../vimdcc/vimdcc.json` file.
 
 - `Launch on startup` - If `True`, the plugin will be enabled on startup. This settings also influences the Status Bar visibility. If `False`, the Status Bar will be attached to the bottom of the plugin window. If `True`, the Status Bar will be attached to the bottom of the Script Editor window.
 - `Previewer auto insert` - If `True`, the previewer will automatically insert the selected register when it finds a match. If `False`, you have to press `Enter` to insert the selected register.
