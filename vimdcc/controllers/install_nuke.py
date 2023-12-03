@@ -5,6 +5,7 @@ from PySide2.QtWidgets import (QWidget, QSplitter, QPushButton, QApplication,
                                QPlainTextEdit)
 
 from ..main import VimDCC
+from ..about import about
 from ..utils import cache
 from ..events import EventManager
 from ..settings import Settings
@@ -52,6 +53,8 @@ class NukeVimDCC(VimDCC):
         self.load_status_bar()
 
         EventManager.register('execute_code', lambda: get_run_button().click())
+
+        print(f'\nVimDCC loaded: NukeVimDCC {about()["version"]}\n')
 
     def get_editor(self) -> QPlainTextEdit:
         return get_input_editor()
