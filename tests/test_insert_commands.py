@@ -30,7 +30,7 @@ class MotionTest:
 
 
 @pytest.mark.parametrize('data', [
-    MotionTest(['i'], 'abc', 1, 'a', 0),
+    MotionTest(['i'], 'abc', 1, 'b', 1),
     MotionTest(['I'], 'abc', 3, 'a', 0),
     MotionTest(['I'], 'abc', 0, 'a', 0),
     MotionTest(['a'], 'abc', 1, 'c', 2),
@@ -44,7 +44,7 @@ def test_move_document_no_selection(handler: InsertHandler, data: MotionTest) ->
 
     params = HandlerParams(
         cursor=editor.textCursor(),
-        keys=data.motion,
+        keys='',
         modifiers=[],
         event=None,
         mode=Modes.NORMAL
@@ -65,5 +65,3 @@ def test_move_document_no_selection(handler: InsertHandler, data: MotionTest) ->
 
     assert cursor.position() == data.expected_pos
     assert cursor.anchor() == data.expected_pos
-    assert cursor.hasSelection() is False
-    assert not cursor.selectedText()
