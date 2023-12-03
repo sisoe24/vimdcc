@@ -131,3 +131,14 @@
 - [x] `a"` - A double quotes
 - [x] `i\`` - Inner backticks
 - [x] `a\`` - A backticks
+
+### Development
+
+- [ ] Finish tests
+- [ ] Add CI
+- [ ] Add coverage
+- [ ] Add badges
+- [ ] Add contributing
+- [ ] Add pull request template
+- [ ] Add issue template
+- [ ] Add release workflow
