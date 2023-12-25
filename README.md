@@ -1,6 +1,6 @@
 # VimDCC
 
-Vim like text editor plugin for PySide2 applications like Nuke, Maya, Houdini.
+Vim-like experience for PySide2 applications like Nuke, Maya, Houdini.
 
 - [VimDCC](#vimdcc)
   - [Description](#description)
