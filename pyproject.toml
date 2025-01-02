@@ -12,7 +12,7 @@ length_sort = true
 max_line_length = 100
 
 [tool.poetry.scripts]
-app = "vimdcc.controllers.install_local:main"
+vimdcc = "vimdcc.controllers.install_local:main"
 
 [tool.pytest.ini_options]
 markers = ["quick: mark test"]
