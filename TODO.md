@@ -1,11 +1,5 @@
 ## VimDCC TODO
 
-### DCC
-
-- [x] Nuke
-- [ ] Maya
-- [ ] Houdini
-
 ### Misc
 - [ ] Clear only a specific register
 - [ ] Quick print
@@ -142,3 +136,7 @@
 - [ ] Add pull request template
 - [ ] Add issue template
 - [ ] Add release workflow
+
+### Bugs
+
+- [ ] `~` does not toggle case of character under cursor
