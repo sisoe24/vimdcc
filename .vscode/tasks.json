@@ -6,12 +6,12 @@
         {
             "label": "RunApp",
             "type": "shell",
-            "command": "poetry run app"
+            "command": "uv run vimdcc"
         },
         {
             "label": "Run Tests",
             "type": "shell",
-            "command": "poetry",
+            "command": "uv",
             "args": [
                 "run",
                 "pytest",
