@@ -27,7 +27,7 @@ def find_matching_brackets(
     opening_bracket = None
 
     # Adjust start position if it's on an open bracket
-    if text[start_pos:][0] == bracket_type[0]:
+    if text[start_pos:start_pos + 1] == bracket_type[0]:
         start_pos += 1
 
     # Forward search for the closing bracket
@@ -73,7 +73,7 @@ def find_matching_quotes(
 ) -> Optional[Tuple[int, int]]:
 
     # Adjust start position if it's on a quote
-    if text[start_pos:][0] == quote_type:
+    if text[start_pos:start_pos + 1] == quote_type:
         start_pos += 1
 
     end_index = None

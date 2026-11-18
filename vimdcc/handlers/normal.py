@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Callable, Optional
 
-from .._qt import QTextCursor, QPlainTextEdit
+from .._qt import Qt, QTextCursor, QPlainTextEdit
 
 from ..registers import _Registers
 from ..editor_mode import Modes, EditorMode
@@ -223,10 +223,12 @@ class SearchHandler(BaseHandler):
         key = params.event.key()
         key_sequence = params.keys
 
-        if key_sequence.startswith('?') and key == 16777220:
+        enter = key in (Qt.Key_Return, Qt.Key_Enter)
+
+        if key_sequence.startswith('?') and enter:
             return self.search_word_up(params, key_sequence[1:])
 
-        if key_sequence.startswith('/') and key == 16777220:
+        if key_sequence.startswith('/') and enter:
             return self.search_word_down(params, key_sequence[1:])
 
         command = self.commands.get(params.keys)
@@ -333,29 +335,35 @@ class YankHandler(BaseHandler):
         self._named_register = PreviewNamedRegister()
         self._numbered_register = PreviewNumberedRegister()
 
-    def _paste(self, params: HandlerParams, text: Optional[str] = None):
+    def _paste(self, params: HandlerParams, text: Optional[str], below: bool):
         if not text:
-            return True
+            return
 
         cursor = params.cursor
         if self.LINE_COPY in text:
-            text = text.replace(self.LINE_COPY, '')
-            cursor.movePosition(QTextCursor.Down)
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.insertText(text)
-            cursor.movePosition(QTextCursor.Up)
+            line = text.replace(self.LINE_COPY, '')
+            line = line[:-1] if line.endswith('\n') else line
+            if below:
+                # works on the last line too, where moving Down is a no-op
+                cursor.movePosition(QTextCursor.EndOfBlock)
+                cursor.insertText('\n' + line)
+            else:
+                cursor.movePosition(QTextCursor.StartOfBlock)
+                cursor.insertText(line + '\n')
+                cursor.movePosition(QTextCursor.Up)
+            cursor.movePosition(QTextCursor.StartOfBlock)
         else:
+            if below:
+                cursor.movePosition(QTextCursor.NextCharacter)
             cursor.insertText(text)
             cursor.movePosition(QTextCursor.PreviousCharacter)
 
     def paste(self, params: HandlerParams):
-        params.cursor.movePosition(QTextCursor.NextCharacter)
-        self.editor.setTextCursor(params.cursor)
-        self._paste(params, self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value(), below=True)
         return True
 
     def paste_before(self, params: HandlerParams):
-        self._paste(params, self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value(), below=False)
         return True
 
     def yank_line(self, params: HandlerParams):
@@ -381,8 +389,7 @@ class YankHandler(BaseHandler):
     def preview_clipboard(self, params: HandlerParams):
         previewer = self._numbered_register
         value = previewer.get_text_value()
-        if value:
-            self._paste(params, value)
+        self._paste(params, value, below=True)
         return True
 
     def preview_register(self, params: HandlerParams):

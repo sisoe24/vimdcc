@@ -148,12 +148,8 @@ class NormalEventFilter(BaseFilter):
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
-        self.key_sequence += key_event.text().strip()
-        status_bar.write('NORMAL', self.key_sequence)
-
-        if self.key_sequence:
-            self._set_edit_mode()
-
+        # check control keys before adding to key_sequence: their text
+        # ('\x08', '\x12') would stay in it and block every command
         if key_event.key() == Qt.Key_R and key_event.modifiers() == Qt.ControlModifier:
             EventManager.emit('execute_code')
             return True
@@ -166,7 +162,16 @@ class NormalEventFilter(BaseFilter):
 
         if key_event.key() == Qt.Key_Backspace:
             self.key_sequence = self.key_sequence[:-1]
+            status_bar.write(EditorMode.mode.value, self.key_sequence)
             return True
+
+        text = key_event.text()
+        if text.isprintable():
+            self.key_sequence += text.strip()
+        status_bar.write(EditorMode.mode.value, self.key_sequence)
+
+        if self.key_sequence:
+            self._set_edit_mode()
 
         if self.key_sequence == 'V':
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)

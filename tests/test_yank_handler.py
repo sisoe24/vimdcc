@@ -8,7 +8,7 @@ from vimdcc.editor_mode import Modes
 from vimdcc.handlers.normal import YankHandler
 from vimdcc.handler_parameters import HandlerParams
 
-from vimdcc._qt import QPlainTextEdit
+from vimdcc._qt import QTextCursor, QPlainTextEdit
 
 
 @pytest.fixture()
@@ -60,6 +60,11 @@ def test_yank_handler(handler: YankHandler, data: MotionTest):
     MotionTest(['yy', 'p'], 'foo bar', 'foo bar\nfoo bar', 0),
     MotionTest(['Y', 'p'], 'foo bar', 'foo bar\nfoo bar', 0),
     MotionTest(['yy', 'P'], 'foo bar', 'foo bar\nfoo bar', 0),
+    # P pastes above, p pastes below
+    MotionTest(['yy', 'j', 'P'], 'one\ntwo', 'one\none\ntwo', 0),
+    MotionTest(['j', 'yy', 'k', 'p'], 'one\ntwo', 'one\ntwo\ntwo', 0),
+    # p on the last line goes below it
+    MotionTest(['yy', 'j', 'p'], 'one\ntwo', 'one\ntwo\none', 0),
 ])
 def test_paste_handler(handler: YankHandler, data: MotionTest):
     editor = handler.editor
@@ -77,6 +82,9 @@ def test_paste_handler(handler: YankHandler, data: MotionTest):
     params.cursor.setPosition(data.cursor_start)
 
     for motion in data.motion:
+        if motion in ('j', 'k'):
+            params.cursor.movePosition(QTextCursor.Down if motion == 'j' else QTextCursor.Up)
+            continue
         params.keys = motion
         handler.handle(params)
         editor.setTextCursor(params.cursor)

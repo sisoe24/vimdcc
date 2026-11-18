@@ -44,14 +44,18 @@ def get_run_button() -> QWidget:
     )
 
 
+def _run_script():
+    button = get_run_button()
+    if button:
+        button.click()
+
+
 class NukeVimDCC(VimDCC):
     def __init__(self):
         super().__init__()
 
         self.splitter = get_splitter()
         self.load_status_bar()
-
-        EventManager.register('execute_code', lambda: get_run_button().click())
 
         print(f'\nVimDCC loaded: NukeVimDCC {about()["version"]}\n')
 
@@ -76,6 +80,10 @@ class NukeVimDCC(VimDCC):
 
 
 def install_nuke():
+    # register here, not in NukeVimDCC.__init__: Nuke creates a new panel
+    # instance every time the panel opens
+    EventManager.register('execute_code', _run_script)
+
     with contextlib.suppress(ImportError):
         import nukescripts
         nukescripts.panels.registerWidgetAsPanel(
