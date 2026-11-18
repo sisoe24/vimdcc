@@ -1,13 +1,12 @@
 import os
-import json
 import pathlib
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
-from dataclasses import asdict, dataclass
+from dataclasses import field, asdict, dataclass
 
 from ._qt import QApplication
 
-from .settings import Settings
+from .settings import Settings, read_json, write_json
 
 
 class Mark(Dict[str, Any]):
@@ -17,10 +16,10 @@ class Mark(Dict[str, Any]):
 
 @dataclass
 class RegistersData:
-    named: Dict[str, str]
-    clipboard: List[str]
-    last_search: str
-    marks: Dict[str, Mark]
+    named: Dict[str, str] = field(default_factory=dict)
+    clipboard: List[str] = field(default_factory=list)
+    last_search: str = ''
+    marks: Dict[str, Mark] = field(default_factory=dict)
 
 
 class Clipboard:
@@ -28,11 +27,11 @@ class Clipboard:
 
     This class is used to store the clipboard history. It is used to store the
     text copied from the editor. The size of the clipboard is defined in the
-    settings but it can be overriden at runtime.
+    settings.
 
     >>> previous_history = ['hello', 'world']
     >>> clipboard = Clipboard(previous_history)
-    >>> clipboard.size = 3
+    >>> Settings.clipboard_size = 3
     >>> clipboard.add('foo')
     >>> clipboard.add('bar')
     >>> clipboard
@@ -42,7 +41,6 @@ class Clipboard:
 
     def __init__(self, previous_history: Optional[List[str]] = None) -> None:
         self.history: List[str] = previous_history or []
-        self.size = Settings.clipboard_size
 
     def add(self, item: str):
         # don't add the same item twice in a row
@@ -50,7 +48,7 @@ class Clipboard:
             return
 
         self.history.insert(0, item)
-        self.history = self.history[:self.size]
+        self.history = self.history[:Settings.clipboard_size]
 
         # no QApplication (e.g. unit tests) means no system clipboard
         if Settings.copy_to_system_clipboard and QApplication.instance():
@@ -78,22 +76,14 @@ class RegisterFile(RegisterFileInterface):
         self._register_file = register_file
 
     def load(self) -> RegistersData:
-        if not self._register_file.exists():
-            registers = RegistersData(
-                named={},
-                clipboard=[],
-                last_search='',
-                marks={},
-            )
-            self.save(registers)
-            return registers
-
-        with self._register_file.open() as f:
-            return RegistersData(**json.load(f))
+        registers = RegistersData()
+        for key, value in read_json(self._register_file).items():
+            if hasattr(registers, key):
+                setattr(registers, key, value)
+        return registers
 
     def save(self, registers: RegistersData):
-        with self._register_file.open('w') as f:
-            json.dump(asdict(registers), f, indent=4)
+        write_json(self._register_file, asdict(registers))
 
 
 class _Registers:
@@ -101,16 +91,20 @@ class _Registers:
     def __init__(self, register_file: RegisterFileInterface):
         self.registers_file = register_file
         self.registers = register_file.load()
-
-        self._clipboard = Clipboard(self.registers.clipboard)
         self._named_register: Optional[str] = None
 
+    def _reload(self):
+        # another DCC session may have written the file since we last read it
+        self.registers = self.registers_file.load()
+
     def _push_to_clipboard(self, value: str):
-        self._clipboard.add(value)
-        self.registers.clipboard = self._clipboard.history
+        clipboard = Clipboard(self.registers.clipboard)
+        clipboard.add(value)
+        self.registers.clipboard = clipboard.history
         self.registers_file.save(self.registers)
 
     def add_mark(self, key: str, text: str, pos: int) -> None:
+        self._reload()
         self.registers.marks[key] = Mark(position=pos, line=text)
         self.registers_file.save(self.registers)
 
@@ -118,8 +112,9 @@ class _Registers:
         return self.registers.marks.get(key)
 
     def add_last_search(self, value: str) -> None:
+        self._reload()
         self.registers.last_search = value
-        self._push_to_clipboard(value)
+        self.registers_file.save(self.registers)
 
     def set_named_register(self, key: str) -> None:
         self._named_register = key
@@ -134,7 +129,7 @@ class _Registers:
         key = self._named_register
 
         if not key:
-            return self.registers.clipboard[0]
+            return self.get_numbered_register_value(0)
 
         if key == '/':
             return self.registers.last_search
@@ -145,6 +140,7 @@ class _Registers:
         if value.isspace():
             return
 
+        self._reload()
         if self._named_register:
             self.registers.named[self._named_register] = value
 

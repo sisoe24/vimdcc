@@ -1,17 +1,31 @@
+import os
 import json
 import pathlib
+from typing import Any
 from dataclasses import field, fields, dataclass
 
 SETTINGS_FILE = pathlib.Path(__file__).parent.parent / 'vimdcc.json'
-if not SETTINGS_FILE.exists():
-    SETTINGS_FILE.write_text('{}')
+
+
+def read_json(path: pathlib.Path) -> dict:
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def write_json(path: pathlib.Path, data: Any) -> None:
+    # write to a temp file first: a crash mid-write must not corrupt the file
+    tmp = path.with_suffix('.tmp')
+    tmp.write_text(json.dumps(data, indent=4))
+    os.replace(tmp, path)
 
 
 @dataclass
 class VimDccSettings:
     launch_on_startup: bool = field(init=False, default=False)
     clipboard_size: int = field(init=False, default=100)
-    install_to_all_editors: bool = field(init=False, default=False)
     previewer_auto_insert: bool = field(init=False, default=True)
     copy_to_system_clipboard: bool = field(init=False, default=True)
 
@@ -19,16 +33,12 @@ class VimDccSettings:
         self._load_settings()
 
     def _load_settings(self):
-        with SETTINGS_FILE.open() as f:
-            data = json.load(f)
-            for key, value in data.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
+        for key, value in read_json(SETTINGS_FILE).items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     def save_settings(self):
-        data = {field.name: getattr(self, field.name) for field in fields(self)}
-        with SETTINGS_FILE.open('w') as f:
-            json.dump(data, f, indent=4)
+        write_json(SETTINGS_FILE, {f.name: getattr(self, f.name) for f in fields(self)})
 
 
 Settings = VimDccSettings()
