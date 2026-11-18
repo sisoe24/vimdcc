@@ -1,6 +1,6 @@
 from enum import Enum
 
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import QPlainTextEdit
 
 from ..command_base import BaseCommand
 from ..handler_parameters import HandlerParams

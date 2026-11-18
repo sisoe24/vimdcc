@@ -1,7 +1,7 @@
 from typing import List
 from dataclasses import field, dataclass
 
-from PySide2.QtGui import QKeyEvent, QTextCursor
+from ._qt import QKeyEvent, QTextCursor
 
 from .status_bar import StatusBar, status_bar
 from .editor_mode import Modes

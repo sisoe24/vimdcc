@@ -2,14 +2,11 @@ import sys
 from typing import Dict, Optional
 from dataclasses import dataclass
 
-from PySide2.QtGui import QKeyEvent, QStandardItem
-from PySide2.QtCore import (Qt, Slot, QRect, QEvent, QObject, QModelIndex,
-                            QCoreApplication, QStringListModel,
-                            QSortFilterProxyModel)
-from PySide2.QtWidgets import (QLabel, QDialog, QLineEdit, QListView,
-                               QSplitter, QSizePolicy, QVBoxLayout,
-                               QApplication, QPlainTextEdit, QDialogButtonBox,
-                               QStyledItemDelegate)
+from ._qt import (Qt, Slot, QRect, QEvent, QLabel, QDialog, QObject, QKeyEvent,
+                  QLineEdit, QListView, QSplitter, QModelIndex, QSizePolicy,
+                  QVBoxLayout, QApplication, QStandardItem, QPlainTextEdit,
+                  QCoreApplication, QDialogButtonBox, QStringListModel,
+                  QStyledItemDelegate, QSortFilterProxyModel)
 
 from .settings import Settings
 from .registers import Registers

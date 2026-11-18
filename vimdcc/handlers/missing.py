@@ -1,5 +1,5 @@
 """Keeping track of missing Vim commands that I would like to implement."""
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import QPlainTextEdit
 
 from ..handler_base import BaseHandler, register_normal_handler
 from ..handler_parameters import HandlerParams

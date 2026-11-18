@@ -1,7 +1,6 @@
 import sys
 
-from PySide2.QtWidgets import (QLabel, QWidget, QVBoxLayout, QApplication,
-                               QPlainTextEdit)
+from .._qt import QLabel, QWidget, QVBoxLayout, QApplication, QPlainTextEdit
 
 from ..main import VimDCC
 from ..events import EventManager
@@ -10,7 +9,7 @@ from ..utils.theme import set_theme
 
 def read_sample(debug=False):
     s = ''
-    with open('sample.txt', 'r') as f:
+    with open('todo.md', 'r') as f:
         if debug:
             content = f.read()
             for i in content:

@@ -1,7 +1,7 @@
 from bisect import bisect_left
 from typing import List, Optional
 
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import QPlainTextEdit
 
 Positions = List[int]
 

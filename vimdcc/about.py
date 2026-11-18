@@ -4,13 +4,12 @@ import pathlib
 import sysconfig
 from typing import Dict
 from platform import python_version
+from functools import lru_cache
 
-from PySide2 import __version__ as PySide2_version
-
-from .utils import cache
+from ._qt import __version__ as pyside_version
 
 
-@cache
+@lru_cache(maxsize=None)
 def load_version() -> str:
     # so much code to get the version number :(
     pyproject = pathlib.Path(__file__).parent.parent / 'pyproject.toml'
@@ -25,7 +24,7 @@ def about() -> Dict[str, str]:
     return {
         'version': load_version(),
         'python': python_version(),
-        'pyside': PySide2_version,
+        'pyside': pyside_version,
         'machine': sysconfig.get_platform(),
         'user': os.getenv('USER', os.getenv('USERNAME', 'unknown')),
     }
