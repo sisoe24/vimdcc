@@ -9,6 +9,7 @@ TODO.md                    export-ignore
 README.html                export-ignore
 
 # Directories
+.github                    export-ignore
 .nuketools                 export-ignore
 .vscode                    export-ignore
 htmlcov                    export-ignore
