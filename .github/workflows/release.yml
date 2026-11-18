@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches pyproject version
+        run: |
+          version=$(grep -m1 '^version = ' pyproject.toml | cut -d '"' -f2)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match pyproject version $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      # same as the VS Code Build task: export-ignore keeps dev files out
+      - name: Build zip
+        run: git archive --output=vimdcc.zip --format=zip HEAD
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          # versions like 0.3.0b1 are pre-releases
+          if [[ "$VERSION" =~ [a-zA-Z] ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" vimdcc.zip \
+            --title "$VERSION" \
+            --notes "See [CHANGELOG](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/CHANGELOG.md)." \
+            "${flags[@]}"
