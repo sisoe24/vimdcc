@@ -1,5 +1,4 @@
-from PySide2.QtGui import QTextCursor
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import QTextCursor, QPlainTextEdit
 
 from ..command_base import MoveCommand
 from ..handler_parameters import HandlerParams

@@ -1,6 +1,6 @@
 # VimDCC
 
-Vim-like experience for PySide2 applications like Nuke, Maya, Houdini.
+Vim-like experience for PySide2/PySide6 applications like Nuke, Maya, Houdini.
 
 - [VimDCC](#vimdcc)
   - [Working DCCs](#working-dccs)
@@ -23,7 +23,7 @@ Vim-like experience for PySide2 applications like Nuke, Maya, Houdini.
 
 ## Description
 
-VimDCC adds Vim-style functionality to QPlainTextEditor in PySide2 applications like Nuke, Maya, and Houdini. It's not a full Vim replacement but provides enough key features to make it worth your time.
+VimDCC adds Vim-style functionality to QPlainTextEditor in PySide2/PySide6 applications like Nuke, Maya, and Houdini. It's not a full Vim replacement but provides enough key features to make it worth your time.
 
 ![VimDCC](images/vimdcc.gif)
 

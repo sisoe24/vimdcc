@@ -1,18 +1,44 @@
-[tool.poetry]
+[project]
 name = "vimdcc"
-version = "0.1.0"
-description = "Vim like text editor plugin for PySide2 applications like Nuke, Maya, Houdini."
-authors = ["virgilsisoe <28490646+sisoe24@users.noreply.github.com>"]
+version = "0.2.0"
+description = "Vim like text editor plugin for PySide2/PySide6 applications like Nuke, Maya, Houdini."
+authors = [{ name = "virgilsisoe", email = "28490646+sisoe24@users.noreply.github.com" }]
 readme = "README.md"
+requires-python = ">=3.9,<3.14"
+dependencies = [
+    # Nuke 15 and older ship PySide2 (Python 3.10), Nuke 16+ ship PySide6 (Python 3.11)
+    "pyside2==5.15.2.1; python_version < '3.11'",
+    "pyside6==6.9.2; python_version >= '3.11'",
+]
+
+[project.scripts]
+vimdcc = "vimdcc.controllers.install_local:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.2,<8",
+    "pytest-cov>=4.1.0,<5",
+    "pytest-randomly>=3.15.0,<4",
+    "pytest-repeat>=0.9.1,<0.10",
+    # 4.5 dropped PySide2 support
+    "pytest-qt>=4.2.0,<4.5",
+]
 
 [tool.isort]
 length_sort = true
+known_qt = "vimdcc._qt"
+forced_separate = ["._qt", ".*"]
+sections = [
+    "FUTURE",
+    "STDLIB",
+    "THIRDPARTY",
+    "FIRSTPARTY",
+    "QT",
+    "LOCALFOLDER",
+]
 
 [tool.autopep8]
 max_line_length = 100
-
-[tool.poetry.scripts]
-vimdcc = "vimdcc.controllers.install_local:main"
 
 [tool.pytest.ini_options]
 markers = ["quick: mark test"]
@@ -24,17 +50,9 @@ addopts = [
     "-W ignore"
     ]
 
-[tool.poetry.dependencies]
-python = "~3.9"
-pyside2 = "5.15.2"
-
-[tool.poetry.group.test.dependencies]
-pytest-cov = "^4.1.0"
-pytest = "^7.4.2"
-pytest-randomly = "^3.15.0"
-pytest-repeat = "^0.9.1"
-pytest-qt = "^4.2.0"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""

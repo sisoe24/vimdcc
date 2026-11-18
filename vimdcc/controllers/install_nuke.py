@@ -1,17 +1,16 @@
 
 import contextlib
+from functools import lru_cache
 
-from PySide2.QtWidgets import (QWidget, QSplitter, QPushButton, QApplication,
-                               QPlainTextEdit)
+from .._qt import QWidget, QSplitter, QPushButton, QApplication, QPlainTextEdit
 
 from ..main import VimDCC
 from ..about import about
-from ..utils import cache
 from ..events import EventManager
 from ..settings import Settings
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_script_editor() -> QWidget:
     for widget in QApplication.allWidgets():
         if 'scripteditor.1' in widget.objectName():
@@ -19,12 +18,12 @@ def get_script_editor() -> QWidget:
     raise RuntimeError('Could not find script editor')
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_splitter() -> QSplitter:
     return get_script_editor().findChild(QSplitter)
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_input_editor() -> QPlainTextEdit:
     input_editor = get_splitter().findChild(QPlainTextEdit)
     if not input_editor:
@@ -32,7 +31,7 @@ def get_input_editor() -> QPlainTextEdit:
     return input_editor
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_run_button() -> QWidget:
     # naively assume that the button always exists
     return next(
@@ -45,14 +44,18 @@ def get_run_button() -> QWidget:
     )
 
 
+def _run_script():
+    button = get_run_button()
+    if button:
+        button.click()
+
+
 class NukeVimDCC(VimDCC):
     def __init__(self):
         super().__init__()
 
         self.splitter = get_splitter()
         self.load_status_bar()
-
-        EventManager.register('execute_code', lambda: get_run_button().click())
 
         print(f'\nVimDCC loaded: NukeVimDCC {about()["version"]}\n')
 
@@ -77,6 +80,10 @@ class NukeVimDCC(VimDCC):
 
 
 def install_nuke():
+    # register here, not in NukeVimDCC.__init__: Nuke creates a new panel
+    # instance every time the panel opens
+    EventManager.register('execute_code', _run_script)
+
     with contextlib.suppress(ImportError):
         import nukescripts
         nukescripts.panels.registerWidgetAsPanel(

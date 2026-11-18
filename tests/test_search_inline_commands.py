@@ -4,11 +4,12 @@ from dataclasses import dataclass
 
 import pytest
 from pytestqt.qtbot import QtBot
-from PySide2.QtWidgets import QPlainTextEdit
 
 from vimdcc.editor_mode import Modes
 from vimdcc.handlers.normal import SearchHandler, SearchLineHandler
 from vimdcc.handler_parameters import HandlerParams
+
+from vimdcc._qt import QPlainTextEdit
 
 
 @pytest.fixture()

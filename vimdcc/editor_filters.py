@@ -1,17 +1,13 @@
 from typing import List, Optional, cast
 
-from PySide2.QtGui import Qt, QKeyEvent, QTextCursor
-from PySide2.QtCore import QEvent, QObject
-from PySide2.QtWidgets import QPlainTextEdit
+from ._qt import Qt, QEvent, QObject, QKeyEvent, QTextCursor, QPlainTextEdit
 
 from .events import EventManager
 from .logger import LOGGER
 from .status_bar import status_bar
 from .editor_mode import Modes, EditorMode
-from .handler_base import HandlerType, get_normal_handlers
+from .handler_base import HandlerType, set_mode, get_normal_handlers
 from .handler_parameters import HandlerParams
-
-# TODO: Test this module
 
 
 def extract_modifiers(modifiers: Qt.KeyboardModifiers) -> List[str]:
@@ -32,10 +28,6 @@ class BaseFilter(QObject):
         super().__init__(parent)
         self.allowed_modes = allowed_modes
         self.editor = editor
-        self.cursor_width = {
-            'block': self.editor.fontMetrics().width(' '),
-            'line': 1
-        }
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
@@ -51,18 +43,16 @@ class BaseFilter(QObject):
 
         return False
 
-    def change_mode(self, mode: Modes, cursor_width: int, keys: str = ''):
-        self.editor.setCursorWidth(cursor_width)
-        EditorMode.mode = mode
+    def change_mode(self, mode: Modes):
+        set_mode(self.editor, mode)
         self.key_sequence = ''
-        status_bar.write(mode.value, keys)
         return True
 
     def to_normal(self):
-        return self.change_mode(Modes.NORMAL, self.cursor_width['block'])
+        return self.change_mode(Modes.NORMAL)
 
     def to_insert(self):
-        return self.change_mode(Modes.INSERT, self.cursor_width['line'])
+        return self.change_mode(Modes.INSERT)
 
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent) -> bool:
         raise NotImplementedError
@@ -158,12 +148,8 @@ class NormalEventFilter(BaseFilter):
         key_event = cast(QKeyEvent, event)
         modifiers = extract_modifiers(key_event.modifiers())
 
-        self.key_sequence += key_event.text().strip()
-        status_bar.write('NORMAL', self.key_sequence)
-
-        if self.key_sequence:
-            self._set_edit_mode()
-
+        # check control keys before adding to key_sequence: their text
+        # ('\x08', '\x12') would stay in it and block every command
         if key_event.key() == Qt.Key_R and key_event.modifiers() == Qt.ControlModifier:
             EventManager.emit('execute_code')
             return True
@@ -176,13 +162,22 @@ class NormalEventFilter(BaseFilter):
 
         if key_event.key() == Qt.Key_Backspace:
             self.key_sequence = self.key_sequence[:-1]
+            status_bar.write(EditorMode.mode.value, self.key_sequence)
             return True
+
+        text = key_event.text()
+        if text.isprintable():
+            self.key_sequence += text.strip()
+        status_bar.write(EditorMode.mode.value, self.key_sequence)
+
+        if self.key_sequence:
+            self._set_edit_mode()
 
         if self.key_sequence == 'V':
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             self.editor.setTextCursor(cursor)
-            return super().change_mode(Modes.VISUAL_LINE, self.cursor_width['block'])
+            return super().change_mode(Modes.VISUAL_LINE)
 
         if self.arrow_keys(cursor, key_event):
             self.editor.setTextCursor(cursor)

@@ -1,9 +1,8 @@
 
 from typing import Any
 
-from PySide2.QtCore import Qt, Slot
-from PySide2.QtWidgets import (QFrame, QSpinBox, QCheckBox, QFormLayout,
-                               QMessageBox, QPushButton)
+from ._qt import (Qt, Slot, QFrame, QSpinBox, QCheckBox, QFormLayout,
+                  QMessageBox, QPushButton)
 
 from .settings import Settings, VimDccSettings
 from .registers import Registers
@@ -41,7 +40,6 @@ class VimPreferencesView(QFrame):
         self.previewer_auto_insert = QCheckBox()
         self.previewer_auto_insert.setChecked(True)
 
-        self.clear_editor_cache = QPushButton('Clear Editor Cache')
         self.clear_registers = QPushButton('Clear Registers')
 
         form_layout = QFormLayout()

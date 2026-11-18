@@ -1,10 +1,9 @@
 import logging
 from typing import Any, Dict
 
-from PySide2.QtCore import Qt, Slot
-from PySide2.QtWidgets import (QLabel, QDialog, QWidget, QToolBar, QLineEdit,
-                               QFormLayout, QMainWindow, QPushButton,
-                               QVBoxLayout, QPlainTextEdit)
+from ._qt import (Qt, Slot, QLabel, QDialog, QWidget, QToolBar, QLineEdit,
+                  QFormLayout, QMainWindow, QPushButton, QVBoxLayout,
+                  QPlainTextEdit)
 
 from .about import about
 from .handlers import normal, missing  # DONT REMOVE THIS LINE  (FIXME)
@@ -113,7 +112,7 @@ class VimDCC(QMainWindow):
 
         if checked:
             LOGGER.debug('Turning Vim ON')
-            input_editor.setCursorWidth(input_editor.fontMetrics().width(' '))
+            input_editor.setCursorWidth(input_editor.fontMetrics().horizontalAdvance(' '))
             self.vim_status.setText('<h3>Vim: ON</h3>')
             filter_event = input_editor.installEventFilter
         else:

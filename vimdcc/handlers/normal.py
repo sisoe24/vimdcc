@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Dict, Callable, Optional
 
-from PySide2.QtGui import QTextCursor
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import Qt, QTextCursor, QPlainTextEdit
 
+from ..registers import _Registers
 from ..editor_mode import Modes, EditorMode
 from ..command_base import BaseCommand, MoveCommand
 from ..handler_base import BaseHandler, register_normal_handler
@@ -132,6 +132,41 @@ class MarksHandler(BaseHandler):
         return self.go_to_mark(params) if key_sequence == '`' else False
 
 
+def _move_to_match(
+    registers: _Registers,
+    start: int,
+    cursor: QTextCursor,
+    pos: Optional[int],
+    move_char: QTextCursor.MoveOperation = QTextCursor.NoMove
+) -> bool:
+    if pos is None:
+        return False
+
+    # anchor the cursor if we are in any of the modes
+    select = QTextCursor.MoveAnchor
+    if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
+        cursor.setPosition(start, QTextCursor.MoveAnchor)
+        select = QTextCursor.KeepAnchor
+
+    # set the cursor to destination
+    cursor.setPosition(pos, select)
+
+    if EditorMode.mode in [Modes.CHANGE, Modes.DELETE]:
+        cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+
+    elif EditorMode.mode == Modes.YANK:
+        cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+        registers.add(cursor.selectedText())
+        cursor.clearSelection()
+        cursor.setPosition(start, QTextCursor.MoveAnchor)
+
+    elif EditorMode.mode == Modes.VISUAL:
+        cursor.movePosition(move_char, QTextCursor.KeepAnchor)
+
+    return True
+
+
 @register_normal_handler
 class SearchHandler(BaseHandler):
     def __init__(self, editor: QPlainTextEdit):
@@ -152,27 +187,8 @@ class SearchHandler(BaseHandler):
         return text
 
     def _move_cursor(self, params: HandlerParams, move_func: Callable[[int], Optional[int]]):
-        cursor = params.cursor
-        start = cursor.position()
-        pos = move_func(cursor.position())
-        if pos is not None:
-
-            # TODO: Refactor: Many similarity with the _set_cursor method from SearchLineHandler
-            select = QTextCursor.MoveAnchor
-            if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
-                cursor.setPosition(start, QTextCursor.MoveAnchor)
-                select = QTextCursor.KeepAnchor
-
-            cursor.setPosition(pos, select)
-
-            if EditorMode.mode in [Modes.CHANGE, Modes.DELETE]:
-                cursor.removeSelectedText()
-
-            elif EditorMode.mode == Modes.YANK:
-                self.registers.add(cursor.selectedText())
-                cursor.clearSelection()
-                cursor.setPosition(start, QTextCursor.MoveAnchor)
-
+        start = params.cursor.position()
+        _move_to_match(self.registers, start, params.cursor, move_func(start))
         return True
 
     def go_up(self, params: HandlerParams):
@@ -207,10 +223,12 @@ class SearchHandler(BaseHandler):
         key = params.event.key()
         key_sequence = params.keys
 
-        if key_sequence.startswith('?') and key == 16777220:
+        enter = key in (Qt.Key_Return, Qt.Key_Enter)
+
+        if key_sequence.startswith('?') and enter:
             return self.search_word_up(params, key_sequence[1:])
 
-        if key_sequence.startswith('/') and key == 16777220:
+        if key_sequence.startswith('/') and enter:
             return self.search_word_down(params, key_sequence[1:])
 
         command = self.commands.get(params.keys)
@@ -226,42 +244,7 @@ class SearchLineHandler(BaseHandler):
             ';': self.search_forward_again,
             ',': self.search_backward_again,
         }
-        # TODO: This is a mess. Refactor this.
         # TODO: Add tests for c, d, y, v
-
-    def _set_cursor(
-        self,
-        start: int,
-        cursor: QTextCursor,
-        pos: Optional[int],
-        move_char: QTextCursor.MoveOperation = QTextCursor.NoMove
-    ):
-        if pos is None:
-            return False
-
-        # anchor the cursor if we are in any of the modes
-        select = QTextCursor.MoveAnchor
-        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE, Modes.YANK, Modes.VISUAL]:
-            cursor.setPosition(start, QTextCursor.MoveAnchor)
-            select = QTextCursor.KeepAnchor
-
-        # set the cursor to destination
-        cursor.setPosition(pos, select)
-
-        if EditorMode.mode in [Modes.CHANGE, Modes.DELETE]:
-            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
-            cursor.removeSelectedText()
-
-        elif EditorMode.mode == Modes.YANK:
-            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
-            self.registers.add(cursor.selectedText())
-            cursor.clearSelection()
-            cursor.setPosition(start, QTextCursor.MoveAnchor)
-
-        elif EditorMode.mode == Modes.VISUAL:
-            cursor.movePosition(move_char, QTextCursor.KeepAnchor)
-
-        return True
 
     def search_forward(
         self,
@@ -274,7 +257,7 @@ class SearchLineHandler(BaseHandler):
         cursor = params.cursor
         start = cursor.position()
         pos = self.search.find_next_down(start)
-        return self._set_cursor(start, cursor, pos, move_char)
+        return _move_to_match(self.registers, start, cursor, pos, move_char)
 
     def search_backward(
         self,
@@ -287,7 +270,7 @@ class SearchLineHandler(BaseHandler):
         cursor = params.cursor
         start = cursor.position()
         pos = self.search.find_next_up(cursor.position())
-        return self._set_cursor(start, cursor, pos, move_char)
+        return _move_to_match(self.registers, start, cursor, pos, move_char)
 
     def search_forward_before(self, params: HandlerParams, key: str):
         """t + key."""
@@ -306,12 +289,12 @@ class SearchLineHandler(BaseHandler):
     def search_forward_again(self, params: HandlerParams):
         start = params.cursor.position()
         pos = self.search.find_next_down(start)
-        return self._set_cursor(start, params.cursor, pos)
+        return _move_to_match(self.registers, start, params.cursor, pos)
 
     def search_backward_again(self, params: HandlerParams):
         start = params.cursor.position()
         pos = self.search.find_next_up(start)
-        return self._set_cursor(start, params.cursor, pos)
+        return _move_to_match(self.registers, start, params.cursor, pos)
 
     def handle(self, params: HandlerParams):
         keys = params.keys
@@ -352,29 +335,35 @@ class YankHandler(BaseHandler):
         self._named_register = PreviewNamedRegister()
         self._numbered_register = PreviewNumberedRegister()
 
-    def _paste(self, params: HandlerParams, text: Optional[str] = None):
+    def _paste(self, params: HandlerParams, text: Optional[str], below: bool):
         if not text:
-            return True
+            return
 
         cursor = params.cursor
         if self.LINE_COPY in text:
-            text = text.replace(self.LINE_COPY, '')
-            cursor.movePosition(QTextCursor.Down)
-            cursor.movePosition(QTextCursor.StartOfLine)
-            cursor.insertText(text)
-            cursor.movePosition(QTextCursor.Up)
+            line = text.replace(self.LINE_COPY, '')
+            line = line[:-1] if line.endswith('\n') else line
+            if below:
+                # works on the last line too, where moving Down is a no-op
+                cursor.movePosition(QTextCursor.EndOfBlock)
+                cursor.insertText('\n' + line)
+            else:
+                cursor.movePosition(QTextCursor.StartOfBlock)
+                cursor.insertText(line + '\n')
+                cursor.movePosition(QTextCursor.Up)
+            cursor.movePosition(QTextCursor.StartOfBlock)
         else:
+            if below:
+                cursor.movePosition(QTextCursor.NextCharacter)
             cursor.insertText(text)
             cursor.movePosition(QTextCursor.PreviousCharacter)
 
     def paste(self, params: HandlerParams):
-        params.cursor.movePosition(QTextCursor.NextCharacter)
-        self.editor.setTextCursor(params.cursor)
-        self._paste(params, self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value(), below=True)
         return True
 
     def paste_before(self, params: HandlerParams):
-        self._paste(params, self.registers.get_named_register_value())
+        self._paste(params, self.registers.get_named_register_value(), below=False)
         return True
 
     def yank_line(self, params: HandlerParams):
@@ -400,8 +389,7 @@ class YankHandler(BaseHandler):
     def preview_clipboard(self, params: HandlerParams):
         previewer = self._numbered_register
         value = previewer.get_text_value()
-        if value:
-            self._paste(params, value)
+        self._paste(params, value, below=True)
         return True
 
     def preview_register(self, params: HandlerParams):
@@ -573,16 +561,6 @@ class TextObjectsHandler(BaseHandler):
 
         if character in self.word:
             return self.delete_word(params.cursor, operator)
-
-        return False
-
-
-@register_normal_handler
-class TextSearchObjectsHandler(BaseHandler):
-    def __init__(self, editor: QPlainTextEdit):
-        super().__init__(editor)
-
-    def handle(self, params: HandlerParams) -> bool:
 
         return False
 

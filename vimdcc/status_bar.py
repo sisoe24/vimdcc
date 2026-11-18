@@ -1,6 +1,6 @@
 from typing import Optional
 
-from PySide2.QtWidgets import QLineEdit
+from ._qt import QLineEdit
 
 
 class StatusBar:

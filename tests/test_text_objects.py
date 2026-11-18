@@ -3,10 +3,11 @@ from dataclasses import dataclass
 
 import pytest
 from pytestqt.qtbot import QtBot
-from PySide2.QtWidgets import QPlainTextEdit
 
 from vimdcc.text_objects import (MatchingCharacter, find_matching_quotes,
                                  find_matching_brackets)
+
+from vimdcc._qt import QPlainTextEdit
 
 PB = MatchingCharacter.PARENTHESIS
 SB = MatchingCharacter.SQUARE_BRACKETS
@@ -79,3 +80,9 @@ def test_find_quotes(data: MatchTest, editor: QPlainTextEdit):
     editor.insertPlainText(data.text)
     find = find_matching_quotes(editor.toPlainText(), data.char, data.start, data.end)
     assert find == data.find
+
+
+def test_find_matching_at_end_of_text():
+    # cursor after the last character (e.g. `G$` then `ci(`) must not raise
+    assert find_matching_brackets('(a', PB, 2, 2) is None
+    assert find_matching_quotes("'a", "'", 2, 2) is None
