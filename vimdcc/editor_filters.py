@@ -6,10 +6,8 @@ from .events import EventManager
 from .logger import LOGGER
 from .status_bar import status_bar
 from .editor_mode import Modes, EditorMode
-from .handler_base import HandlerType, get_normal_handlers
+from .handler_base import HandlerType, set_mode, get_normal_handlers
 from .handler_parameters import HandlerParams
-
-# TODO: Test this module
 
 
 def extract_modifiers(modifiers: Qt.KeyboardModifiers) -> List[str]:
@@ -30,10 +28,6 @@ class BaseFilter(QObject):
         super().__init__(parent)
         self.allowed_modes = allowed_modes
         self.editor = editor
-        self.cursor_width = {
-            'block': self.editor.fontMetrics().horizontalAdvance(' '),
-            'line': 1
-        }
 
     def eventFilter(self, watched: QObject, event: QEvent):
         if not isinstance(watched, QPlainTextEdit):
@@ -49,18 +43,16 @@ class BaseFilter(QObject):
 
         return False
 
-    def change_mode(self, mode: Modes, cursor_width: int, keys: str = ''):
-        self.editor.setCursorWidth(cursor_width)
-        EditorMode.mode = mode
+    def change_mode(self, mode: Modes):
+        set_mode(self.editor, mode)
         self.key_sequence = ''
-        status_bar.write(mode.value, keys)
         return True
 
     def to_normal(self):
-        return self.change_mode(Modes.NORMAL, self.cursor_width['block'])
+        return self.change_mode(Modes.NORMAL)
 
     def to_insert(self):
-        return self.change_mode(Modes.INSERT, self.cursor_width['line'])
+        return self.change_mode(Modes.INSERT)
 
     def parse_keys(self, editor: QPlainTextEdit, event: QEvent) -> bool:
         raise NotImplementedError
@@ -180,7 +172,7 @@ class NormalEventFilter(BaseFilter):
             cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             self.editor.setTextCursor(cursor)
-            return super().change_mode(Modes.VISUAL_LINE, self.cursor_width['block'])
+            return super().change_mode(Modes.VISUAL_LINE)
 
         if self.arrow_keys(cursor, key_event):
             self.editor.setTextCursor(cursor)

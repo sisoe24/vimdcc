@@ -14,6 +14,13 @@ HandlerType = Callable[[QPlainTextEdit], Any]
 _NORMAL_HANDLERS: List[HandlerType] = []
 
 
+def set_mode(editor: QPlainTextEdit, mode: Modes):
+    EditorMode.mode = mode
+    status_bar.write(mode.value, '')
+    editor.setCursorWidth(2 if mode == Modes.INSERT else editor.fontMetrics().horizontalAdvance(' '))
+    editor.viewport().update()
+
+
 class BaseHandler(ABC):
     def __init__(self, editor: QPlainTextEdit):
         self.editor = editor
@@ -31,19 +38,13 @@ class BaseHandler(ABC):
         self.registers.add(text)
 
     def to_normal_mode(self):
-        status_bar.write('NORMAL', '')
-        EditorMode.mode = Modes.NORMAL
-        self.editor.setCursorWidth(self.editor.fontMetrics().horizontalAdvance(' '))
-        self.editor.viewport().update()
+        set_mode(self.editor, Modes.NORMAL)
 
     def to_insert_mode(self):
-        status_bar.write('INSERT', '')
-        EditorMode.mode = Modes.INSERT
-        self.editor.setCursorWidth(2)
-        self.editor.viewport().update()
+        set_mode(self.editor, Modes.INSERT)
 
     def to_visual_mode(self):
-        EditorMode.mode = Modes.VISUAL
+        set_mode(self.editor, Modes.VISUAL)
 
     def should_handle(self, params: HandlerParams) -> bool:
         """Indicate whether the key sequence should be handled."""

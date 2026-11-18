@@ -36,11 +36,6 @@ class _EventManager:
         >>> EventManager.unregister('on_hello', handler)
     """
 
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(_EventManager, cls).__new__(cls)
-        return cls.instance
-
     def __init__(self):
         self.events: dict[str, list[GenericEvent]] = defaultdict(list)
 
