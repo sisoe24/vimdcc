@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from dataclasses import asdict, dataclass
 
-from PySide2.QtGui import QClipboard
+from ._qt import QApplication
 
 from .settings import Settings
 
@@ -52,9 +52,10 @@ class Clipboard:
         self.history.insert(0, item)
         self.history = self.history[:self.size]
 
-        if Settings.copy_to_system_clipboard:
+        # no QApplication (e.g. unit tests) means no system clipboard
+        if Settings.copy_to_system_clipboard and QApplication.instance():
             item = item.replace('<LINE_COPY>', '\n')
-            QClipboard().setText(item)
+            QApplication.clipboard().setText(item)
 
     def get(self, index: int):
         return self.history[index] if 0 <= index < len(self.history) else None

@@ -1,8 +1,7 @@
 import logging
 import pathlib
+from functools import lru_cache
 from logging.handlers import TimedRotatingFileHandler
-
-from .utils import cache
 
 
 def file_handler():
@@ -27,7 +26,7 @@ def stream_handler():
     return sh
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_logger() -> logging.Logger:
     logger = logging.getLogger('vim')
     logger.propagate = False

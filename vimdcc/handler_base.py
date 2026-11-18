@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Type, TypeVar, Callable
 
-from PySide2.QtWidgets import QPlainTextEdit
+from ._qt import QPlainTextEdit
 
 from .logger import LOGGER
 from .registers import Registers
@@ -33,7 +33,7 @@ class BaseHandler(ABC):
     def to_normal_mode(self):
         status_bar.write('NORMAL', '')
         EditorMode.mode = Modes.NORMAL
-        self.editor.setCursorWidth(self.editor.fontMetrics().width(' '))
+        self.editor.setCursorWidth(self.editor.fontMetrics().horizontalAdvance(' '))
         self.editor.viewport().update()
 
     def to_insert_mode(self):

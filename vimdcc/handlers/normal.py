@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Callable, Optional
 
-from PySide2.QtGui import QTextCursor
-from PySide2.QtWidgets import QPlainTextEdit
+from .._qt import QTextCursor, QPlainTextEdit
 
 from ..editor_mode import Modes, EditorMode
 from ..command_base import BaseCommand, MoveCommand

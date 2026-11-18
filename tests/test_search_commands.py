@@ -3,16 +3,15 @@ from typing import List
 from dataclasses import dataclass
 
 import pytest
-from PySide2.QtGui import QKeyEvent
-from PySide2.QtCore import Qt, QEvent
 from pytestqt.qtbot import QtBot
-from PySide2.QtWidgets import QPlainTextEdit
 
 from vimdcc.editor_mode import Modes
 from vimdcc.commands.search import (SearchCommand, _find, _find_next_up,
                                     _find_next_down)
 from vimdcc.handlers.normal import SearchHandler
 from vimdcc.handler_parameters import HandlerParams
+
+from vimdcc._qt import Qt, QEvent, QKeyEvent, QPlainTextEdit
 
 
 @pytest.mark.parametrize('string, search, positions', [

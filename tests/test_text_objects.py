@@ -3,10 +3,11 @@ from dataclasses import dataclass
 
 import pytest
 from pytestqt.qtbot import QtBot
-from PySide2.QtWidgets import QPlainTextEdit
 
 from vimdcc.text_objects import (MatchingCharacter, find_matching_quotes,
                                  find_matching_brackets)
+
+from vimdcc._qt import QPlainTextEdit
 
 PB = MatchingCharacter.PARENTHESIS
 SB = MatchingCharacter.SQUARE_BRACKETS

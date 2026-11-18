@@ -1,8 +1,6 @@
 from typing import List, Optional, cast
 
-from PySide2.QtGui import Qt, QKeyEvent, QTextCursor
-from PySide2.QtCore import QEvent, QObject
-from PySide2.QtWidgets import QPlainTextEdit
+from ._qt import Qt, QEvent, QObject, QKeyEvent, QTextCursor, QPlainTextEdit
 
 from .events import EventManager
 from .logger import LOGGER
@@ -33,7 +31,7 @@ class BaseFilter(QObject):
         self.allowed_modes = allowed_modes
         self.editor = editor
         self.cursor_width = {
-            'block': self.editor.fontMetrics().width(' '),
+            'block': self.editor.fontMetrics().horizontalAdvance(' '),
             'line': 1
         }
 
